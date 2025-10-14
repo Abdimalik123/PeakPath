@@ -1,0 +1,29 @@
+# Node.js dependencies
+node_modules/
+
+# Python virtual environments
+.venv/
+venv/
+backend/venv/
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.so
+
+# Environment and sensitive files
+.env
+db.py
+
+# OS-specific clutter
+.DS_Store
+Thumbs.db
+
+# Logs and temp files
+*.log
+*.tmp
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.swp
