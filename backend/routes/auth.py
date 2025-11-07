@@ -1,11 +1,40 @@
-from flask import Flask, Blueprint, request, jsonify
+from flask import Flask, Blueprint, request, jsonify, g
+import functools
 from db import conn
-from werkzeug.security import generate_password_hash
-from .env import SECRET_KEY
+from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
 auth_bp = Blueprint('auth_bp', __name__)
+
+
+def login_required(view):
+    @functools.wraps(view)
+    def wrapped_view(*args, **kwargs):
+        auth_header = request.headers.get("Authorization")
+
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return jsonify({"success": False, "error": "Missing or invalid token"}), 401
+
+        token = auth_header.split(" ")[1]
+
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return jsonify({"success": False, "error": "Token expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"success": False, "error": "Invalid token"}), 401
+
+        # Store user info in flask.g so routes can access it
+        g.user = payload
+        return view(*args, **kwargs)
+
+    return wrapped_view
+
 
 
 @auth_bp.route('/register', methods = ['POST'])
