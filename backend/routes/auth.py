@@ -1,46 +1,38 @@
-from flask import Flask, Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g
 import functools
-from db import conn
+from db import get_db, return_db
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
 from dotenv import load_dotenv
 import os
+from utils.logging import log_activity
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 auth_bp = Blueprint('auth_bp', __name__)
 
-
 def login_required(view):
     @functools.wraps(view)
     def wrapped_view(*args, **kwargs):
         auth_header = request.headers.get("Authorization")
-
         if not auth_header or not auth_header.startswith("Bearer "):
             return jsonify({"success": False, "error": "Missing or invalid token"}), 401
-
         token = auth_header.split(" ")[1]
-
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         except jwt.ExpiredSignatureError:
             return jsonify({"success": False, "error": "Token expired"}), 401
         except jwt.InvalidTokenError:
             return jsonify({"success": False, "error": "Invalid token"}), 401
-
-        # Store user info in flask.g so routes can access it
         g.user = payload
         return view(*args, **kwargs)
-
     return wrapped_view
 
 
-
-@auth_bp.route('/register', methods = ['POST'])
+@auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    cursor = conn.cursor()
     firstname = data.get("firstname")
     lastname = data.get("lastname")
     email = data.get("email")
@@ -48,88 +40,83 @@ def register():
     confirm_password = data.get("confirm_password")
 
     # Form validation
-    if not firstname:
-        return jsonify({"success":False, "message": "Missing firstname"})
-    if not lastname:
-        return jsonify({"success": False, "message": "Missing lastname"})
-    if not email:
-        return jsonify({"success": False, "message": "Missing email"})
-    if not password:
-        return jsonify({"success": False, "message": "Missing password"})
-    if not confirm_password:
-        return jsonify({"success": False, "message": "Confirm password"})
+    for field_name, field_value in [("firstname", firstname), ("lastname", lastname), ("email", email), ("password", password), ("confirm_password", confirm_password)]:
+        if not field_value:
+            return jsonify({"success": False, "message": f"Missing {field_name}"}), 400
     if confirm_password != password:
-        return jsonify({"success": False, "message": "Passwords do not match"})    
-    
-    try:
-        # Check if user already exists
-        cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
-        existing_user = cursor.fetchone()
-        if existing_user:
-            return jsonify({"success": False, "message": "User already exists"})
+        return jsonify({"success": False, "message": "Passwords do not match"}), 400
 
-        # Hash the password and store the new user
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            return jsonify({"success": False, "message": "User already exists"}), 400
+
         hashed_password = generate_password_hash(password)
-        cursor.execute("INSERT INTO users (firstname, lastname, email, password_hash) VALUES (%s, %s, %s, %s)", (firstname, lastname, email, hashed_password))
+        cursor.execute(
+            "INSERT INTO users (firstname, lastname, email, password_hash) VALUES (%s, %s, %s, %s) RETURNING id",
+            (firstname, lastname, email, hashed_password)
+        )
+        user_id = cursor.fetchone()[0]
         conn.commit()
-        
-        # Generate JWT token
+
+        # Log the creation
+        log_activity(user_id, "created", "user", user_id)
+
         payload = {
+            "id": user_id,
             "firstname": firstname,
             "lastname": lastname,
             "email": email,
             "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1)
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-
-        return jsonify({"success": True, "message": "You have successfully registered", "token": token})
+        return jsonify({"success": True, "message": "Registered successfully", "user_id": user_id, "token": token}), 201
     except Exception as e:
         conn.rollback()
-        return jsonify({"success": False, "message": str(e)})
+        return jsonify({"success": False, "message": str(e)}), 500
     finally:
         cursor.close()
-    
+        return_db(conn)
 
-@auth_bp.route('/login', methods = ['POST'])
+
+@auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
-
-    # Form validation
     if not email:
-        return jsonify({"success": False, "message": "You have to type in your email"})
+        return jsonify({"success": False, "message": "Email is required"}), 400
     if not password:
-        return jsonify({"success": False, "message": "You have to type in your password"})
-    
+        return jsonify({"success": False, "message": "Password is required"}), 400
+
+    conn = get_db()
     cursor = conn.cursor()
     try:
-        # Check if user exists
-        cursor.execute("SELECT id, firstname, lastname, email, password_hash FROM users WHERE email = %s" , (email,))
-        current_user = cursor.fetchone()
-        if not current_user:
-            return jsonify({"success": False, "message": "User does not exist"})
-    
-        user_id, firstname, lastname, email, password_hash = current_user
-        # Verify password
+        cursor.execute("SELECT id, firstname, lastname, email, password_hash FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        if not user:
+            return jsonify({"success": False, "message": "User does not exist"}), 404
+
+        user_id, firstname, lastname, email, password_hash = user
         if not check_password_hash(password_hash, password):
-            return jsonify({"success": False, "message": "Incorrect password"})
-        
-        # Generate JWT token
+            return jsonify({"success": False, "message": "Incorrect password"}), 401
+
+        # Log the login
+        log_activity(user_id, "logged_in", "user", user_id)
+
         payload = {
             "id": user_id,
-            "firstname": firstname,  # Assuming firstname is the 2nd column
-            "lastname": lastname,   # Assuming lastname is the 3rd column
-            "email": email,      # Assuming email is the 4th column
+            "firstname": firstname,
+            "lastname": lastname,
+            "email": email,
             "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1)
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-        return jsonify({"success": True, "message": "You have successfully logged in", "token": token}), 200
-
+        return jsonify({"success": True, "message": "Logged in successfully", "token": token}), 200
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
-
     finally:
         cursor.close()
-    
-
+        return_db(conn)

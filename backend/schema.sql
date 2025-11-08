@@ -113,15 +113,19 @@ CREATE TABLE IF NOT EXISTS habits (
 );
 CREATE INDEX IF NOT EXISTS idx_habits_user_id ON habits(user_id);
 
--- ---------- HABIT_LOGS (match DB: no created_at) ----------
+-- ---------- UPDATED HABIT_LOGS SCHEMA ----------
+
 CREATE TABLE IF NOT EXISTS habit_logs (
     id SERIAL PRIMARY KEY,
     habit_id INTEGER NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
-    date DATE,
-    completed BOOLEAN
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- precise time of log
+    amount NUMERIC(6,2),                            -- optional quantity (e.g. ml, minutes)
+    notes TEXT,                                     -- optional user notes
+    completed BOOLEAN DEFAULT TRUE,                 -- binary flag for session success
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- for audit and sorting
 );
-CREATE INDEX IF NOT EXISTS idx_habit_logs_habit_id ON habit_logs(habit_id);
 
+CREATE INDEX IF NOT EXISTS idx_habit_logs_habit_id ON habit_logs(habit_id);
 -- ---------- GOALS (match DB) ----------
 CREATE TABLE IF NOT EXISTS goals (
     id SERIAL PRIMARY KEY,
@@ -175,3 +179,55 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     created_at TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_activity_logs_user_id ON activity_logs(user_id);
+
+-- ---------- GAMIFICATION TABLES ----------
+-- User Points
+CREATE TABLE IF NOT EXISTS user_points (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    total_points INTEGER DEFAULT 0,
+    level INTEGER DEFAULT 1,
+    points_to_next_level INTEGER DEFAULT 100,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_user_points_user_id ON user_points(user_id);
+
+-- User Achievements
+CREATE TABLE IF NOT EXISTS user_achievements (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    achievement_type VARCHAR,
+    achievement_name VARCHAR,
+    description TEXT,
+    earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    metadata TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON user_achievements(user_id);
+
+-- Point Transactions
+CREATE TABLE IF NOT EXISTS point_transactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    points INTEGER,
+    reason VARCHAR,
+    entity_type VARCHAR,
+    entity_id INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_point_transactions_user_id ON point_transactions(user_id);
+
+-- ---------- GOAL SYNCING ----------
+-- Goal Links
+CREATE TABLE IF NOT EXISTS goal_links (
+    id SERIAL PRIMARY KEY,
+    goal_id INTEGER NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+    entity_type VARCHAR,
+    entity_id INTEGER,
+    linked_workout_type VARCHAR,
+    contribution_value INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_goal_links_goal_id ON goal_links(goal_id);
+
+-- Add auto_sync column to goals
+ALTER TABLE goals ADD COLUMN IF NOT EXISTS auto_sync BOOLEAN DEFAULT FALSE;
