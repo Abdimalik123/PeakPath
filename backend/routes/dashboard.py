@@ -2,7 +2,6 @@ from flask import Blueprint, request, jsonify, g
 from db import get_db, return_db
 from routes.auth import login_required
 from datetime import datetime, timedelta
-from utils.gamification_helper import calculate_workout_streak, calculate_habit_streak
 
 dashboard_bp = Blueprint('dashboard_bp', __name__)
 
@@ -14,20 +13,16 @@ def get_dashboard():
     cursor = conn.cursor()
     
     try:
-        # User info with points
+        # User info
         cursor.execute("""
-            SELECT u.firstname, u.lastname, up.total_points, up.level, up.points_to_next_level
+            SELECT u.firstname, u.lastname
             FROM users u
-            LEFT JOIN user_points up ON up.user_id = u.id
             WHERE u.id = %s
         """, (user_id,))
         
         user_data = cursor.fetchone()
         user_info = {
-            "name": f"{user_data[0]} {user_data[1]}" if user_data[0] else "User",
-            "level": user_data[3] if user_data[3] else 1,
-            "total_points": user_data[2] if user_data[2] else 0,
-            "points_to_next_level": user_data[4] if user_data[4] else 100
+            "name": f"{user_data[0]} {user_data[1]}" if user_data[0] else "User"
         }
         
         # Today's stats
@@ -43,16 +38,9 @@ def get_dashboard():
         """, (user_id, today))
         habits_today = cursor.fetchone()[0]
         
-        cursor.execute("""
-            SELECT COALESCE(SUM(points), 0) FROM point_transactions
-            WHERE user_id = %s AND DATE(created_at) = %s
-        """, (user_id, today))
-        points_today = cursor.fetchone()[0]
-        
         today_stats = {
             "workouts_completed": workouts_today,
-            "habits_logged": habits_today,
-            "points_earned": points_today
+            "habits_logged": habits_today
         }
         
         # Recent workouts
@@ -87,19 +75,6 @@ def get_dashboard():
                 "progress_percentage": progress_pct, "deadline": row[5]
             })
         
-        # Habit streaks
-        cursor.execute("SELECT id, name, frequency FROM habits WHERE user_id = %s", (user_id,))
-        habits = cursor.fetchall()
-        habit_streaks = []
-        
-        for habit in habits:
-            current_streak = calculate_habit_streak(user_id, habit[0], cursor)
-            habit_streaks.append({
-                "habit_id": habit[0], "habit_name": habit[1],
-                "frequency": habit[2], "current_streak": current_streak,
-                "best_streak": current_streak
-            })
-        
         # Weekly activity
         week_start = today - timedelta(days=6)
         weekly_activity = []
@@ -116,26 +91,12 @@ def get_dashboard():
             habits_count = cursor.fetchone()[0]
             weekly_activity.append({"date": str(day), "workouts": workouts, "habits": habits_count})
         
-        # Recent achievements
-        cursor.execute("""
-            SELECT achievement_name, description, earned_at
-            FROM user_achievements WHERE user_id = %s
-            ORDER BY earned_at DESC LIMIT 3
-        """, (user_id,))
-        
-        recent_achievements = [
-            {"name": row[0], "description": row[1], "earned_at": row[2]}
-            for row in cursor.fetchall()
-        ]
-        
         dashboard = {
             "user": user_info,
             "today": today_stats,
             "recent_workouts": recent_workouts,
             "active_goals": active_goals,
-            "habit_streaks": habit_streaks,
-            "weekly_activity": weekly_activity,
-            "recent_achievements": recent_achievements
+            "weekly_activity": weekly_activity
         }
         
         return jsonify({"success": True, "dashboard": dashboard}), 200

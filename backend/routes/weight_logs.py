@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, g
 from db import get_db, return_db
 from routes.auth import login_required
-from utils.logging import log_activity
 
 weight_bp = Blueprint('weight_bp', __name__)
 
@@ -12,10 +11,10 @@ def add_weight():
     data = request.get_json()
     weight = data.get("weight_kg")
     date = data.get("date")
-
+    
     if weight is None:
         return jsonify({"error": "Missing weight"}), 400
-
+    
     conn = get_db()
     cursor = conn.cursor()
     try:
@@ -26,10 +25,6 @@ def add_weight():
         """, (user_id, weight, date))
         weight_id = cursor.fetchone()[0]
         conn.commit()
-
-        # Log the activity
-        log_activity(user_id, "added", "weight_log", weight_id)
-
         return jsonify({"success": True, "weight_id": weight_id}), 201
     except Exception as e:
         conn.rollback()
@@ -69,10 +64,10 @@ def update_weight_log(log_id):
     data = request.get_json()
     new_weight = data.get("weight_kg")
     new_date = data.get("date")
-
+    
     if new_weight is None:
         return jsonify({"error": "Missing weight"}), 400
-
+    
     conn = get_db()
     cursor = conn.cursor()
     try:
@@ -82,10 +77,6 @@ def update_weight_log(log_id):
             WHERE id = %s AND user_id = %s
         """, (new_weight, new_date, log_id, user_id))
         conn.commit()
-
-        # Log the activity
-        log_activity(user_id, "updated", "weight_log", log_id)
-
         return jsonify({"success": True, "message": "Weight log updated"}), 200
     except Exception as e:
         conn.rollback()
@@ -104,10 +95,6 @@ def delete_weight_log(log_id):
     try:
         cursor.execute("DELETE FROM weight_logs WHERE id = %s AND user_id = %s", (log_id, user_id))
         conn.commit()
-
-        # Log the activity
-        log_activity(user_id, "deleted", "weight_log", log_id)
-
         return jsonify({"success": True, "message": "Weight log deleted"}), 200
     except Exception as e:
         conn.rollback()

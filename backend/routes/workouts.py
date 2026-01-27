@@ -2,27 +2,21 @@ from flask import Blueprint, request, jsonify, g, current_app
 from db import get_db, return_db
 from routes.auth import login_required
 from utils.logging import log_activity
-from utils.pagination import (
-    get_pagination_params, 
-    create_pagination_response,
-    get_date_range_params,
-    get_search_params,
-    paginate_query
-)
+
 
 
 workouts_bp = Blueprint('workouts_bp', __name__)
 
 @workouts_bp.route('/workouts', methods=['POST'])
 @login_required
-def add_workout():
+def create_workout():
     user_id = g.user['id']
     data = request.get_json()
     workout_type = data.get("type")
     duration = data.get("duration")
     date = data.get("date")
     notes = data.get("notes")
-    exercises = data.get("exercises", [])
+  
 
     if not workout_type or duration is None:
         return jsonify({"error": "Missing required fields"}), 400
@@ -37,67 +31,96 @@ def add_workout():
         """, (user_id, workout_type, duration, date, notes))
         workout_id = cursor.fetchone()[0]
 
-        # Loop through exercises
-        for ex in exercises:
-            exercise_id = ex.get("exercise_id")
-
-            # If no ID, create the exercise first
-            if not exercise_id:
-                cursor.execute("""
-                    INSERT INTO exercises (user_id, name, muscle_group, equipment, description)
-                    VALUES (%s, %s, %s, %s, %s) RETURNING id
-                """, (
-                    user_id,
-                    ex.get("name"),
-                    ex.get("muscle_group"),
-                    ex.get("equipment"),
-                    ex.get("description")
-                ))
-                exercise_id = cursor.fetchone()[0]
-                log_activity(user_id, "created", "exercise", exercise_id)
-
-            # Link exercise to workout
-            cursor.execute("""
-                INSERT INTO workout_exercises (workout_id, exercise_id, sets, reps, weight, duration, notes)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (
-                workout_id,
-                exercise_id,
-                ex.get("sets"),
-                ex.get("reps"),
-                ex.get("weight"),
-                ex.get("duration"),
-                ex.get("notes")
-            ))
-
         conn.commit()
         # Log the workout creation
         log_activity(user_id, "created", "workout", workout_id)
-        current_app.logger.info(f'User {user_id} created workout {workout_id} - Type: {workout_type}, Duration: {duration}min')
-        
-        # Award points and sync goals
-        try:
-            from utils.gamification_helper import award_points_for_action
-            from utils.goal_sync import sync_goal_progress
-            award_points_for_action(user_id, "workout_completed", "workout", workout_id)
-            sync_goal_progress(user_id, "workout", workout_id, workout_type)
-        except Exception as e:
-            current_app.logger.error(f'Gamification error for user {user_id}: {str(e)}')
-        
+
         return jsonify({
             "success": True,
-            "message": "Workout and exercises logged successfully",
+            "message": "Workout logged successfully",
             "workout_id": workout_id,
-            "exercise_count": len(exercises)
         }), 201
 
     except Exception as e:
         conn.rollback()
-        current_app.logger.error(f'Error creating workout for user {user_id}: {str(e)}')
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         cursor.close()
         return_db(conn)
+
+
+@workouts_bp.route('/workouts/<int:workout_id>/exercises', methods=['POST'])
+@login_required
+def add_exercise_to_workout(workout_id):
+    user_id = g.user['id']
+    data = request.get_json()
+
+    exercise_id = data.get("exercise_id")
+    sets = data.get("sets")
+    reps = data.get("reps")
+    weight = data.get("weight")
+    duration = data.get("duration")
+    notes = data.get("notes")
+
+    if not exercise_id:
+        return jsonify({"error": "Missing exercise_id"}), 400
+    if duration is not None and duration < 0:
+        return jsonify({"error": "Duration cannot be negative"}), 400
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # Verify workout and exercise belong to user
+        cursor.execute("SELECT 1 FROM workouts WHERE id = %s AND user_id = %s", (workout_id, user_id))
+        if cursor.fetchone() is None:
+            return jsonify({"error": "Workout not found or inaccessible"}), 404
+        
+        # Verify exercise exists
+        cursor.execute("SELECT 1 FROM exercises WHERE id = %s", (exercise_id,))
+        if cursor.fetchone() is None:
+            return jsonify({"error": "Exercise not found"}), 404
+
+        # Insert into workout_exercises
+        cursor.execute("""
+            INSERT INTO workout_exercises (workout_id, exercise_id, sets, reps, weight, duration, notes)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (workout_id, exercise_id, sets, reps, weight, duration, notes))
+        conn.commit()
+
+        log_activity(user_id, "added", "workout_exercise", exercise_id)
+        return jsonify({"success": True, "message": "Exercise added to workout"}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        cursor.close()
+        return_db(conn)
+    
+
+@workouts_bp.route('/workouts/<int:workout_id>/remove_exercise', methods=['POST'])
+@login_required
+def remove_exercise_from_workout(workout_id):
+    user_id = g.user['id']
+    data = request.json
+    exercise_id = data.get('exercise_id')
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            DELETE FROM workout_exercises
+            WHERE workout_id=%s AND exercise_id=%s
+        """, (workout_id, exercise_id))
+        conn.commit()
+        log_activity(user_id, "exercise_removed_from_workout", "workout_exercise", exercise_id)
+        return jsonify({"success": True, "message": "Exercise removed from workout"}), 200
+
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        return_db(conn)
+
 
 
 @workouts_bp.route('/workouts', methods=['GET'])
@@ -106,85 +129,28 @@ def get_workouts():
     user_id = g.user['id']
     conn = get_db()
     cursor = conn.cursor()
-    
+
     try:
-        # Get pagination parameters
-        pagination = get_pagination_params()
-        page = pagination['page']
-        per_page = pagination['per_page']
-        
-        # Get search and filter parameters
-        search_params = get_search_params()
-        date_range = get_date_range_params()
-        
-        # Build WHERE clause
-        where_conditions = ["w.user_id = %s"]
-        params = [user_id]
-        
-        # Add type filter
-        if search_params['type']:
-            where_conditions.append("w.type ILIKE %s")
-            params.append(f"%{search_params['type']}%")
-        
-        # Add search filter (searches in notes)
-        if search_params['search']:
-            where_conditions.append("w.notes ILIKE %s")
-            params.append(f"%{search_params['search']}%")
-        
-        # Add date range filter
-        if date_range:
-            if date_range.get('start_date'):
-                where_conditions.append("w.date >= %s")
-                params.append(date_range['start_date'])
-            if date_range.get('end_date'):
-                where_conditions.append("w.date <= %s")
-                params.append(date_range['end_date'])
-        
-        where_clause = " AND ".join(where_conditions)
-        
-        # Get total count
-        count_query = f"""
-            SELECT COUNT(DISTINCT w.id)
-            FROM workouts w
-            WHERE {where_clause}
-        """
-        cursor.execute(count_query, params)
-        total_count = cursor.fetchone()[0]
-        
-        # Get paginated results
-        base_query = f"""
-            SELECT w.id, w.date, w.type, w.duration, w.notes, COUNT(we.id) as exercise_count, w.created_at
-            FROM workouts w
-            LEFT JOIN workout_exercises we ON we.workout_id = w.id
-            WHERE {where_clause}
-            GROUP BY w.id
-            ORDER BY w.date DESC
-        """
-        
-        paginated_query, limit, offset = paginate_query(base_query, page, per_page)
-        cursor.execute(paginated_query, params + [limit, offset])
+        cursor.execute("""
+            SELECT id, date, type, duration, notes
+            FROM workouts
+            WHERE user_id = %s
+            ORDER BY date DESC
+        """, (user_id,))
         workouts = cursor.fetchall()
-        
-        workout_list = []
-        for workout in workouts:
-            workout_dict = {
-                "id": workout[0],
-                "date": workout[1],
-                "type": workout[2],
-                "duration": workout[3],
-                "notes": workout[4],
-                "exercise_count": workout[5],
-                "created_at": workout[6]
-            }
-            workout_list.append(workout_dict)
-        
-        return jsonify(create_pagination_response(workout_list, total_count, page, per_page)), 200
+
+        result = [
+            {"id": w[0], "date": str(w[1]), "type": w[2], "duration": w[3], "notes": w[4]}
+            for w in workouts
+        ]
+        return jsonify({"success": True, "workouts": result}), 200
+
     except Exception as e:
-        current_app.logger.error(f'Error fetching workouts for user {user_id}: {str(e)}')
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({"success": False, "message": "Failed to retrieve workouts: " + str(e)}), 500
     finally:
         cursor.close()
         return_db(conn)
+    
 
 
 @workouts_bp.route('/workouts/<int:workout_id>', methods=['GET'])
@@ -236,30 +202,6 @@ def get_workout(workout_id):
         return_db(conn)
 
 
-@workouts_bp.route('/exercises', methods=['GET'])
-@login_required
-def get_exercises():
-    user_id = g.user['id']
-    conn = get_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            SELECT id, name, category, muscle_group, equipment, description 
-            FROM exercises 
-            WHERE user_id = %s
-            ORDER BY name
-        """, (user_id,))
-        exercises = [
-            {"id": row[0], "name": row[1], "category": row[2], "muscle_group": row[3],
-             "equipment": row[4], "description": row[5]}
-            for row in cursor.fetchall()
-        ]
-        return jsonify({"success": True, "exercises": exercises})
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
-    finally:
-        cursor.close()
-        return_db(conn)
 @workouts_bp.route('/workouts/<int:workout_id>', methods=['PUT'])
 @login_required
 def update_workout(workout_id):

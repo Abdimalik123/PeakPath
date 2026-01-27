@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify, g
 from db import get_db, return_db
 from routes.auth import login_required
-from utils.logging import log_activity
 
 user_bp = Blueprint('user_bp', __name__)
 
@@ -34,7 +33,6 @@ def add_profile():
         conn.commit()
 
         if profile:
-            profile_id = profile[0]
             profile_data = {
                 "user_id": user_id,
                 "age": profile[1],
@@ -45,8 +43,6 @@ def add_profile():
                 "activity_level": profile[6],
                 "created_at": profile[7]
             }
-            # Log creation
-            log_activity(user_id, "created", "user_profile", profile_id)
 
         return jsonify({"message": "Profile created successfully", "profile": profile_data}), 201
     except Exception as e:
@@ -143,8 +139,6 @@ def update_profile():
                 "goal_weight_kg": updated_profile[4],
                 "activity_level": updated_profile[5]
             }
-            # Log update
-            log_activity(user_id, "updated", "user_profile", profile_id)
             return jsonify({"message": "Profile updated successfully", "profile": updated_profile_data}), 200
     except Exception as e:
         conn.rollback()
