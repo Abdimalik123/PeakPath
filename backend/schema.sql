@@ -56,9 +56,16 @@ CREATE TABLE IF NOT EXISTS exercises (
     equipment VARCHAR,
     description TEXT,
     created_at TIMESTAMP,
-    updated_at TIMESTAMP
+    updated_at TIMESTAMP,
+    created_by INTEGER,
+    is_global BOOLEAN DEFAULT FALSE
 );
 CREATE INDEX IF NOT EXISTS idx_exercises_user_name ON exercises(user_id, name);
+CREATE UNIQUE INDEX IF NOT EXISTS uniq_exercises_name_ci ON exercises (LOWER(name));
+CREATE INDEX IF NOT EXISTS idx_exercises_name ON exercises(name);
+CREATE INDEX IF NOT EXISTS idx_exercises_muscle_group ON exercises(muscle_group);
+CREATE INDEX IF NOT EXISTS idx_exercises_equipment ON exercises(equipment);
+
 
 -- ---------- WORKOUT_EXERCISES ----------
 CREATE TABLE IF NOT EXISTS workout_exercises (

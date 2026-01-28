@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint
+from flask import Flask, Blueprint, jsonify
 from flask_cors import CORS
 import logging
 from logging.handlers import RotatingFileHandler
@@ -9,6 +9,7 @@ load_dotenv()
 
 from routes.auth import auth_bp
 from routes.workouts import workouts_bp
+from routes.exercises import exercises_bp
 from routes.user_profile import user_bp
 from routes.habits import habits_bp
 from routes.goals import goals_bp
@@ -35,38 +36,24 @@ CORS(app, resources={
         "max_age": 3600
     }
 })
-
-# Configure logging
-if not os.path.exists('logs'):
-    os.mkdir('logs')
-
-# Create formatter
-log_format = '%(asctime)s - %(levelname)s - %(message)s [in %(pathname)s:%(lineno)d]'
-formatter = logging.Formatter(log_format)
-
-# File handler
-file_handler = RotatingFileHandler('logs/life_tracker.log', maxBytes=10240000, backupCount=10)
+# Use a persistent volume in Docker for logs: /app/logs
+file_handler = RotatingFileHandler('/app/logs/life_tracker.log', maxBytes=10_240_000, backupCount=10)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logging.INFO)
 
-# Console handler for real-time viewing
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(formatter)
-console_handler.setLevel(logging.INFO)
-
-# Remove Flask's default handlers to avoid duplicates
+# Remove Flask default handlers
 app.logger.handlers.clear()
-
-# Configure app logger
 app.logger.addHandler(file_handler)
-app.logger.addHandler(console_handler)
-app.logger.setLevel(logging.DEBUG)
-app.logger.propagate = False  # Don't propagate to root logger
+app.logger.setLevel(logging.INFO)
+app.logger.propagate = False
 
 app.logger.info('Life Tracker startup')
-app.logger.info(f'Log file location: {os.path.abspath("logs/life_tracker.log")}')
+
+# Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(workouts_bp)
+app.register_blueprint(exercises_bp)
 app.register_blueprint(user_bp)
 app.register_blueprint(habits_bp)
 app.register_blueprint(goals_bp)
@@ -116,4 +103,4 @@ def bad_request(e):
     }), 400
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000,debug=True)

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, g
 from db import get_db, return_db
 from routes.auth import login_required
+from utils.logging import log_activity
 import datetime
 from  datetime import date, time
 
@@ -31,6 +32,7 @@ def add_goal():
         """, (user_id, name, goal_type, target, progress, deadline))
         goal_id = cursor.fetchone()[0]
         conn.commit()
+        log_activity(user_id, "created", "goal", goal_id)
         return jsonify({"success": True, "goal_id": goal_id, "message": "Goal added successfully"}), 201
     except Exception as e:
         conn.rollback()
@@ -139,6 +141,7 @@ def update_goal(goal_id):
             WHERE id = %s AND user_id = %s
         """, (new_name, new_type, new_target, new_progress, new_deadline, goal_id, user_id))
         conn.commit()
+        log_activity(user_id, "updated", "goal", goal_id)
         return jsonify({"success": True, "message": "Goal updated successfully"}), 200
     except Exception as e:
         conn.rollback()
@@ -157,6 +160,7 @@ def delete_goal(goal_id):
     try:
         cursor.execute("DELETE FROM goals WHERE id = %s AND user_id = %s", (goal_id, user_id))
         conn.commit()
+        log_activity(user_id, "deleted", "goal", goal_id)
         return jsonify({"success": True, "message": "Goal deleted successfully"}), 200
     except Exception as e:
         conn.rollback()

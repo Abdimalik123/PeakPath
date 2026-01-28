@@ -2,7 +2,7 @@ from db import get_db, return_db
 from flask import Blueprint
 from utils.logging import log_activity
 from flask import request, jsonify, g
-from utils.auth import login_required
+from routes.auth import login_required
 
 exercises_bp = Blueprint('exercises', __name__)
 
@@ -46,19 +46,56 @@ def create_exercise():
 @exercises_bp.route('/exercises', methods=['GET'])
 @login_required
 def get_exercises():
+    """
+    Fetch exercises visible to the current user.
+    Supports optional filters: search, category, muscle_group
+    """
+    search = request.args.get('search', '').strip()
+    category = request.args.get('category', '').strip()
+    muscle_group = request.args.get('muscle_group', '').strip()
+
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute("""
-            SELECT id, name, category, description
+        query = """
+            SELECT id, name, category, muscle_group, equipment, description
             FROM exercises
-            ORDER BY name
-        """,)
+            WHERE (is_global = TRUE OR created_by = %s)
+        """
+        params = [g.user['id']]
+
+        # Apply search
+        if search:
+            query += " AND lower(name) LIKE lower(%s)"
+            params.append(f"%{search}%")
+
+        # Apply category filter
+        if category:
+            query += " AND category = %s"
+            params.append(category)
+
+        # Apply muscle_group filter
+        if muscle_group:
+            query += " AND muscle_group = %s"
+            params.append(muscle_group)
+
+        query += " ORDER BY name"
+
+        cursor.execute(query, params)
         exercises = [
-            {"id": row[0], "name": row[1], "category": row[2], "description": row[3]}
+            {
+                "id": row[0],
+                "name": row[1],
+                "category": row[2],
+                "muscle_group": row[3],
+                "equipment": row[4],
+                "description": row[5]
+            }
             for row in cursor.fetchall()
         ]
-        return jsonify({"success":True, "exercises": exercises}), 200
+
+        return jsonify({"success": True, "exercises": exercises}), 200
+
     finally:
         cursor.close()
         return_db(conn)

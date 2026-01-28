@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, g
 from db import get_db, return_db
 from routes.auth import login_required
+from utils.logging import log_activity
 import datetime
 from datetime import date, time
 
@@ -29,6 +30,7 @@ def add_habit():
         """, (user_id, name, frequency, reminder_time, description, next_occurrence))
         habit_id = cursor.fetchone()[0]
         conn.commit()
+        log_activity(user_id, "created", "habit", habit_id)
         return jsonify({"success": True, "message": "Habit added successfully", "habit_id": habit_id}), 201
     except Exception as e:
         conn.rollback()
@@ -133,6 +135,7 @@ def update_habit(habit_id):
             WHERE id=%s AND user_id=%s
         """, (new_name, new_frequency, new_reminder_time, new_description, new_next_occurrence, habit_id, user_id))
         conn.commit()
+        log_activity(user_id, "updated", "habit", habit_id)
         return jsonify({"success": True, "message": "Habit updated successfully"}), 200
     except Exception as e:
         conn.rollback()
@@ -151,6 +154,7 @@ def delete_habit(habit_id):
     try:
         cursor.execute("DELETE FROM habits WHERE id = %s AND user_id = %s", (habit_id, user_id))
         conn.commit()
+        log_activity(user_id, "deleted", "habit", habit_id)
         return jsonify({"success": True, "message": "Habit deleted successfully"}), 200
     except Exception as e:
         conn.rollback()
