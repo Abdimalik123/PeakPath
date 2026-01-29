@@ -1,8 +1,18 @@
+# Python cache
 __pycache__/
 *.py[cod]
-.env
-.venv
+
+# Virtual environments
+.venv/
 venv/
 ENV/
+
+# Environment variables
+.env
+
+# Git
 .git/
 .gitignore
+
+# Logs
+logs/

@@ -4,14 +4,18 @@ from db import get_db, return_db
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
-from dotenv import load_dotenv
 import os
 from utils.logging import log_activity
 
-load_dotenv()
+
 SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise Exception("SECRET_KEY environment variable not set")
+
 auth_bp = Blueprint('auth_bp', __name__)
 
+
+#------------------------- JWT/LOGIN-REQUIRED --------------------------------------------------#
 def login_required(view):
     @functools.wraps(view)
     def wrapped_view(*args, **kwargs):
@@ -29,7 +33,7 @@ def login_required(view):
         return view(*args, **kwargs)
     return wrapped_view
 
-
+#------------------------- REGISTER --------------------------------------------------#
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -80,7 +84,7 @@ def register():
         cursor.close()
         return_db(conn)
 
-
+#------------------------- LOGIN --------------------------------------------------#
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()

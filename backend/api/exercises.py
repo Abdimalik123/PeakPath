@@ -2,7 +2,7 @@ from db import get_db, return_db
 from flask import Blueprint
 from utils.logging import log_activity
 from flask import request, jsonify, g
-from routes.auth import login_required
+from api.auth import login_required
 
 exercises_bp = Blueprint('exercises', __name__)
 

@@ -1,7 +1,8 @@
-from flask import Blueprint, request, jsonify, g, current_app
+from flask import Blueprint, request, jsonify, g
 from db import get_db, return_db
-from routes.auth import login_required
-from utils.logging import log_activity
+from api.auth import login_required
+from utils.logging import log_activity, logger
+
 
 
 
@@ -43,7 +44,9 @@ def create_workout():
 
     except Exception as e:
         conn.rollback()
-        return jsonify({"success": False, "message": str(e)}), 500
+        logger.error(f"Error in endpoint /workouts: {e}")
+        return jsonify({"success": False, "message": "Internal server error"}), 500
+
     finally:
         cursor.close()
         return_db(conn)
@@ -91,7 +94,8 @@ def add_exercise_to_workout(workout_id):
         return jsonify({"success": True, "message": "Exercise added to workout"}), 201
     except Exception as e:
         conn.rollback()
-        return jsonify({"success": False, "message": str(e)}), 500
+        logger.error(f"Error in endpoint /workouts: {e}")
+        return jsonify({"success": False, "message": "Internal server error"}), 500
     finally:
         cursor.close()
         return_db(conn)
@@ -146,7 +150,8 @@ def get_workouts():
         return jsonify({"success": True, "workouts": result}), 200
 
     except Exception as e:
-        return jsonify({"success": False, "message": "Failed to retrieve workouts: " + str(e)}), 500
+        logger.error(f"Error in endpoint /workouts: {e}")
+        return jsonify({"success": False, "message": "Internal server error"}), 500
     finally:
         cursor.close()
         return_db(conn)
@@ -196,7 +201,8 @@ def get_workout(workout_id):
 
         return jsonify({"success": True, "workout": workout_info}), 200
     except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+        logger.error(f"Error in endpoint /workouts: {e}")
+        return jsonify({"success": False, "message": "Internal server error"}), 500
     finally:
         cursor.close()
         return_db(conn)
@@ -267,7 +273,8 @@ def update_workout(workout_id):
 
     except Exception as e:
         conn.rollback()
-        return jsonify({"success": False, "message": str(e)}), 500
+        logger.error(f"Error in endpoint /workouts: {e}")
+        return jsonify({"success": False, "message": "Internal server error"}), 500
     finally:
         cursor.close()
         return_db(conn)
@@ -286,7 +293,8 @@ def delete_workout(workout_id):
         return jsonify({"success": True, "message": "Workout deleted successfully"}), 200
     except Exception as e:
         conn.rollback()
-        return jsonify({"success": False, "message": str(e)}), 500
+        logger.error(f"Error in endpoint /workouts: {e}")
+        return jsonify({"success": False, "message": "Internal server error"}), 500
     finally:
         cursor.close()
         return_db(conn)
@@ -311,7 +319,8 @@ def get_workout_stats():
         stats = cursor.fetchone()
         return jsonify({"success": True, "stats": stats}), 200
     except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+        logger.error(f"Error in endpoint /workouts: {e}")
+        return jsonify({"success": False, "message": "Internal server error"}), 500
     finally:
         cursor.close()
         return_db(conn)

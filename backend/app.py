@@ -3,24 +3,21 @@ from flask_cors import CORS
 import logging
 from logging.handlers import RotatingFileHandler
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
-
-from routes.auth import auth_bp
-from routes.workouts import workouts_bp
-from routes.exercises import exercises_bp
-from routes.user_profile import user_bp
-from routes.habits import habits_bp
-from routes.goals import goals_bp
-from routes.weight_logs import weight_bp
-from routes.notifications import notifications_bp
-from routes.activity_logs import activity_bp
-from routes.workout_templates import workout_templates_bp
-from routes.template_exercises import template_exercises_bp
-from routes.gamification import gamification_bp
-from routes.summary import summary_bp
-from routes.dashboard import dashboard_bp
+from api.auth import auth_bp
+from api.workouts import workouts_bp
+from api.exercises import exercises_bp
+from api.user_profile import user_bp
+from api.habits import habits_bp
+from api.goals import goals_bp
+from api.weight_logs import weight_bp
+from api.notifications import notifications_bp
+from api.activity_logs import activity_bp
+from api.workout_templates import workout_templates_bp
+from api.template_exercises import template_exercises_bp
+from api.gamification import gamification_bp
+from api.summary import summary_bp
+from api.dashboard import dashboard_bp
 
 app = Flask(__name__)
 
@@ -51,20 +48,20 @@ app.logger.propagate = False
 app.logger.info('Life Tracker startup')
 
 # Register blueprints
-app.register_blueprint(auth_bp)
-app.register_blueprint(workouts_bp)
-app.register_blueprint(exercises_bp)
-app.register_blueprint(user_bp)
-app.register_blueprint(habits_bp)
-app.register_blueprint(goals_bp)
-app.register_blueprint(weight_bp)
-app.register_blueprint(notifications_bp)
-app.register_blueprint(activity_bp)
-app.register_blueprint(workout_templates_bp)
-app.register_blueprint(template_exercises_bp)
-app.register_blueprint(gamification_bp)
-app.register_blueprint(summary_bp)
-app.register_blueprint(dashboard_bp)
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
+app.register_blueprint(workouts_bp, url_prefix='/api/workouts')
+app.register_blueprint(exercises_bp, url_prefix='/api/exercises')
+app.register_blueprint(user_bp, url_prefix='/api/user')
+app.register_blueprint(habits_bp, url_prefix='/api/habits')
+app.register_blueprint(goals_bp, url_prefix='/api/goals')
+app.register_blueprint(weight_bp, url_prefix='/api/weight_logs')
+app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
+app.register_blueprint(activity_bp, url_prefix='/api/activity_logs')
+app.register_blueprint(workout_templates_bp, url_prefix='/api/workout_templates')
+app.register_blueprint(template_exercises_bp, url_prefix='/api/template_exercises')
+app.register_blueprint(gamification_bp, url_prefix='/api/gamification')
+app.register_blueprint(summary_bp, url_prefix='/api/summary')
+app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
 
 # Health check endpoint
 @app.route('/health')

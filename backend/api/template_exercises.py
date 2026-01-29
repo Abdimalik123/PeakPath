@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, g
 from db import get_db, return_db
-from routes.auth import login_required
+from api.auth import login_required
 
 template_exercises_bp = Blueprint('template_exercises_bp', __name__)
 
