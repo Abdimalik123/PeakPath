@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import client from '../api/client';
 
 interface Goal {
   id: number;
@@ -40,20 +41,20 @@ const Goals: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/goals', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setGoals(data.goals);
+      const response = await client.get('/goals');
+      
+      if (response.data.success) {
+        setGoals(response.data.goals);
       } else {
-        setError(data.message);
+        setError(response.data.message);
       }
-    } catch (err) {
-      setError('Failed to load goals');
+    } catch (err: any) {
+      if (err?.response?.status === 401) {
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        setError('Failed to load goals');
+      }
     } finally {
       setLoading(false);
     }
@@ -64,24 +65,15 @@ const Goals: React.FC = () => {
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/goals', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          goal_type: formData.goal_type,
-          target: parseInt(formData.target),
-          progress: parseInt(formData.progress),
-          deadline: formData.deadline
-        })
+      const response = await client.post('/goals', {
+        name: formData.name,
+        goal_type: formData.goal_type,
+        target: parseInt(formData.target),
+        progress: parseInt(formData.progress),
+        deadline: formData.deadline
       });
-
-      const data = await response.json();
-      if (data.success) {
+      
+      if (response.data.success) {
         setShowAddModal(false);
         setFormData({
           name: '',
@@ -92,7 +84,7 @@ const Goals: React.FC = () => {
         });
         fetchGoals();
       } else {
-        setError(data.message);
+        setError(response.data.message);
       }
     } catch (err) {
       setError('Failed to create goal');
@@ -101,18 +93,9 @@ const Goals: React.FC = () => {
 
   const handleUpdateProgress = async (goalId: number, newProgress: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/goals/${goalId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ progress: newProgress })
-      });
-
-      const data = await response.json();
-      if (data.success) {
+      const response = await client.put(`/goals/${goalId}`, { progress: newProgress });
+      
+      if (response.data.success) {
         fetchGoals();
         if (selectedGoal && selectedGoal.id === goalId) {
           setSelectedGoal({ ...selectedGoal, progress: newProgress });
@@ -127,16 +110,9 @@ const Goals: React.FC = () => {
     if (!confirm('Delete this goal?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/goals/${goalId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
+      const response = await client.delete(`/goals/${goalId}`);
+      
+      if (response.data.success) {
         fetchGoals();
         setSelectedGoal(null);
       }

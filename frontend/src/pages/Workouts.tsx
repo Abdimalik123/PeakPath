@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import client from '../api/client';
 
 interface Workout {
   id: number;
@@ -104,20 +105,20 @@ const Workouts: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/workouts', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setWorkouts(data.workouts);
+      const response = await client.get('/workouts');
+      
+      if (response.data.success) {
+        setWorkouts(response.data.workouts);
       } else {
-        setError(data.message);
+        setError(response.data.message);
       }
-    } catch (err) {
-      setError('Failed to load workouts');
+    } catch (err: any) {
+      if (err?.response?.status === 401) {
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        setError('Failed to load workouts');
+      }
     } finally {
       setLoading(false);
     }
@@ -125,16 +126,10 @@ const Workouts: React.FC = () => {
 
   const fetchAvailableExercises = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/exercises', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setAvailableExercises(data.exercises);
+      const response = await client.get('/exercises');
+      
+      if (response.data.success) {
+        setAvailableExercises(response.data.exercises);
       }
     } catch (err) {
       console.error('Failed to load exercises', err);
@@ -176,16 +171,10 @@ const Workouts: React.FC = () => {
 
   const fetchWorkoutDetails = async (workoutId: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/workouts/${workoutId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setSelectedWorkout(data.workout);
+      const response = await client.get(`/workouts/${workoutId}`);
+      
+      if (response.data.success) {
+        setSelectedWorkout(response.data.workout);
       }
     } catch (err) {
       console.error('Failed to load workout details', err);
@@ -199,29 +188,20 @@ const Workouts: React.FC = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/exercises/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: newExerciseForm.name,
-          category: newExerciseForm.category,
-          description: newExerciseForm.description
-        })
+      const response = await client.post('/exercises/create', {
+        name: newExerciseForm.name,
+        category: newExerciseForm.category,
+        description: newExerciseForm.description
       });
-
-      const data = await response.json();
-      if (data.success) {
+      
+      if (response.data.success) {
         // Refresh the exercise list
         await fetchAvailableExercises();
         
         // Auto-select the newly created exercise
         setCurrentExerciseForm({
           ...currentExerciseForm,
-          exercise_id: data.exercise_id.toString()
+          exercise_id: response.data.exercise_id.toString()
         });
         
         // Switch back to select mode
@@ -229,9 +209,9 @@ const Workouts: React.FC = () => {
         setNewExerciseForm({ name: '', category: '', description: '' });
         setError(null);
       } else {
-        setError(data.message);
+        setError(response.data.message);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError('Failed to create exercise');
     }
   };
@@ -283,48 +263,31 @@ const Workouts: React.FC = () => {
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
-      
       // Step 1: Create the workout
-      const workoutResponse = await fetch('http://localhost:5000/workouts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          type: formData.type,
-          duration: parseInt(formData.duration),
-          date: formData.date,
-          notes: formData.notes
-        })
+      const workoutResponse = await client.post('/workouts', {
+        type: formData.type,
+        duration: parseInt(formData.duration),
+        date: formData.date,
+        notes: formData.notes
       });
-
-      const workoutData = await workoutResponse.json();
-      if (!workoutData.success) {
-        setError(workoutData.message);
+      
+      if (!workoutResponse.data.success) {
+        setError(workoutResponse.data.message);
         return;
       }
 
-      const workoutId = workoutData.workout_id;
+      const workoutId = workoutResponse.data.workout_id;
 
       // Step 2: Add exercises to the workout (if any)
       if (exercisesToAdd.length > 0) {
         for (const exercise of exercisesToAdd) {
-          await fetch(`http://localhost:5000/workouts/${workoutId}/exercises`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              exercise_id: exercise.exercise_id,
-              sets: exercise.sets || null,
-              reps: exercise.reps || null,
-              weight: exercise.weight || null,
-              duration: exercise.duration || null,
-              notes: exercise.notes || null
-            })
+          await client.post(`/workouts/${workoutId}/exercises`, {
+            exercise_id: exercise.exercise_id,
+            sets: exercise.sets || null,
+            reps: exercise.reps || null,
+            weight: exercise.weight || null,
+            duration: exercise.duration || null,
+            notes: exercise.notes || null
           });
         }
       }
@@ -345,25 +308,16 @@ const Workouts: React.FC = () => {
     if (!selectedWorkout) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/workouts/${selectedWorkout.id}/exercises`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          exercise_id: parseInt(currentExerciseForm.exercise_id),
-          sets: currentExerciseForm.sets ? parseInt(currentExerciseForm.sets) : null,
-          reps: currentExerciseForm.reps ? parseInt(currentExerciseForm.reps) : null,
-          weight: currentExerciseForm.weight ? parseFloat(currentExerciseForm.weight) : null,
-          duration: currentExerciseForm.duration ? parseInt(currentExerciseForm.duration) : null,
-          notes: currentExerciseForm.notes || null
-        })
+      const response = await client.post(`/workouts/${selectedWorkout.id}/exercises`, {
+        exercise_id: parseInt(currentExerciseForm.exercise_id),
+        sets: currentExerciseForm.sets ? parseInt(currentExerciseForm.sets) : null,
+        reps: currentExerciseForm.reps ? parseInt(currentExerciseForm.reps) : null,
+        weight: currentExerciseForm.weight ? parseFloat(currentExerciseForm.weight) : null,
+        duration: currentExerciseForm.duration ? parseInt(currentExerciseForm.duration) : null,
+        notes: currentExerciseForm.notes || null
       });
-
-      const data = await response.json();
-      if (data.success) {
+      
+      if (response.data.success) {
         setShowAddExerciseModal(false);
         setCurrentExerciseForm({ exercise_id: '', sets: '', reps: '', weight: '', duration: '', notes: '' });
         // Reset filters
@@ -373,7 +327,7 @@ const Workouts: React.FC = () => {
         // Refresh workout details
         fetchWorkoutDetails(selectedWorkout.id);
       } else {
-        setError(data.message);
+        setError(response.data.message);
       }
     } catch (err) {
       setError('Failed to add exercise');
@@ -384,16 +338,9 @@ const Workouts: React.FC = () => {
     if (!confirm('Delete this workout?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/workouts/${workoutId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
+      const response = await client.delete(`/workouts/${workoutId}`);
+      
+      if (response.data.success) {
         fetchWorkouts();
         setSelectedWorkout(null);
       }

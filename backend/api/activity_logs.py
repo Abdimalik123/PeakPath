@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, g
 from db import get_db, return_db
-from routes.auth import login_required
+from api.auth import login_required
 from utils.logging import log_activity
 
 activity_bp = Blueprint('activity_bp', __name__)

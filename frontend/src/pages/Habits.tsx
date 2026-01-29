@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import client from '../api/client';
 
 interface Habit {
   id: number;
@@ -53,20 +54,20 @@ const Habits: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/habits', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setHabits(data.habits);
+      const response = await client.get('/habits');
+      
+      if (response.data.success) {
+        setHabits(response.data.habits);
       } else {
-        setError(data.message);
+        setError(response.data.message);
       }
-    } catch (err) {
-      setError('Failed to load habits');
+    } catch (err: any) {
+      if (err?.response?.status === 401) {
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else {
+        setError('Failed to load habits');
+      }
     } finally {
       setLoading(false);
     }
@@ -74,16 +75,10 @@ const Habits: React.FC = () => {
 
   const fetchHabitLogs = async (habitId: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/habits/${habitId}/logs`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setHabitLogs(data.logs);
+      const response = await client.get(`/habits/${habitId}/logs`);
+      
+      if (response.data.success) {
+        setHabitLogs(response.data.logs);
       }
     } catch (err) {
       console.error('Failed to load habit logs', err);
@@ -95,18 +90,9 @@ const Habits: React.FC = () => {
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/habits', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-      if (data.success) {
+      const response = await client.post('/habits', formData);
+      
+      if (response.data.success) {
         setShowAddModal(false);
         setFormData({
           name: '',
@@ -117,7 +103,7 @@ const Habits: React.FC = () => {
         });
         fetchHabits();
       } else {
-        setError(data.message);
+        setError(response.data.message);
       }
     } catch (err) {
       setError('Failed to create habit');
@@ -126,21 +112,12 @@ const Habits: React.FC = () => {
 
   const handleLogHabit = async (habitId: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/habits/${habitId}/log`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          completed: true,
-          timestamp: new Date().toISOString()
-        })
+      const response = await client.post(`/habits/${habitId}/log`, {
+        completed: true,
+        timestamp: new Date().toISOString()
       });
-
-      const data = await response.json();
-      if (data.success) {
+      
+      if (response.data.success) {
         if (selectedHabit && selectedHabit.id === habitId) {
           fetchHabitLogs(habitId);
         }
@@ -154,16 +131,9 @@ const Habits: React.FC = () => {
     if (!confirm('Delete this habit?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/habits/${habitId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
+      const response = await client.delete(`/habits/${habitId}`);
+      
+      if (response.data.success) {
         fetchHabits();
         setSelectedHabit(null);
       }

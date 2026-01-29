@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './config';
+import client from './client';
 
 export interface DashboardData {
   user: {
@@ -32,20 +32,6 @@ export interface DashboardData {
 }
 
 export const fetchDashboard = async (): Promise<DashboardData> => {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(`${API_BASE_URL}/dashboard`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch dashboard data');
-  }
-
-  const data = await response.json();
-  return data.dashboard;
+  const response = await client.get('/dashboard');
+  return response.data.dashboard;
 };
