@@ -10,7 +10,7 @@ export const register = (data: {
     password: string;
     confirm_password: string;
 }) =>
-  client.post('/api/register', data);
+  client.post('/register', data);
 
 export const logout = () => {
   localStorage.removeItem('token');

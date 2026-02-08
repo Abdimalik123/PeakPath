@@ -21,6 +21,7 @@ function App() {
       
       {/* Protected routes (after login) */}
       
+      
       <Route path="/profile" element={<Profile />} />
       <Route path="/workouts" element={<Workouts />} />
       <Route path="/habits" element={<Habits />} />
