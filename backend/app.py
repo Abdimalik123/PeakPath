@@ -3,6 +3,7 @@ from flask_cors import CORS
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+from db import connection_pool, get_db, return_db
 
 from api.auth import auth_bp
 from api.workouts import workouts_bp
@@ -67,11 +68,34 @@ app.register_blueprint(dashboard_bp, url_prefix='/api')
 @app.route('/health')
 def health_check():
     from datetime import datetime
-    return jsonify({
-        "status": "ok",
+
+    db_status = "unknown"
+    db_error = None
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+        cursor.close()
+        return_db(conn)
+        db_status = "connected"
+    except Exception as e:
+        db_error = "disconnected"
+        db_error = str(e)
+        app.logger.error(f"Database health check failed: {e}")
+
+    response = {
+        "status": "ok" if db_status == "connected" else "degraded",
         "timestamp": datetime.now().isoformat(),
-        "service": "Life Tracker API"
-    }), 200
+        "service": "Life Tracker API",
+        "database": db_status
+    }
+
+    if db_error:
+        response["database_error"] = db_error
+
+    status_code = 200 if db_status == "connected" else 503
+    return jsonify(response), status_code
 
 # Global error handlers
 @app.errorhandler(404)
@@ -98,6 +122,14 @@ def bad_request(e):
         "message": "Bad request",
         "error": str(e)
     }), 400
+
+
+# On shutdown, close all database connections
+@app.teardown_appcontext
+def close_db(exception=None):
+    if connection_pool:
+        connection_pool.closeall()
+        app.logger.info('Database connections closed') 
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000,debug=True)
