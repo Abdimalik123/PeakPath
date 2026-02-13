@@ -1,10 +1,12 @@
 from flask import Flask, Blueprint, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_cors import CORS
 import logging
 from logging.handlers import RotatingFileHandler
 import os
 from db import connection_pool, get_db, return_db
-
+# Import blueprints
 from api.auth import auth_bp
 from api.workouts import workouts_bp
 from api.exercises import exercises_bp
@@ -20,7 +22,25 @@ from api.gamification import gamification_bp
 from api.summary import summary_bp
 from api.dashboard import dashboard_bp
 
+
 app = Flask(__name__)
+
+DB_HOST = os.getenv('DB_HOST', 'localhost')
+DB_PORT = os.getenv('DB_PORT', '5432')
+DB_NAME = os.getenv('DB_NAME', 'life_tracker_db')
+DB_USERNAME = os.getenv('DB_USERNAME', 'lfadmin')
+DB_PASSWORD = os.getenv('DB_PASSWORD') 
+
+DATABASE_URL = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+import models # Import all models for migrations
 
 # Configure CORS with specific origins
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
@@ -64,6 +84,8 @@ app.register_blueprint(gamification_bp, url_prefix='/api')
 app.register_blueprint(summary_bp, url_prefix='/api')
 app.register_blueprint(dashboard_bp, url_prefix='/api')
 
+
+from sqlalchemy.exc import SQLAlchemyError
 # Health check endpoint
 @app.route('/health')
 def health_check():
@@ -72,18 +94,13 @@ def health_check():
     db_status = "unknown"
     db_error = None
     try:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-        cursor.fetchone()
-        cursor.close()
-        return_db(conn)
+        with db.engine.connect() as conn:
+            conn.execute("SELECT 1")
         db_status = "connected"
-    except Exception as e:
-        db_error = "disconnected"
+    except SQLAlchemyError as e:
+        db_status = "disconnected"
         db_error = str(e)
         app.logger.error(f"Database health check failed: {e}")
-
     response = {
         "status": "ok" if db_status == "connected" else "degraded",
         "timestamp": datetime.now().isoformat(),
