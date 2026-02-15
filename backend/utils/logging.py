@@ -1,5 +1,6 @@
 import logging
-from db import get_db, return_db
+from app import db
+from models import ActivityLog
 
 # Configure a simple logger for stdout
 logger = logging.getLogger("activity_logger")
@@ -16,22 +17,21 @@ def log_activity(user_id, action, entity_type, entity_id=None):
     """
     Logs user actions both to the database and to stdout (CloudWatch)
     """
-    conn = get_db()
-    cursor = conn.cursor()
     try:
-        cursor.execute("""
-            INSERT INTO activity_logs (user_id, action, entity_type, entity_id, created_at)
-            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
-        """, (user_id, action, entity_type, entity_id))
-        conn.commit()
+        activity = ActivityLog(
+            user_id=user_id,
+            action=action,
+            entity_type=entity_type,
+            entity_id=entity_id
+        )
+        
+        db.session.add(activity)
+        db.session.commit()
 
         # Log to stdout for CloudWatch
         logger.info(f"User {user_id} {action} {entity_type} (ID: {entity_id})")
 
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         logger.error(f"Failed to log activity to DB: {e}")
         print(f"Failed to log activity: {e}")  # Extra safety for stdout
-    finally:
-        cursor.close()
-        return_db(conn)

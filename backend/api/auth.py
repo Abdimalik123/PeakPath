@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, g
 import functools
-from db import get_db, return_db
+from app import db
+from models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
@@ -33,6 +34,7 @@ def login_required(view):
         return view(*args, **kwargs)
     return wrapped_view
 
+
 #------------------------- REGISTER --------------------------------------------------#
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -44,45 +46,57 @@ def register():
     confirm_password = data.get("confirm_password")
 
     # Form validation
-    for field_name, field_value in [("firstname", firstname), ("lastname", lastname), ("email", email), ("password", password), ("confirm_password", confirm_password)]:
+    for field_name, field_value in [("firstname", firstname), ("lastname", lastname), 
+                                     ("email", email), ("password", password), 
+                                     ("confirm_password", confirm_password)]:
         if not field_value:
             return jsonify({"success": False, "message": f"Missing {field_name}"}), 400
+    
     if confirm_password != password:
         return jsonify({"success": False, "message": "Passwords do not match"}), 400
 
-    conn = get_db()
-    cursor = conn.cursor()
     try:
-        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
-        if cursor.fetchone():
+        # Check if user exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
             return jsonify({"success": False, "message": "User already exists"}), 400
 
+        # Create new user
         hashed_password = generate_password_hash(password)
-        cursor.execute(
-            "INSERT INTO users (firstname, lastname, email, password_hash) VALUES (%s, %s, %s, %s) RETURNING id",
-            (firstname, lastname, email, hashed_password)
+        user = User(
+            firstname=firstname,
+            lastname=lastname,
+            email=email,
+            password_hash=hashed_password
         )
-        user_id = cursor.fetchone()[0]
-        conn.commit()
+        
+        db.session.add(user)
+        db.session.commit()
 
         # Log the creation
-        log_activity(user_id, "created", "user", user_id)
+        log_activity(user.id, "created", "user", user.id)
 
+        # Generate token
         payload = {
-            "id": user_id,
+            "id": user.id,
             "firstname": firstname,
             "lastname": lastname,
             "email": email,
             "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1)
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-        return jsonify({"success": True, "message": "Registered successfully", "user_id": user_id, "token": token}), 201
+        
+        return jsonify({
+            "success": True, 
+            "message": "Registered successfully", 
+            "user_id": user.id, 
+            "token": token
+        }), 201
+        
     except Exception as e:
-        conn.rollback()
+        db.session.rollback()
         return jsonify({"success": False, "message": str(e)}), 500
-    finally:
-        cursor.close()
-        return_db(conn)
+
 
 #------------------------- LOGIN --------------------------------------------------#
 @auth_bp.route('/login', methods=['POST'])
@@ -90,37 +104,41 @@ def login():
     data = request.get_json()
     email = data.get("email")
     password = data.get("password")
+    
     if not email:
         return jsonify({"success": False, "message": "Email is required"}), 400
     if not password:
         return jsonify({"success": False, "message": "Password is required"}), 400
 
-    conn = get_db()
-    cursor = conn.cursor()
     try:
-        cursor.execute("SELECT id, firstname, lastname, email, password_hash FROM users WHERE email = %s", (email,))
-        user = cursor.fetchone()
+        # Find user
+        user = User.query.filter_by(email=email).first()
+        
         if not user:
             return jsonify({"success": False, "message": "User does not exist"}), 404
 
-        user_id, firstname, lastname, email, password_hash = user
-        if not check_password_hash(password_hash, password):
+        # Verify password
+        if not check_password_hash(user.password_hash, password):
             return jsonify({"success": False, "message": "Incorrect password"}), 401
 
         # Log the login
-        log_activity(user_id, "logged_in", "user", user_id)
+        log_activity(user.id, "logged_in", "user", user.id)
 
+        # Generate token
         payload = {
-            "id": user_id,
-            "firstname": firstname,
-            "lastname": lastname,
-            "email": email,
+            "id": user.id,
+            "firstname": user.firstname,
+            "lastname": user.lastname,
+            "email": user.email,
             "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1)
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-        return jsonify({"success": True, "message": "Logged in successfully", "token": token}), 200
+        
+        return jsonify({
+            "success": True, 
+            "message": "Logged in successfully", 
+            "token": token
+        }), 200
+        
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
-    finally:
-        cursor.close()
-        return_db(conn)

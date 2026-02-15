@@ -20,7 +20,7 @@ class User(db.Model):
     notifications = db.relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     activity_logs = db.relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
     workout_templates = db.relationship("WorkoutTemplate", back_populates="user", cascade="all, delete-orphan")
-    user_points = db.relationship("UserPoint", back_populates="user", cascade="all, delete-orphan")
+    user_points = db.relationship("UserPoint", back_populates="user", uselist=False, cascade="all, delete-orphan")
     user_achievements = db.relationship("UserAchievement", back_populates="user", cascade="all, delete-orphan")
     point_transactions = db.relationship("PointTransaction", back_populates="user", cascade="all, delete-orphan")
 

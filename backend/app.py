@@ -1,3 +1,5 @@
+# Add at top of app.py:
+from sqlalchemy.exc import SQLAlchemyError
 from flask import Flask, Blueprint, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -27,7 +29,7 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'pool_size': 10,
-        'pool____recycle': 3600,
+        'pool_recycle': 3600,
         'pool_pre_ping': True,
     }
 
@@ -57,9 +59,9 @@ def create_app():
     )
 
     # Logging setup
-    os.makedirs('/app/logs', exist_ok=True)
+    os.makedirs('logs', exist_ok=True)
     file_handler = RotatingFileHandler(
-        '/app/logs/life_tracker.log', 
+        'logs/life_tracker.log', 
         maxBytes=10_240_000, 
         backupCount=10
     )
@@ -116,7 +118,7 @@ def create_app():
         db_error = None
         try:
             with db.engine.connect() as conn:
-                conn.execute("SELECT 1")
+                conn.execute(db.text("SELECT 1"))
             db_status = "connected"
         except SQLAlchemyError as e:
             db_status = "disconnected"

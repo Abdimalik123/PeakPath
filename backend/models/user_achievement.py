@@ -10,7 +10,7 @@ class UserAchievement(db.Model):
     achievement_name = db.Column(db.String(200))
     description = db.Column(db.Text)
     earned_at = db.Column(db.DateTime, default=datetime.utcnow)
-    metadata = db.Column(db.Text)  # Store JSON as text
+    achievement_metadata = db.Column(db.Text)  # Store JSON as text
 
     # Relationships
     user = db.relationship("User", back_populates="user_achievements")
@@ -25,5 +25,5 @@ class UserAchievement(db.Model):
             'achievement_name': self.achievement_name,
             'description': self.description,
             'earned_at': self.earned_at.isoformat() if self.earned_at else None,
-            'metadata': self.metadata
+            'achievement_metadata': self.achievement_metadata
         }
