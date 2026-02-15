@@ -23,3 +23,6 @@ class User(db.Model):
     user_points = db.relationship("UserPoint", back_populates="user", cascade="all, delete-orphan")
     user_achievements = db.relationship("UserAchievement", back_populates="user", cascade="all, delete-orphan")
     point_transactions = db.relationship("PointTransaction", back_populates="user", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<User {self.email}>"
