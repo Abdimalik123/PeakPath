@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, g, current_app
-from app import db
+from database import db
 from models import UserProfile
 from api.auth import login_required
 
@@ -20,7 +20,7 @@ def add_profile():
     activity_level = data.get("activity_level")
 
     if not all([age, gender, height, current_weight, goal_weight, activity_level]):
-        return jsonify({"error": "Missing required fields"}), 400
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
 
     try:
         profile = UserProfile(
@@ -47,12 +47,12 @@ def add_profile():
             "created_at": profile.created_at
         }
 
-        return jsonify({"message": "Profile created successfully", "profile": profile_data}), 201
+        return jsonify({"success": True, "message": "Profile created successfully", "profile": profile_data}), 201
         
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error creating profile: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 @user_bp.route('/profile', methods=['GET'])
@@ -64,7 +64,7 @@ def get_profile():
         profile = UserProfile.query.filter_by(user_id=user_id).first()
         
         if not profile:
-            return jsonify({"error": "Profile not found"}), 404
+            return jsonify({"success": False, "message": "Profile not found"}), 404
         
         profile_data = {
             "age": profile.age,
@@ -79,7 +79,7 @@ def get_profile():
         
     except Exception as e:
         current_app.logger.error(f"Error fetching profile: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 @user_bp.route('/profile', methods=['PUT'])
@@ -92,7 +92,7 @@ def update_profile():
         profile = UserProfile.query.filter_by(user_id=user_id).first()
         
         if not profile:
-            return jsonify({"error": "Profile not found"}), 404
+            return jsonify({"success": False, "message": "Profile not found"}), 404
 
         # Update fields if provided
         if data.get("age") is not None:
@@ -119,9 +119,9 @@ def update_profile():
             "activity_level": profile.activity_level
         }
         
-        return jsonify({"message": "Profile updated successfully", "profile": updated_profile_data}), 200
+        return jsonify({"success": True, "message": "Profile updated successfully", "profile": updated_profile_data}), 200
         
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error updating profile: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"success": False, "message": str(e)}), 500

@@ -1,4 +1,4 @@
-from app import db
+from database import db
 
 class WeightLog(db.Model):
     __tablename__ = "weight_logs"

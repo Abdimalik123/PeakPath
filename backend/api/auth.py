@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, g
 import functools
-from app import db
+from database import db, limiter
 from models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
@@ -27,9 +27,9 @@ def login_required(view):
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         except jwt.ExpiredSignatureError:
-            return jsonify({"success": False, "error": "Token expired"}), 401
+            return jsonify({"success": False, "message": "Token expired"}), 401
         except jwt.InvalidTokenError:
-            return jsonify({"success": False, "error": "Invalid token"}), 401
+            return jsonify({"success": False, "message": "Invalid token"}), 401
         g.user = payload
         return view(*args, **kwargs)
     return wrapped_view
@@ -37,6 +37,7 @@ def login_required(view):
 
 #------------------------- REGISTER --------------------------------------------------#
 @auth_bp.route('/register', methods=['POST'])
+@limiter.limit("10 per minute")
 def register():
     data = request.get_json()
     firstname = data.get("firstname")
@@ -100,6 +101,7 @@ def register():
 
 #------------------------- LOGIN --------------------------------------------------#
 @auth_bp.route('/login', methods=['POST'])
+@limiter.limit("10 per minute")
 def login():
     data = request.get_json()
     email = data.get("email")

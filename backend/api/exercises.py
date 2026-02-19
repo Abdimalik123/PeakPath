@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, g, current_app
-from app import db
+from database import db
 from models import Exercise
 from utils.logging import log_activity
 from api.auth import login_required
@@ -16,7 +16,7 @@ def create_exercise():
     description = data.get('description', '')
     
     if not name or not category:
-        return jsonify({"message": "Missing required fields"}), 400
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
     
     try:
         exercise = Exercise(
@@ -94,7 +94,7 @@ def get_exercise(exercise_id):
         exercise = Exercise.query.get(exercise_id)
         
         if not exercise:
-            return jsonify({"message": "Exercise not found"}), 404
+            return jsonify({"success": False, "message": "Exercise not found"}), 404
         
         return jsonify(exercise.to_dict()), 200
         
@@ -112,13 +112,13 @@ def update_exercise(exercise_id):
     description = data.get('description', '')
     
     if not name or not category:
-        return jsonify({"message": "Missing required fields"}), 400
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
     
     try:
         exercise = Exercise.query.get(exercise_id)
         
         if not exercise:
-            return jsonify({"message": "Exercise not found"}), 404
+            return jsonify({"success": False, "message": "Exercise not found"}), 404
         
         # Update fields
         exercise.name = name
@@ -129,7 +129,7 @@ def update_exercise(exercise_id):
         
         log_activity(g.user['id'], "exercise_updated", "exercise", exercise_id)
         
-        return jsonify({"success": True}), 200
+        return jsonify({"success": True, "message": "Exercise updated successfully"}), 200
         
     except Exception as e:
         db.session.rollback()

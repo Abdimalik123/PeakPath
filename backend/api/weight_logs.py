@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify, g, current_app
-from app import db
+from database import db
 from models import WeightLog
 from api.auth import login_required
+from utils.rewards import on_weight_logged
 
 weight_bp = Blueprint('weight_bp', __name__)
 
@@ -15,7 +16,7 @@ def add_weight():
     date = data.get("date")
     
     if weight is None:
-        return jsonify({"error": "Missing weight"}), 400
+        return jsonify({"success": False, "message": "Missing weight"}), 400
     
     try:
         weight_log = WeightLog(
@@ -26,7 +27,11 @@ def add_weight():
         
         db.session.add(weight_log)
         db.session.commit()
-        
+
+        # Award points
+        on_weight_logged(user_id, weight_log.id)
+        db.session.commit()
+
         return jsonify({"success": True, "weight_id": weight_log.id}), 201
         
     except Exception as e:
@@ -66,13 +71,13 @@ def update_weight_log(log_id):
     new_date = data.get("date")
     
     if new_weight is None:
-        return jsonify({"error": "Missing weight"}), 400
+        return jsonify({"success": False, "message": "Missing weight"}), 400
     
     try:
         weight_log = WeightLog.query.filter_by(id=log_id, user_id=user_id).first()
         
         if not weight_log:
-            return jsonify({"error": "Weight log not found"}), 404
+            return jsonify({"success": False, "message": "Weight log not found"}), 404
         
         weight_log.weight_kg = new_weight
         if new_date:
@@ -97,7 +102,7 @@ def delete_weight_log(log_id):
         weight_log = WeightLog.query.filter_by(id=log_id, user_id=user_id).first()
         
         if not weight_log:
-            return jsonify({"error": "Weight log not found"}), 404
+            return jsonify({"success": False, "message": "Weight log not found"}), 404
         
         db.session.delete(weight_log)
         db.session.commit()

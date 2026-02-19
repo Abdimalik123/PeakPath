@@ -1,163 +1,88 @@
-from db import get_db, return_db
+from database import db
+from models.goal import Goal
+from models.goal_link import GoalLink
+from models.workout import Workout
+from models.habit_log import HabitLog
+from flask import current_app
 
 
-def sync_goal_progress(user_id, entity_type, entity_id, entity_value=None):
+def sync_goal_progress(user_id, entity_type, entity_id=None, entity_value=None):
     """
-    Sync goal progress when a workout or habit is logged
-    
+    Sync goal progress when a workout or habit is logged.
+
     Args:
         user_id: User ID
         entity_type: 'workout' or 'habit'
         entity_id: workout_id or habit_id
-        entity_value: workout type (for workouts) or None
+        entity_value: workout type string (for workout-type matching)
     """
-    conn = get_db()
-    cursor = conn.cursor()
-    
     try:
-        # Find linked goals
+        # Find auto-sync goals with matching links
+        query = db.session.query(GoalLink, Goal).join(
+            Goal, Goal.id == GoalLink.goal_id
+        ).filter(
+            Goal.user_id == user_id,
+            Goal.auto_sync == True,
+            GoalLink.entity_type == entity_type,
+        )
+
         if entity_type == 'workout':
-            cursor.execute("""
-                SELECT gl.goal_id, gl.contribution_value, g.progress, g.target
-                FROM goal_links gl
-                JOIN goals g ON g.id = gl.goal_id
-                WHERE g.user_id = %s 
-                AND gl.entity_type = 'workout'
-                AND (gl.linked_workout_type = %s OR gl.linked_workout_type IS NULL)
-                AND g.auto_sync = TRUE
-            """, (user_id, entity_value))
-        else:  # habit
-            cursor.execute("""
-                SELECT gl.goal_id, gl.contribution_value, g.progress, g.target
-                FROM goal_links gl
-                JOIN goals g ON g.id = gl.goal_id
-                WHERE g.user_id = %s 
-                AND gl.entity_type = 'habit'
-                AND gl.entity_id = %s
-                AND g.auto_sync = TRUE
-            """, (user_id, entity_id))
-        
-        linked_goals = cursor.fetchall()
-        
-        # Update each linked goal
-        for goal_id, contribution, current_progress, target in linked_goals:
-            new_progress = current_progress + contribution
-            
-            cursor.execute("""
-                UPDATE goals
-                SET progress = %s, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-            """, (new_progress, goal_id))
-            
-            # Check if goal completed
-            if current_progress < target and new_progress >= target:
-                # Import here to avoid circular dependency
-                from utils.gamification_helper import award_points_for_action
-                award_points_for_action(user_id, "goal_completed", "goal", goal_id)
-        
-        conn.commit()
-        
+            query = query.filter(
+                db.or_(
+                    GoalLink.linked_workout_type == entity_value,
+                    GoalLink.linked_workout_type.is_(None),
+                )
+            )
+        elif entity_type == 'habit':
+            query = query.filter(GoalLink.entity_id == entity_id)
+
+        linked = query.all()
+        completed_goals = []
+
+        for link, goal in linked:
+            old_progress = goal.progress or 0
+            goal.progress = old_progress + link.contribution_value
+
+            # Check if goal just completed
+            if old_progress < goal.target and goal.progress >= goal.target:
+                completed_goals.append(goal)
+
+        db.session.flush()
+        return completed_goals
+
     except Exception as e:
-        conn.rollback()
-        raise e
-    finally:
-        cursor.close()
-        return_db(conn)
+        current_app.logger.error(f"Error syncing goal progress for user {user_id}: {e}")
+        raise
 
 
-def calculate_goal_progress_from_scratch(goal_id, user_id):
-    """
-    Recalculate goal progress from linked entities
-    """
-    conn = get_db()
-    cursor = conn.cursor()
-    
+def recalculate_goal_progress(goal_id, user_id):
+    """Recalculate goal progress from scratch based on all linked entities."""
     try:
-        # Get all links for this goal
-        cursor.execute("""
-            SELECT entity_type, entity_id, linked_workout_type, contribution_value
-            FROM goal_links
-            WHERE goal_id = %s
-        """, (goal_id,))
-        
-        links = cursor.fetchall()
+        links = GoalLink.query.filter_by(goal_id=goal_id).all()
         total_progress = 0
-        
-        for entity_type, entity_id, workout_type, contribution in links:
-            if entity_type == 'workout':
-                if workout_type:
-                    cursor.execute("""
-                        SELECT COUNT(*) FROM workouts
-                        WHERE user_id = %s AND type = %s
-                    """, (user_id, workout_type))
-                else:
-                    cursor.execute("""
-                        SELECT COUNT(*) FROM workouts
-                        WHERE user_id = %s
-                    """, (user_id,))
-                
-                count = cursor.fetchone()[0]
-                total_progress += count * contribution
-                
-            elif entity_type == 'habit':
-                cursor.execute("""
-                    SELECT COUNT(*) FROM habit_logs
-                    WHERE habit_id = %s AND completed = TRUE
-                """, (entity_id,))
-                
-                count = cursor.fetchone()[0]
-                total_progress += count * contribution
-        
-        # Update goal
-        cursor.execute("""
-            UPDATE goals
-            SET progress = %s, updated_at = CURRENT_TIMESTAMP
-            WHERE id = %s
-        """, (total_progress, goal_id))
-        
-        conn.commit()
-        return total_progress
-        
-    except Exception as e:
-        conn.rollback()
-        raise e
-    finally:
-        cursor.close()
-        return_db(conn)
 
-
-def get_linked_goals(goal_id):
-    """
-    Get all entity links for a goal
-    """
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    try:
-        cursor.execute("""
-            SELECT id, entity_type, entity_id, linked_workout_type, contribution_value, created_at
-            FROM goal_links
-            WHERE goal_id = %s
-        """, (goal_id,))
-        
-        links = cursor.fetchall()
-        links_list = []
-        
         for link in links:
-            link_data = {
-                "id": link[0],
-                "entity_type": link[1],
-                "entity_id": link[2],
-                "linked_workout_type": link[3],
-                "contribution_value": link[4],
-                "created_at": link[5]
-            }
-            links_list.append(link_data)
-        
-        return links_list
-        
+            if link.entity_type == 'workout':
+                query = Workout.query.filter_by(user_id=user_id)
+                if link.linked_workout_type:
+                    query = query.filter_by(type=link.linked_workout_type)
+                count = query.count()
+                total_progress += count * link.contribution_value
+
+            elif link.entity_type == 'habit':
+                count = HabitLog.query.filter_by(
+                    habit_id=link.entity_id,
+                    completed=True,
+                ).count()
+                total_progress += count * link.contribution_value
+
+        goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
+        if goal:
+            goal.progress = total_progress
+            db.session.flush()
+
+        return total_progress
+
     except Exception as e:
-        raise e
-    finally:
-        cursor.close()
-        return_db(conn)
+        current_app.logger.error(f"Error recalculating goal {goal_id}: {e}")
+        raise

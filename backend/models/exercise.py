@@ -1,4 +1,4 @@
-from app import db
+from database import db
 
 class Exercise(db.Model):
     __tablename__ = "exercises"

@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify, g, current_app
-from app import db
+from database import db
 from models import Workout, WorkoutExercise, Exercise
 from api.auth import login_required
 from utils.logging import log_activity
 from utils.validators import validate_request, WorkoutSchema
+from utils.rewards import on_workout_logged
 from sqlalchemy import desc
 from datetime import datetime
 
@@ -44,7 +45,11 @@ def create_workout():
         
         db.session.commit()
         log_activity(g.user['id'], "created", "workout", workout.id)
-        
+
+        # Award points, check achievements, sync goals
+        on_workout_logged(g.user['id'], workout)
+        db.session.commit()
+
         return jsonify({
             "success": True,
             "message": "Workout logged successfully",

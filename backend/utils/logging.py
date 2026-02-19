@@ -1,5 +1,5 @@
 import logging
-from app import db
+from database import db
 from models import ActivityLog
 
 # Configure a simple logger for stdout

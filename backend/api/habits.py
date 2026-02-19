@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify, g, current_app
-from app import db
+from database import db
 from models import Habit, HabitLog
 from api.auth import login_required
 from utils.logging import log_activity
+from utils.rewards import on_habit_logged
 from datetime import date, time
 
 habits_bp = Blueprint('habits_bp', __name__)
@@ -20,7 +21,7 @@ def add_habit():
     next_occurrence = data.get("next_occurrence")
 
     if not all([name, frequency, reminder_time, description, next_occurrence]):
-        return jsonify({"error": "Missing required fields"}), 400
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
 
     try:
         habit = Habit(
@@ -118,7 +119,6 @@ def update_habit(habit_id):
         if not habit:
             return jsonify({"success": False, "message": "Habit not found"}), 404
 
-        # Update fields if provided
         if data.get("name") is not None:
             habit.name = data["name"]
         if data.get("frequency") is not None:
@@ -180,7 +180,15 @@ def log_habit(habit_id):
         # Check habit exists and belongs to user
         habit = Habit.query.filter_by(id=habit_id, user_id=user_id).first()
         if not habit:
-            return jsonify({"error": "Habit not found"}), 404
+            return jsonify({"success": False, "message": "Habit not found"}), 404
+
+        # Prevent duplicate logs on the same day
+        today = date.today()
+        existing_log = HabitLog.query.filter_by(habit_id=habit_id).filter(
+            db.func.date(HabitLog.timestamp) == today
+        ).first()
+        if existing_log:
+            return jsonify({"success": False, "message": "Habit already logged today"}), 400
 
         # Create log
         habit_log = HabitLog(
@@ -193,7 +201,11 @@ def log_habit(habit_id):
         
         db.session.add(habit_log)
         db.session.commit()
-        
+
+        # Award points, check achievements, sync goals
+        on_habit_logged(user_id, habit_id, habit_log)
+        db.session.commit()
+
         return jsonify({"success": True, "message": "Habit log created"}), 201
         
     except Exception as e:
@@ -208,14 +220,11 @@ def get_habit_logs(habit_id):
     user_id = g.user['id']
     
     try:
-        # Verify habit belongs to user
         habit = Habit.query.filter_by(id=habit_id, user_id=user_id).first()
         if not habit:
             return jsonify({"error": "Habit not found"}), 404
         
-        # Get logs
         logs = HabitLog.query.filter_by(habit_id=habit_id).order_by(HabitLog.timestamp.desc()).all()
-        
         logs_list = [log.to_dict() for log in logs]
         
         return jsonify({"success": True, "logs": logs_list}), 200

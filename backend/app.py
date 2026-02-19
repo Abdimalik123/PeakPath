@@ -1,4 +1,3 @@
-# Add at top of app.py:
 from sqlalchemy.exc import SQLAlchemyError
 from flask import Flask, Blueprint, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -7,9 +6,12 @@ from flask_cors import CORS
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+from dotenv import load_dotenv
 
-db = SQLAlchemy()
-migrate = Migrate()
+# Load environment variables from .env file
+load_dotenv()
+
+from database import db, migrate, limiter
 
 def create_app():
     app = Flask(__name__)
@@ -46,9 +48,13 @@ def create_app():
     
     # Configure CORS with specific origins
     FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+    DOMAIN_URL = os.getenv('DOMAIN_URL', '')
+    cors_origins = [FRONTEND_URL, "http://localhost:3000", "http://localhost:5173"]
+    if DOMAIN_URL:
+        cors_origins.append(DOMAIN_URL)
     CORS(app, resources={
         r"/*": {
-        "origins": [FRONTEND_URL, "http://localhost:3000", "http://localhost:5173"],
+        "origins": cors_origins,
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "expose_headers": ["Content-Type", "Authorization"],
@@ -57,6 +63,9 @@ def create_app():
         }
         }
     )
+
+    # Rate limiting
+    limiter.init_app(app)
 
     # Logging setup
     os.makedirs('logs', exist_ok=True)
@@ -74,7 +83,7 @@ def create_app():
     app.logger.setLevel(logging.INFO)
     app.logger.propagate = False
     
-    app.logger.info('Life Tracker startup')
+    app.logger.info('PeakPath API startup')
 
     
     # Import blueprints
@@ -94,20 +103,20 @@ def create_app():
     from api.dashboard import dashboard_bp
 
     # Register blueprints
-    app.register_blueprint(auth_bp, url_prefix='/api')
-    app.register_blueprint(workouts_bp, url_prefix='/api')
-    app.register_blueprint(exercises_bp, url_prefix='/api')
-    app.register_blueprint(user_bp, url_prefix='/api')
-    app.register_blueprint(habits_bp, url_prefix='/api')
-    app.register_blueprint(goals_bp, url_prefix='/api/')
-    app.register_blueprint(weight_bp, url_prefix='/api/')
-    app.register_blueprint(notifications_bp, url_prefix='/api')
-    app.register_blueprint(activity_bp, url_prefix='/api')
-    app.register_blueprint(workout_templates_bp, url_prefix='/api')
-    app.register_blueprint(template_exercises_bp, url_prefix='/api')
-    app.register_blueprint(gamification_bp, url_prefix='/api')
-    app.register_blueprint(summary_bp, url_prefix='/api')
-    app.register_blueprint(dashboard_bp, url_prefix='/api')
+    app.register_blueprint(auth_bp, url_prefix='/api/v1')
+    app.register_blueprint(workouts_bp, url_prefix='/api/v1')
+    app.register_blueprint(exercises_bp, url_prefix='/api/v1')
+    app.register_blueprint(user_bp, url_prefix='/api/v1')
+    app.register_blueprint(habits_bp, url_prefix='/api/v1')
+    app.register_blueprint(goals_bp, url_prefix='/api/v1')
+    app.register_blueprint(weight_bp, url_prefix='/api/v1')
+    app.register_blueprint(notifications_bp, url_prefix='/api/v1')
+    app.register_blueprint(activity_bp, url_prefix='/api/v1')
+    app.register_blueprint(workout_templates_bp, url_prefix='/api/v1')
+    app.register_blueprint(template_exercises_bp, url_prefix='/api/v1')
+    app.register_blueprint(gamification_bp, url_prefix='/api/v1')
+    app.register_blueprint(summary_bp, url_prefix='/api/v1')
+    app.register_blueprint(dashboard_bp, url_prefix='/api/v1')
 
     # Health check endpoint
     @app.route('/health')
@@ -127,7 +136,7 @@ def create_app():
         response = {
             "status": "ok" if db_status == "connected" else "degraded",
             "timestamp": datetime.now().isoformat(),
-            "service": "Life Tracker API",
+            "service": "PeakPath API",
             "database": db_status
         }
 
@@ -163,9 +172,19 @@ def create_app():
             "error": str(e)
         }), 400
 
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        return jsonify({
+            "success": False,
+            "message": "Too many requests",
+            "error": "Rate limit exceeded"
+        }), 429
+
+    return app
+
 
 
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000,debug=True)
+    app.run(host="0.0.0.0", port=5400,debug=True)
