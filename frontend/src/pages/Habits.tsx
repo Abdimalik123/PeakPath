@@ -121,9 +121,11 @@ const Habits: React.FC = () => {
         if (selectedHabit && selectedHabit.id === habitId) {
           fetchHabitLogs(habitId);
         }
+      } else {
+        setError(response.data.message);
       }
-    } catch (err) {
-      setError('Failed to log habit');
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Failed to log habit');
     }
   };
 
@@ -236,9 +238,9 @@ const Habits: React.FC = () => {
         )}
 
         {/* Habits Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Habits List */}
-          <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             {habits.length === 0 ? (
               <div className="col-span-2 bg-[#1c1f2e] border border-white/5 p-12 rounded-[2rem] text-center">
                 <svg className="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,7 +260,7 @@ const Habits: React.FC = () => {
                 <div
                   key={habit.id}
                   onClick={() => setSelectedHabit(habit)}
-                  className="bg-[#1c1f2e] border border-white/5 p-6 rounded-[2rem] hover:border-blue-500/50 transition-all cursor-pointer group"
+                  className="bg-[#1c1f2e] border border-white/5 p-6 rounded-[2rem] hover:border-blue-500/50 transition-all cursor-pointer group h-fit"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-400 group-hover:bg-blue-500 group-hover:text-[#121420] transition-colors">

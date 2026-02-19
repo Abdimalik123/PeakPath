@@ -11,7 +11,13 @@ export default defineConfig({
     watch: {
       usePolling: true,
     },
-    hmr: false  // Disable hot reload for WSL
+    hmr: false,  // Disable hot reload for WSL
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5400',
+        changeOrigin: true,
+      }
+    }
   },
   optimizeDeps: {
     force: true,  // Force re-optimization

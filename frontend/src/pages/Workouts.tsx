@@ -55,7 +55,6 @@ const Workouts: React.FC = () => {
   const [availableExercises, setAvailableExercises] = useState<AvailableExercise[]>([]);
   const [filteredExercises, setFilteredExercises] = useState<AvailableExercise[]>([]);
   
-  // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
@@ -82,7 +81,6 @@ const Workouts: React.FC = () => {
     description: ''
   });
 
-  // Determine if we should show cards or dropdown
   const MAX_CARDS_DISPLAY = 10;
   const isFiltering = searchQuery || selectedCategory || selectedMuscleGroup;
   const showAsCards = isFiltering && filteredExercises.length <= MAX_CARDS_DISPLAY && filteredExercises.length > 0;
@@ -92,7 +90,6 @@ const Workouts: React.FC = () => {
     fetchAvailableExercises();
   }, []);
 
-  // Filter exercises whenever search/filter params change
   useEffect(() => {
     filterExercises();
   }, [searchQuery, selectedCategory, selectedMuscleGroup, availableExercises]);
@@ -127,7 +124,6 @@ const Workouts: React.FC = () => {
   const fetchAvailableExercises = async () => {
     try {
       const response = await client.get('/exercises');
-      
       if (response.data.success) {
         setAvailableExercises(response.data.exercises);
       }
@@ -138,24 +134,17 @@ const Workouts: React.FC = () => {
 
   const filterExercises = () => {
     let filtered = [...availableExercises];
-
-    // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter(ex =>
         ex.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-
-    // Apply category filter
     if (selectedCategory) {
       filtered = filtered.filter(ex => ex.category === selectedCategory);
     }
-
-    // Apply muscle group filter
     if (selectedMuscleGroup) {
       filtered = filtered.filter(ex => ex.muscle_group === selectedMuscleGroup);
     }
-
     setFilteredExercises(filtered);
   };
 
@@ -172,7 +161,6 @@ const Workouts: React.FC = () => {
   const fetchWorkoutDetails = async (workoutId: number) => {
     try {
       const response = await client.get(`/workouts/${workoutId}`);
-      
       if (response.data.success) {
         setSelectedWorkout(response.data.workout);
       }
@@ -195,16 +183,11 @@ const Workouts: React.FC = () => {
       });
       
       if (response.data.success) {
-        // Refresh the exercise list
         await fetchAvailableExercises();
-        
-        // Auto-select the newly created exercise
         setCurrentExerciseForm({
           ...currentExerciseForm,
           exercise_id: response.data.exercise_id.toString()
         });
-        
-        // Switch back to select mode
         setIsCreatingNewExercise(false);
         setNewExerciseForm({ name: '', category: '', description: '' });
         setError(null);
@@ -239,16 +222,8 @@ const Workouts: React.FC = () => {
     };
 
     setExercisesToAdd([...exercisesToAdd, newExercise]);
-    setCurrentExerciseForm({
-      exercise_id: '',
-      sets: '',
-      reps: '',
-      weight: '',
-      duration: '',
-      notes: ''
-    });
+    setCurrentExerciseForm({ exercise_id: '', sets: '', reps: '', weight: '', duration: '', notes: '' });
     setShowAddExerciseModal(false);
-    // Reset filters
     setSearchQuery('');
     setSelectedCategory('');
     setSelectedMuscleGroup('');
@@ -258,41 +233,32 @@ const Workouts: React.FC = () => {
     setExercisesToAdd(exercisesToAdd.filter((_, i) => i !== index));
   };
 
+  // ✅ Fixed: sends exercises together with workout in one request
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     try {
-      // Step 1: Create the workout
-      const workoutResponse = await client.post('/workouts', {
+      const response = await client.post('/workouts', {
         type: formData.type,
         duration: parseInt(formData.duration),
         date: formData.date,
-        notes: formData.notes
+        notes: formData.notes,
+        exercises: exercisesToAdd.map(ex => ({
+          exercise_id: ex.exercise_id,
+          sets: ex.sets || null,
+          reps: ex.reps || null,
+          weight: ex.weight || null,
+          duration: ex.duration || null,
+          notes: ex.notes || null
+        }))
       });
-      
-      if (!workoutResponse.data.success) {
-        setError(workoutResponse.data.message);
+
+      if (!response.data.success) {
+        setError(response.data.message);
         return;
       }
 
-      const workoutId = workoutResponse.data.workout_id;
-
-      // Step 2: Add exercises to the workout (if any)
-      if (exercisesToAdd.length > 0) {
-        for (const exercise of exercisesToAdd) {
-          await client.post(`/workouts/${workoutId}/exercises`, {
-            exercise_id: exercise.exercise_id,
-            sets: exercise.sets || null,
-            reps: exercise.reps || null,
-            weight: exercise.weight || null,
-            duration: exercise.duration || null,
-            notes: exercise.notes || null
-          });
-        }
-      }
-
-      // Reset form and close modal
       setShowAddModal(false);
       setFormData({ type: '', duration: '', date: new Date().toISOString().split('T')[0], notes: '' });
       setExercisesToAdd([]);
@@ -303,43 +269,11 @@ const Workouts: React.FC = () => {
     }
   };
 
-  const handleAddExerciseToExistingWorkout = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedWorkout) return;
-
-    try {
-      const response = await client.post(`/workouts/${selectedWorkout.id}/exercises`, {
-        exercise_id: parseInt(currentExerciseForm.exercise_id),
-        sets: currentExerciseForm.sets ? parseInt(currentExerciseForm.sets) : null,
-        reps: currentExerciseForm.reps ? parseInt(currentExerciseForm.reps) : null,
-        weight: currentExerciseForm.weight ? parseFloat(currentExerciseForm.weight) : null,
-        duration: currentExerciseForm.duration ? parseInt(currentExerciseForm.duration) : null,
-        notes: currentExerciseForm.notes || null
-      });
-      
-      if (response.data.success) {
-        setShowAddExerciseModal(false);
-        setCurrentExerciseForm({ exercise_id: '', sets: '', reps: '', weight: '', duration: '', notes: '' });
-        // Reset filters
-        setSearchQuery('');
-        setSelectedCategory('');
-        setSelectedMuscleGroup('');
-        // Refresh workout details
-        fetchWorkoutDetails(selectedWorkout.id);
-      } else {
-        setError(response.data.message);
-      }
-    } catch (err) {
-      setError('Failed to add exercise');
-    }
-  };
-
   const handleDelete = async (workoutId: number) => {
     if (!confirm('Delete this workout?')) return;
 
     try {
       const response = await client.delete(`/workouts/${workoutId}`);
-      
       if (response.data.success) {
         fetchWorkouts();
         setSelectedWorkout(null);
@@ -352,6 +286,16 @@ const Workouts: React.FC = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const resetExerciseModal = () => {
+    setShowAddExerciseModal(false);
+    setCurrentExerciseForm({ exercise_id: '', sets: '', reps: '', weight: '', duration: '', notes: '' });
+    setIsCreatingNewExercise(false);
+    setNewExerciseForm({ name: '', category: '', description: '' });
+    setSearchQuery('');
+    setSelectedCategory('');
+    setSelectedMuscleGroup('');
   };
 
   if (loading) {
@@ -410,7 +354,7 @@ const Workouts: React.FC = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Workouts List */}
           <div className="lg:col-span-2 space-y-4">
             {workouts.length === 0 ? (
@@ -432,7 +376,7 @@ const Workouts: React.FC = () => {
                 <div
                   key={workout.id}
                   onClick={() => fetchWorkoutDetails(workout.id)}
-                  className="bg-[#1c1f2e] border border-white/5 p-6 rounded-[2rem] hover:border-cyan-500/50 transition-all cursor-pointer group"
+                  className="bg-[#1c1f2e] border border-white/5 p-6 rounded-[2rem] hover:border-cyan-500/50 transition-all cursor-pointer group h-fit"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -494,16 +438,7 @@ const Workouts: React.FC = () => {
                 </div>
 
                 <div className="mb-6">
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">Exercises</h4>
-                    <button
-                      onClick={() => setShowAddExerciseModal(true)}
-                      className="px-3 py-1.5 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-[#121420] rounded-lg text-xs font-bold uppercase tracking-wider transition"
-                    >
-                      + Add
-                    </button>
-                  </div>
-                  
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-3">Exercises</h4>
                   {selectedWorkout.exercises && selectedWorkout.exercises.length > 0 ? (
                     <div className="space-y-2">
                       {selectedWorkout.exercises.map((exercise, idx) => (
@@ -522,7 +457,7 @@ const Workouts: React.FC = () => {
                     </div>
                   ) : (
                     <div className="p-6 bg-[#0f111a] rounded-xl text-center">
-                      <p className="text-xs text-gray-500">No exercises added yet</p>
+                      <p className="text-xs text-gray-500">No exercises logged for this workout</p>
                     </div>
                   )}
                 </div>
@@ -553,10 +488,7 @@ const Workouts: React.FC = () => {
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold text-white">Log Workout</h3>
               <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setExercisesToAdd([]);
-                }}
+                onClick={() => { setShowAddModal(false); setExercisesToAdd([]); }}
                 className="p-2 hover:bg-white/5 rounded-lg transition"
               >
                 <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -566,7 +498,6 @@ const Workouts: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Workout Details */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Workout Type</label>
@@ -592,7 +523,6 @@ const Workouts: React.FC = () => {
                       required
                     />
                   </div>
-
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Date</label>
                     <input
@@ -622,7 +552,7 @@ const Workouts: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h4 className="text-lg font-bold text-white">Exercises (Optional)</h4>
-                    <p className="text-xs text-gray-500 mt-1">Add exercises now or later</p>
+                    <p className="text-xs text-gray-500 mt-1">Add exercises now or skip</p>
                   </div>
                   <button
                     type="button"
@@ -659,9 +589,7 @@ const Workouts: React.FC = () => {
                   </div>
                 ) : (
                   <div className="p-8 bg-[#0f111a] rounded-xl text-center">
-                    <p className="text-xs text-gray-500">
-                      No exercises added yet. Click "Add Exercise" to select from your library or create a new one.
-                    </p>
+                    <p className="text-xs text-gray-500">No exercises added yet. Click "Add Exercise" to select from your library.</p>
                   </div>
                 )}
               </div>
@@ -677,39 +605,25 @@ const Workouts: React.FC = () => {
         </div>
       )}
 
-      {/* Add Exercise Modal with Smart Display Logic */}
+      {/* Add Exercise Modal */}
       {showAddExerciseModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-[#1c1f2e] border border-white/5 rounded-[2rem] p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold text-white">Add Exercise</h3>
-              <button
-                onClick={() => {
-                  setShowAddExerciseModal(false);
-                  setCurrentExerciseForm({ exercise_id: '', sets: '', reps: '', weight: '', duration: '', notes: '' });
-                  setIsCreatingNewExercise(false);
-                  setNewExerciseForm({ name: '', category: '', description: '' });
-                  setSearchQuery('');
-                  setSelectedCategory('');
-                  setSelectedMuscleGroup('');
-                }}
-                className="p-2 hover:bg-white/5 rounded-lg transition"
-              >
+              <button onClick={resetExerciseModal} className="p-2 hover:bg-white/5 rounded-lg transition">
                 <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            {/* Toggle between Select Existing and Create New */}
             <div className="flex gap-2 mb-6">
               <button
                 type="button"
                 onClick={() => setIsCreatingNewExercise(false)}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold uppercase tracking-wider transition ${
-                  !isCreatingNewExercise
-                    ? 'bg-cyan-500 text-[#121420]'
-                    : 'bg-[#0f111a] text-gray-400 hover:text-white'
+                  !isCreatingNewExercise ? 'bg-cyan-500 text-[#121420]' : 'bg-[#0f111a] text-gray-400 hover:text-white'
                 }`}
               >
                 Select Existing
@@ -718,9 +632,7 @@ const Workouts: React.FC = () => {
                 type="button"
                 onClick={() => setIsCreatingNewExercise(true)}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold uppercase tracking-wider transition ${
-                  isCreatingNewExercise
-                    ? 'bg-cyan-500 text-[#121420]'
-                    : 'bg-[#0f111a] text-gray-400 hover:text-white'
+                  isCreatingNewExercise ? 'bg-cyan-500 text-[#121420]' : 'bg-[#0f111a] text-gray-400 hover:text-white'
                 }`}
               >
                 Create New
@@ -728,7 +640,6 @@ const Workouts: React.FC = () => {
             </div>
 
             {isCreatingNewExercise ? (
-              /* Create New Exercise Form */
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Exercise Name</label>
@@ -740,7 +651,6 @@ const Workouts: React.FC = () => {
                     placeholder="e.g., Bench Press"
                   />
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category</label>
                   <input
@@ -751,7 +661,6 @@ const Workouts: React.FC = () => {
                     placeholder="e.g., Chest, Cardio, Legs"
                   />
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description (Optional)</label>
                   <textarea
@@ -759,10 +668,9 @@ const Workouts: React.FC = () => {
                     onChange={(e) => setNewExerciseForm({ ...newExerciseForm, description: e.target.value })}
                     className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition resize-none"
                     rows={2}
-                    placeholder="Brief description of the exercise"
+                    placeholder="Brief description"
                   />
                 </div>
-
                 <button
                   type="button"
                   onClick={handleCreateNewExercise}
@@ -772,20 +680,11 @@ const Workouts: React.FC = () => {
                 </button>
               </div>
             ) : (
-              /* Select Existing Exercise Form with Smart Display */
-              <form onSubmit={selectedWorkout ? handleAddExerciseToExistingWorkout : (e) => { e.preventDefault(); handleAddExerciseToList(); }} className="space-y-4">
-                
+              <form onSubmit={(e) => { e.preventDefault(); handleAddExerciseToList(); }} className="space-y-4">
                 {/* Search and Filters */}
                 <div className="space-y-3 pb-4 border-b border-white/5">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                      Search Exercises
-                      {!isFiltering && availableExercises.length > 10 && (
-                        <span className="ml-2 text-cyan-400 font-normal normal-case">
-                          (Start typing to see cards)
-                        </span>
-                      )}
-                    </label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Search Exercises</label>
                     <input
                       type="text"
                       value={searchQuery}
@@ -809,7 +708,6 @@ const Workouts: React.FC = () => {
                         ))}
                       </select>
                     </div>
-
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Muscle Group</label>
                       <select
@@ -828,17 +726,13 @@ const Workouts: React.FC = () => {
                   {isFiltering && (
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-500">
-                        {filteredExercises.length === 0 ? 'No matches' : 
+                        {filteredExercises.length === 0 ? 'No matches' :
                          filteredExercises.length > MAX_CARDS_DISPLAY ? `${filteredExercises.length} results (narrow down to see cards)` :
                          `Showing ${filteredExercises.length} exercise${filteredExercises.length !== 1 ? 's' : ''}`}
                       </span>
                       <button
                         type="button"
-                        onClick={() => {
-                          setSearchQuery('');
-                          setSelectedCategory('');
-                          setSelectedMuscleGroup('');
-                        }}
+                        onClick={() => { setSearchQuery(''); setSelectedCategory(''); setSelectedMuscleGroup(''); }}
                         className="text-cyan-400 hover:text-cyan-300 transition"
                       >
                         Clear filters
@@ -847,9 +741,8 @@ const Workouts: React.FC = () => {
                   )}
                 </div>
 
-                {/* Exercise Selection - Cards or Dropdown based on filtering */}
+                {/* Exercise Selection */}
                 {showAsCards ? (
-                  /* Clickable Cards when filtered */
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
                       Select Exercise {currentExerciseForm.exercise_id && '✓'}
@@ -867,29 +760,13 @@ const Workouts: React.FC = () => {
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <p className={`text-sm font-bold mb-1 ${
-                                currentExerciseForm.exercise_id === exercise.id.toString() ? 'text-[#121420]' : 'text-white'
-                              }`}>
+                              <p className={`text-sm font-bold mb-1 ${currentExerciseForm.exercise_id === exercise.id.toString() ? 'text-[#121420]' : 'text-white'}`}>
                                 {exercise.name}
                               </p>
-                              <div className={`flex flex-wrap gap-2 text-xs ${
-                                currentExerciseForm.exercise_id === exercise.id.toString() ? 'text-[#121420]/70' : 'text-gray-500'
-                              }`}>
-                                {exercise.category && (
-                                  <span className="px-2 py-0.5 bg-black/10 rounded">
-                                    {exercise.category}
-                                  </span>
-                                )}
-                                {exercise.muscle_group && (
-                                  <span className="px-2 py-0.5 bg-black/10 rounded">
-                                    {exercise.muscle_group}
-                                  </span>
-                                )}
-                                {exercise.equipment && (
-                                  <span className="px-2 py-0.5 bg-black/10 rounded">
-                                    {exercise.equipment}
-                                  </span>
-                                )}
+                              <div className={`flex flex-wrap gap-2 text-xs ${currentExerciseForm.exercise_id === exercise.id.toString() ? 'text-[#121420]/70' : 'text-gray-500'}`}>
+                                {exercise.category && <span className="px-2 py-0.5 bg-black/10 rounded">{exercise.category}</span>}
+                                {exercise.muscle_group && <span className="px-2 py-0.5 bg-black/10 rounded">{exercise.muscle_group}</span>}
+                                {exercise.equipment && <span className="px-2 py-0.5 bg-black/10 rounded">{exercise.equipment}</span>}
                               </div>
                             </div>
                             {currentExerciseForm.exercise_id === exercise.id.toString() && (
@@ -903,16 +780,8 @@ const Workouts: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  /* Dropdown when not filtered or too many results */
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                      Select Exercise
-                      {!isFiltering && availableExercises.length > 10 && (
-                        <span className="ml-2 text-xs text-gray-500 font-normal normal-case">
-                          (or use filters above to browse)
-                        </span>
-                      )}
-                    </label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Select Exercise</label>
                     <select
                       value={currentExerciseForm.exercise_id}
                       onChange={(e) => setCurrentExerciseForm({ ...currentExerciseForm, exercise_id: e.target.value })}
@@ -926,13 +795,8 @@ const Workouts: React.FC = () => {
                         </option>
                       ))}
                     </select>
-                    {filteredExercises.length === 0 && isFiltering && (
-                      <p className="text-xs text-gray-500 mt-2">No exercises match your filters.</p>
-                    )}
                     {filteredExercises.length > MAX_CARDS_DISPLAY && isFiltering && (
-                      <p className="text-xs text-cyan-400 mt-2">
-                        💡 Tip: Narrow your search to {MAX_CARDS_DISPLAY} or fewer to see clickable cards
-                      </p>
+                      <p className="text-xs text-cyan-400 mt-2">💡 Narrow your search to {MAX_CARDS_DISPLAY} or fewer to see clickable cards</p>
                     )}
                   </div>
                 )}
@@ -950,14 +814,13 @@ const Workouts: React.FC = () => {
                       min="0"
                     />
                   </div>
-
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Reps</label>
                     <input
                       type="number"
                       value={currentExerciseForm.reps}
                       onChange={(e) => setCurrentExerciseForm({ ...currentExerciseForm, reps: e.target.value })}
-                      className="w-full bg-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                      className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
                       placeholder="10"
                       min="0"
                     />
@@ -977,7 +840,6 @@ const Workouts: React.FC = () => {
                       min="0"
                     />
                   </div>
-
                   <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Duration (min)</label>
                     <input
@@ -1006,7 +868,7 @@ const Workouts: React.FC = () => {
                   type="submit"
                   className="w-full bg-cyan-500 hover:bg-cyan-400 text-[#121420] py-4 rounded-xl font-bold uppercase tracking-wider text-sm transition shadow-[0_0_20px_rgba(34,211,238,0.3)]"
                 >
-                  {selectedWorkout ? 'Add to Workout' : 'Add Exercise'}
+                  Add Exercise
                 </button>
               </form>
             )}
