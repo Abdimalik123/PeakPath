@@ -141,70 +141,71 @@ const Workouts: React.FC = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#121420] flex items-center justify-center">
-        <div className="text-cyan-400 text-xl">Loading workouts...</div>
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="text-[var(--brand-primary)] text-lg font-medium">Loading workouts...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#121420] text-gray-300">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
       <Navigation currentPage="/workouts" />
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <PageHeader
-          title="Workouts"
-          subtitle="Track your training sessions"
-          actionButton={{
-            label: "+ Log Workout",
-            onClick: () => setShowAddModal(true)
-          }}
-        />
+      <div className="lg:ml-64 min-h-screen">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <PageHeader
+            title="Workouts"
+            subtitle="Track your training sessions"
+            actionButton={{
+              label: "+ Log Workout",
+              onClick: () => setShowAddModal(true)
+            }}
+          />
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
-            <p className="text-red-400 text-sm">{error}</p>
-          </div>
-        )}
+          {error && (
+            <div className="mb-6 p-4 bg-[var(--error)]/10 border border-[var(--error)]/30 rounded-[var(--radius-lg)]">
+              <p className="text-[var(--error)] text-sm text-center font-medium">{error}</p>
+            </div>
+          )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* Workouts List */}
-          <div className="lg:col-span-2 space-y-4">
-            {workouts.length === 0 ? (
-              <EmptyState
-                icon={
-                  <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                }
-                title="No Workouts Yet"
-                description="Start tracking your fitness journey"
-                actionButton={{
-                  label: "Log First Workout",
-                  onClick: () => setShowAddModal(true)
-                }}
-              />
-            ) : (
-              workouts.map((workout) => {
-                const workoutData = {
-                  id: workout.id.toString(),
-                  type: workout.type,
-                  date: workout.date,
-                  duration: workout.duration,
-                  exercise_count: 0 // You may want to track this from exercises
-                };
-                
-                return (
-                  <WorkoutCard 
-                    key={workout.id}
-                    workout={workoutData}
-                    onClick={(id) => fetchWorkoutDetails(parseInt(id))}
-                  />
-                );
-              })
-            )}
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            {/* Workouts List */}
+            <div className="lg:col-span-2 space-y-4">
+              {workouts.length === 0 ? (
+                <EmptyState
+                  icon={
+                    <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  }
+                  title="No Workouts Yet"
+                  description="Start tracking your fitness journey"
+                  actionButton={{
+                    label: "Log First Workout",
+                    onClick: () => setShowAddModal(true)
+                  }}
+                />
+              ) : (
+                workouts.map((workout) => {
+                  const workoutData = {
+                    id: workout.id.toString(),
+                    type: workout.type,
+                    date: workout.date,
+                    duration: workout.duration,
+                    exercise_count: 0 // You may want to track this from exercises
+                  };
+                  
+                  return (
+                    <WorkoutCard 
+                      key={workout.id}
+                      workout={workoutData}
+                      onClick={(id) => fetchWorkoutDetails(parseInt(id))}
+                    />
+                  );
+                })
+              )}
+            </div>
 
           <div className="space-y-6">
             {selectedWorkout && (
@@ -212,6 +213,7 @@ const Workouts: React.FC = () => {
             )}
           </div>
         </div>
+      </main>
       </div>
 
       <AddWorkoutModal

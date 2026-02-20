@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Layout from '../components/Layout';
+import { Navigation } from '../components/Navigation';
 import { Dumbbell, Plus, X, Star, Search, Filter, Copy, Trash2, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -261,18 +261,17 @@ export default function WorkoutTemplates() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="p-6 flex items-center justify-center min-h-screen">
-          <div className="w-12 h-12 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </Layout>
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin"></div>
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <Navigation currentPage="/templates" />
+      <div className="lg:ml-64 min-h-screen">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
@@ -398,7 +397,7 @@ export default function WorkoutTemplates() {
               ))}
             </div>
           )}
-        </div>
+        </main>
       </div>
 
       {/* Template Detail Modal */}
@@ -514,6 +513,6 @@ export default function WorkoutTemplates() {
           </div>
         </div>
       )}
-    </Layout>
+    </div>
   );
 }

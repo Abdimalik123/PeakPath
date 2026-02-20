@@ -60,14 +60,14 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-[#121420] text-gray-300 font-sans">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
       {/* Navigation */}
-      <nav className="border-b border-white/5 bg-[#121420]/80 backdrop-blur-md">
+      <nav className="border-b border-[var(--border-subtle)] bg-[var(--bg-primary)]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)]"></div>
-              <h1 className="text-xl font-bold tracking-tight text-white">LIFE<span className="text-cyan-400">TRACKER</span></h1>
+              <div className="w-8 h-8 rounded-full bg-[var(--brand-primary)]"></div>
+              <h1 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">PeakPath</h1>
             </Link>
           </div>
         </div>
@@ -82,8 +82,8 @@ export default function Onboarding() {
 
           {/* Header */}
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-2">Complete Your Profile</h2>
-            <p className="text-gray-400 text-sm uppercase tracking-wider">PERSONALIZED FITNESS SETUP</p>
+            <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Complete Your Profile</h2>
+            <p className="text-[var(--text-muted)] text-sm uppercase tracking-wider">PERSONALIZED FITNESS SETUP</p>
           </div>
 
           {/* Progress Bar */}
@@ -97,10 +97,10 @@ export default function Onboarding() {
                   <div
                     className={`w-10 h-10 rounded-full flex items-center justify-center border-2 font-bold transition-all ${
                       s < step
-                        ? 'bg-cyan-500 border-cyan-500 text-[#121420]'
+                        ? 'bg-[var(--brand-primary)] border-[var(--brand-primary)] text-[var(--bg-primary)]'
                         : s === step
-                        ? 'border-cyan-500 text-cyan-400'
-                        : 'border-white/10 text-gray-600'
+                        ? 'border-[var(--brand-primary)] text-[var(--brand-primary)]'
+                        : 'border-[var(--border-subtle)] text-[var(--text-muted)]'
                     }`}
                   >
                     {s < step ? (
@@ -112,23 +112,23 @@ export default function Onboarding() {
                     )}
                   </div>
                   <span className={`text-sm font-medium hidden sm:inline uppercase tracking-wider ${
-                    s <= step ? 'text-white' : 'text-gray-600'
+                    s <= step ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'
                   }`}>
                     {s === 1 ? 'Basic Info' : s === 2 ? 'Body Stats' : 'Activity'}
                   </span>
                 </div>
               ))}
             </div>
-            <div className="w-full bg-white/5 rounded-full h-2">
+            <div className="w-full bg-[var(--bg-tertiary)] rounded-full h-2">
               <div
-                className="bg-cyan-400 h-2 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(34,211,238,0.5)]"
+                className="bg-[var(--brand-primary)] h-2 rounded-full transition-all duration-500"
                 style={{ width: `${(step / 3) * 100}%` }}
               ></div>
             </div>
           </div>
 
           {/* Card */}
-          <div className="bg-[#1c1f2e] border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
+          <div className="pp-card p-8 relative overflow-hidden">
             {/* Subtle background glow inside the card */}
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-[60px]"></div>
 

@@ -94,18 +94,18 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#121420] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#121420] text-gray-300">
-
+    <div className="min-h-screen bg-[var(--bg-primary)]">
       <Navigation currentPage="/profile" />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      
+      <div className="lg:ml-64 min-h-screen">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           {/* Header */}
           <div>
@@ -117,15 +117,15 @@ export default function Profile() {
 
           {/* Error/Success Messages */}
           {error && (
-            <div className="flex items-center gap-2 p-4 bg-red-500/20 border border-red-500/50 rounded-[2rem]">
-              <AlertCircle className="w-5 h-5 text-red-400" />
-              <p className="text-red-300">{error}</p>
+            <div className="flex items-center gap-2 p-4 bg-[var(--error)]/10 border border-[var(--error)]/30 rounded-[var(--radius-lg)]">
+              <AlertCircle className="w-5 h-5 text-[var(--error)]" />
+              <p className="text-[var(--error)]">{error}</p>
             </div>
           )}
           {success && (
-            <div className="flex items-center gap-2 p-4 bg-green-500/20 border border-green-500/50 rounded-[2rem]">
-              <Save className="w-5 h-5 text-green-400" />
-              <p className="text-green-300">{success}</p>
+            <div className="flex items-center gap-2 p-4 bg-[var(--success)]/10 border border-[var(--success)]/30 rounded-[var(--radius-lg)]">
+              <Save className="w-5 h-5 text-[var(--success)]" />
+              <p className="text-[var(--success)]">{success}</p>
             </div>
           )}
 
@@ -133,42 +133,42 @@ export default function Profile() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             {/* Account Info */}
-            <div className="bg-[#1c1f2e]/70 border border-white/5 p-6 rounded-[2rem] backdrop-blur-sm">
+            <div className="pp-card p-6">
               <div className="flex items-center gap-3 mb-4">
-                <User className="w-6 h-6 text-cyan-400" />
-                <h2 className="text-xl font-bold text-white">Account Information</h2>
+                <User className="w-6 h-6 text-[var(--brand-primary)]" />
+                <h2 className="text-xl font-bold text-[var(--text-primary)]">Account Information</h2>
               </div>
               <div className="space-y-4">
                 <input
                   type="text"
                   value={userInfo.firstname}
                   disabled
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] text-[var(--text-muted)] cursor-not-allowed"
                   placeholder="First Name"
                 />
                 <input
                   type="text"
                   value={userInfo.lastname}
                   disabled
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] text-[var(--text-muted)] cursor-not-allowed"
                   placeholder="Last Name"
                 />
                 <input
                   type="email"
                   value={userInfo.email}
                   disabled
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-gray-400 cursor-not-allowed"
+                  className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] text-[var(--text-muted)] cursor-not-allowed"
                   placeholder="Email"
                 />
-                <p className="text-xs text-gray-500">Contact support to change name or email</p>
+                <p className="text-xs text-[var(--text-muted)]">Contact support to change name or email</p>
               </div>
             </div>
 
             {/* Body Metrics */}
-            <div className="bg-[#1c1f2e]/70 border border-white/5 p-6 rounded-[2rem] backdrop-blur-sm">
+            <div className="pp-card p-6">
               <div className="flex items-center gap-3 mb-4">
-                <Activity className="w-6 h-6 text-cyan-400" />
-                <h2 className="text-xl font-bold text-white">Body Metrics</h2>
+                <Activity className="w-6 h-6 text-[var(--brand-primary)]" />
+                <h2 className="text-xl font-bold text-[var(--text-primary)]">Body Metrics</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input
@@ -176,42 +176,42 @@ export default function Profile() {
                   value={profileData.height}
                   onChange={(e) => setProfileData({ ...profileData, height: e.target.value })}
                   placeholder="Height (cm)"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]"
                 />
                 <input
                   type="number"
                   value={profileData.current_weight}
                   onChange={(e) => setProfileData({ ...profileData, current_weight: e.target.value })}
                   placeholder="Current Weight (kg)"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]"
                 />
                 <input
                   type="number"
                   value={profileData.goal_weight}
                   onChange={(e) => setProfileData({ ...profileData, goal_weight: e.target.value })}
                   placeholder="Goal Weight (kg)"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]"
                 />
                 <input
                   type="number"
                   value={profileData.age}
                   onChange={(e) => setProfileData({ ...profileData, age: e.target.value })}
                   placeholder="Age"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]"
                 />
               </div>
             </div>
 
             {/* Activity Level */}
-            <div className="bg-[#1c1f2e]/70 border border-white/5 p-6 rounded-[2rem] backdrop-blur-sm">
+            <div className="pp-card p-6">
               <div className="flex items-center gap-3 mb-4">
-                <TrendingUp className="w-6 h-6 text-cyan-400" />
-                <h2 className="text-xl font-bold text-white">Activity Level</h2>
+                <TrendingUp className="w-6 h-6 text-[var(--brand-primary)]" />
+                <h2 className="text-xl font-bold text-[var(--text-primary)]">Activity Level</h2>
               </div>
               <select
                 value={profileData.activity_level}
                 onChange={(e) => setProfileData({ ...profileData, activity_level: e.target.value })}
-                className="w-full px-4 py-3 bg-[#0f111a] border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-cyan-500"
+                className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand-primary)]"
               >
                 <option value="sedentary">Sedentary - Little or no exercise</option>
                 <option value="light">Lightly Active - Exercise 1-3 days/week</option>
@@ -227,12 +227,13 @@ export default function Profile() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-4 bg-cyan-500 hover:bg-cyan-600 rounded-[2rem] font-bold text-white transition flex items-center justify-center gap-2 disabled:bg-gray-600"
+            className="w-full py-4 pp-btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-5 h-5" />
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
+        </main>
       </div>
     </div>
   );

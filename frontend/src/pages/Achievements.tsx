@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Layout from '../components/Layout';
+import { Navigation } from '../components/Navigation';
 import { Award, Trophy, Star, Zap, Target, Calendar, Dumbbell, Flame, Lock, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -158,18 +158,17 @@ export default function Achievements() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="p-6 flex items-center justify-center min-h-screen">
-          <div className="w-12 h-12 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </Layout>
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin"></div>
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <Navigation currentPage="/achievements" />
+      <div className="lg:ml-64 min-h-screen">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
@@ -303,38 +302,38 @@ export default function Achievements() {
           {/* Empty State */}
           {filteredAchievements.length === 0 && (
             <div className="text-center py-12">
-              <Award className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400">No achievements in this category yet</p>
+              <Award className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4" />
+              <p className="text-[var(--text-muted)]">No achievements in this category yet</p>
             </div>
           )}
-        </div>
+        </main>
       </div>
 
       {/* Unlock Modal */}
       {showUnlockModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-slate-900 border-2 border-yellow-500 rounded-2xl p-8 max-w-md w-full text-center animate-scaleIn">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-[var(--bg-secondary)] border-2 border-[var(--warning)] rounded-[var(--radius-lg)] p-8 max-w-md w-full text-center">
             <div className="mb-6">
-              <div className="w-24 h-24 mx-auto bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full flex items-center justify-center animate-bounce">
+              <div className="w-24 h-24 mx-auto bg-gradient-to-br from-[var(--warning)] to-orange-600 rounded-full flex items-center justify-center">
                 <Trophy className="w-12 h-12 text-white" />
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-white mb-2">Achievement Unlocked!</h2>
-            <h3 className="text-xl font-bold text-yellow-400 mb-4">{showUnlockModal.name}</h3>
-            <p className="text-gray-300 mb-6">{showUnlockModal.description}</p>
+            <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Achievement Unlocked!</h2>
+            <h3 className="text-xl font-bold text-[var(--warning)] mb-4">{showUnlockModal.name}</h3>
+            <p className="text-[var(--text-secondary)] mb-6">{showUnlockModal.description}</p>
             <div className="flex items-center justify-center gap-2 mb-6">
-              <Star className="w-5 h-5 text-yellow-400" />
-              <span className="text-2xl font-bold text-yellow-400">+{showUnlockModal.points} points</span>
+              <Star className="w-5 h-5 text-[var(--warning)]" />
+              <span className="text-2xl font-bold text-[var(--warning)]">+{showUnlockModal.points} points</span>
             </div>
             <button
               onClick={() => setShowUnlockModal(null)}
-              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold transition"
+              className="px-6 py-3 pp-btn-primary"
             >
               Awesome!
             </button>
           </div>
         </div>
       )}
-    </Layout>
+    </div>
   );
 }

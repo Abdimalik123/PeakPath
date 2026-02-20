@@ -1,17 +1,20 @@
 import { type ReactNode } from 'react';
-import Sidebar from './Sidebar';
+import { Navigation } from './Navigation';
 
 interface LayoutProps {
   children: ReactNode;
+  currentPage?: string;
 }
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children, currentPage }: LayoutProps) {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-950">
-      <Sidebar />
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <Navigation currentPage={currentPage} />
+      <div className="lg:ml-64 min-h-screen">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

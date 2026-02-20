@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import Layout from '../components/Layout';
-import { Activity as ActivityIcon, Users, Trophy, TrendingUp, UserPlus, Heart, MessageCircle, Award, Flame, Dumbbell, Target } from 'lucide-react';
+import { Navigation } from '../components/Navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
+import { Button } from '../components/Button';
+import { Users, Trophy, TrendingUp, UserPlus, Heart, MessageCircle, Award, Flame, Dumbbell, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import client from '../api/client';
 
 interface User {
   id: number;
@@ -14,7 +17,7 @@ interface User {
   streak?: number;
 }
 
-interface Activity {
+interface ActivityItem {
   id: number;
   user: User;
   type: 'workout' | 'goal' | 'achievement' | 'habit';
@@ -32,12 +35,12 @@ export default function Social() {
   const [activeTab, setActiveTab] = useState<'feed' | 'leaderboard' | 'friends'>('feed');
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('week');
   
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [leaderboard, setLeaderboard] = useState<User[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
   const [suggestions, setSuggestions] = useState<User[]>([]);
 
-  // Mock current user
+  // Mock current user - Replace with actual API call
   const currentUser = {
     id: 1,
     name: 'You',
@@ -47,8 +50,8 @@ export default function Social() {
     streak: 12
   };
 
-  // Mock data
-  const mockActivities: Activity[] = [
+  // Mock data - Replace with actual API calls when backend is ready
+  const mockActivities: ActivityItem[] = [
     {
       id: 1,
       user: { id: 2, name: 'Sarah Chen', level: 10, points: 1200 },
@@ -87,7 +90,7 @@ export default function Social() {
       user: { id: 5, name: 'Alex Rivera', level: 12, points: 1500 },
       type: 'habit',
       action: 'reached a streak',
-      details: '🔥 30 day habit streak!',
+      details: '30 day habit streak!',
       timestamp: '1 day ago',
       likes: 18,
       comments: 5,
@@ -143,12 +146,28 @@ export default function Social() {
 
   const loadSocialData = async () => {
     try {
-      // TODO: Replace with actual API calls
+      setLoading(true);
+      // TODO: Replace with actual API calls when backend endpoints are ready
+      // const [activitiesRes, leaderboardRes, friendsRes, suggestionsRes] = await Promise.all([
+      //   client.get('/social/feed'),
+      //   client.get(`/social/leaderboard?range=${timeRange}`),
+      //   client.get('/social/friends'),
+      //   client.get('/social/suggestions')
+      // ]);
+      // setActivities(activitiesRes.data);
+      // setLeaderboard(leaderboardRes.data);
+      // setFriends(friendsRes.data);
+      // setSuggestions(suggestionsRes.data);
+      
+      // Using mock data for now
       setActivities(mockActivities);
       setLeaderboard(mockLeaderboard);
       setFriends(mockFriends);
       setSuggestions(mockSuggestions);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error: any) {
+      console.error('Social load error:', error);
       if (error?.response?.status === 401) {
         localStorage.removeItem('token');
         navigate('/login');
@@ -174,7 +193,6 @@ export default function Social() {
     setSuggestions(suggestions.map(user =>
       user.id === userId ? { ...user, isFollowing: true } : user
     ));
-    // Move to friends list
     const newFriend = suggestions.find(u => u.id === userId);
     if (newFriend) {
       setFriends([...friends, { ...newFriend, isFollowing: true }]);
@@ -198,11 +216,11 @@ export default function Social() {
 
   const getActivityColor = (type: string) => {
     switch (type) {
-      case 'workout': return 'text-emerald-400';
+      case 'workout': return 'text-[var(--brand-primary)]';
       case 'goal': return 'text-purple-400';
-      case 'achievement': return 'text-yellow-400';
+      case 'achievement': return 'text-[var(--warning)]';
       case 'habit': return 'text-orange-400';
-      default: return 'text-gray-400';
+      default: return 'text-[var(--text-muted)]';
     }
   };
 
@@ -215,59 +233,67 @@ export default function Social() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="p-6 flex items-center justify-center min-h-screen">
-          <div className="w-12 h-12 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[var(--bg-primary)]">
+        <Navigation currentPage="/social" />
+        <div className="lg:ml-64 min-h-screen flex items-center justify-center">
+          <div className="w-12 h-12 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin"></div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <Navigation currentPage="/social" />
+      
+      <div className="lg:ml-64 min-h-screen">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-              <Users className="w-10 h-10 text-emerald-400" />
+            <h1 className="text-3xl font-bold text-[var(--text-primary)] flex items-center gap-3">
+              <Users className="w-8 h-8 text-[var(--brand-primary)]" />
               Community
             </h1>
-            <p className="text-gray-400">Connect, compete, and stay motivated together</p>
+            <p className="text-sm text-[var(--text-muted)] mt-1">
+              Connect, compete, and stay motivated together
+            </p>
           </div>
 
           {/* Your Stats Card */}
-          <div className="bg-gradient-to-r from-emerald-900/30 to-blue-900/30 backdrop-blur-sm border border-emerald-500/30 rounded-2xl p-6 mb-6">
-            <div className="grid md:grid-cols-4 gap-6">
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Your Rank</p>
-                <p className="text-3xl font-bold text-white">#{currentUser.rank}</p>
+          <Card className="bg-gradient-brand border-none mb-6">
+            <CardContent className="pt-6 text-white">
+              <div className="grid md:grid-cols-4 gap-6">
+                <div>
+                  <p className="text-white/70 text-sm mb-1">Your Rank</p>
+                  <p className="text-3xl font-bold">#{currentUser.rank}</p>
+                </div>
+                <div>
+                  <p className="text-white/70 text-sm mb-1">Total Points</p>
+                  <p className="text-3xl font-bold">{currentUser.points}</p>
+                </div>
+                <div>
+                  <p className="text-white/70 text-sm mb-1">Current Level</p>
+                  <p className="text-3xl font-bold">{currentUser.level}</p>
+                </div>
+                <div>
+                  <p className="text-white/70 text-sm mb-1">Current Streak</p>
+                  <p className="text-3xl font-bold">{currentUser.streak} 🔥</p>
+                </div>
               </div>
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Total Points</p>
-                <p className="text-3xl font-bold text-emerald-400">{currentUser.points}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Current Level</p>
-                <p className="text-3xl font-bold text-blue-400">{currentUser.level}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Current Streak</p>
-                <p className="text-3xl font-bold text-orange-400">{currentUser.streak} 🔥</p>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 border-b border-emerald-900/50">
+          <div className="flex gap-2 mb-6 border-b border-[var(--border-default)]">
             {(['feed', 'leaderboard', 'friends'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 font-semibold transition capitalize ${
+                className={`px-6 py-3 font-semibold text-sm transition capitalize ${
                   activeTab === tab
-                    ? 'text-emerald-400 border-b-2 border-emerald-400'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'text-[var(--brand-primary)] border-b-2 border-[var(--brand-primary)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 {tab === 'feed' && <TrendingUp className="w-5 h-5 inline mr-2" />}
@@ -288,51 +314,50 @@ export default function Social() {
                   const colorClass = getActivityColor(activity.type);
                   
                   return (
-                    <div
-                      key={activity.id}
-                      className="bg-slate-900/50 backdrop-blur-sm border border-emerald-900/50 rounded-xl p-6 hover:border-emerald-700/50 transition"
-                    >
-                      {/* User Info */}
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg">
-                          {activity.user.name[0]}
+                    <Card key={activity.id}>
+                      <CardContent className="pt-6">
+                        {/* User Info */}
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-white font-bold text-lg">
+                            {activity.user.name[0]}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-[var(--text-primary)]">{activity.user.name}</h3>
+                            <p className="text-sm text-[var(--text-muted)]">
+                              Level {activity.user.level} • {activity.timestamp}
+                            </p>
+                          </div>
+                          <Icon className={`w-6 h-6 ${colorClass}`} />
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-white">{activity.user.name}</h3>
-                          <p className="text-sm text-gray-400">
-                            Level {activity.user.level} • {activity.timestamp}
-                          </p>
+
+                        {/* Activity Content */}
+                        <p className="text-[var(--text-secondary)] mb-2">
+                          <span className="text-[var(--text-primary)] font-medium">{activity.action}</span>
+                        </p>
+                        <div className="bg-[var(--bg-tertiary)] rounded-[var(--radius-md)] p-4 mb-4">
+                          <p className="text-[var(--text-primary)]">{activity.details}</p>
                         </div>
-                        <Icon className={`w-6 h-6 ${colorClass}`} />
-                      </div>
 
-                      {/* Activity Content */}
-                      <p className="text-gray-300 mb-2">
-                        <span className="text-white font-medium">{activity.action}</span>
-                      </p>
-                      <div className="bg-slate-800/50 rounded-lg p-4 mb-4">
-                        <p className="text-white">{activity.details}</p>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-6">
-                        <button
-                          onClick={() => handleLike(activity.id)}
-                          className={`flex items-center gap-2 transition ${
-                            activity.isLiked
-                              ? 'text-red-400'
-                              : 'text-gray-400 hover:text-red-400'
-                          }`}
-                        >
-                          <Heart className={`w-5 h-5 ${activity.isLiked ? 'fill-current' : ''}`} />
-                          <span>{activity.likes}</span>
-                        </button>
-                        <button className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition">
-                          <MessageCircle className="w-5 h-5" />
-                          <span>{activity.comments}</span>
-                        </button>
-                      </div>
-                    </div>
+                        {/* Actions */}
+                        <div className="flex items-center gap-6">
+                          <button
+                            onClick={() => handleLike(activity.id)}
+                            className={`flex items-center gap-2 transition ${
+                              activity.isLiked
+                                ? 'text-[var(--error)]'
+                                : 'text-[var(--text-muted)] hover:text-[var(--error)]'
+                            }`}
+                          >
+                            <Heart className={`w-5 h-5 ${activity.isLiked ? 'fill-current' : ''}`} />
+                            <span>{activity.likes}</span>
+                          </button>
+                          <button className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--brand-secondary)] transition">
+                            <MessageCircle className="w-5 h-5" />
+                            <span>{activity.comments}</span>
+                          </button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   );
                 })}
               </div>
@@ -340,50 +365,59 @@ export default function Social() {
               {/* Sidebar */}
               <div className="space-y-6">
                 {/* Friend Suggestions */}
-                <div className="bg-slate-900/50 backdrop-blur-sm border border-emerald-900/50 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <UserPlus className="w-5 h-5 text-emerald-400" />
-                    Suggested Friends
-                  </h3>
-                  <div className="space-y-3">
-                    {suggestions.map((user) => (
-                      <div key={user.id} className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                          {user.name[0]}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <UserPlus className="w-5 h-5 text-[var(--brand-primary)]" />
+                      <CardTitle>Suggested Friends</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {suggestions.map((user) => (
+                        <div key={user.id} className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--brand-secondary)] to-purple-600 flex items-center justify-center text-white font-bold">
+                            {user.name[0]}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[var(--text-primary)] font-medium text-sm">{user.name}</p>
+                            <p className="text-xs text-[var(--text-muted)]">Level {user.level}</p>
+                          </div>
+                          <Button 
+                            variant="primary" 
+                            size="sm"
+                            onClick={() => handleFollow(user.id)}
+                          >
+                            Follow
+                          </Button>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-white font-medium text-sm">{user.name}</p>
-                          <p className="text-xs text-gray-400">Level {user.level}</p>
-                        </div>
-                        <button
-                          onClick={() => handleFollow(user.id)}
-                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition"
-                        >
-                          Follow
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {/* Top Performers This Week */}
-                <div className="bg-slate-900/50 backdrop-blur-sm border border-emerald-900/50 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-emerald-400" />
-                    Top This Week
-                  </h3>
-                  <div className="space-y-3">
-                    {leaderboard.slice(0, 5).map((user, index) => (
-                      <div key={user.id} className="flex items-center gap-3">
-                        <span className="text-2xl">{getRankBadge(index + 1)}</span>
-                        <div className="flex-1">
-                          <p className="text-white font-medium text-sm">{user.name}</p>
-                          <p className="text-xs text-emerald-400">{user.points} pts</p>
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-[var(--brand-primary)]" />
+                      <CardTitle>Top This Week</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {leaderboard.slice(0, 5).map((user, index) => (
+                        <div key={user.id} className="flex items-center gap-3">
+                          <span className="text-2xl">{getRankBadge(index + 1)}</span>
+                          <div className="flex-1">
+                            <p className="text-[var(--text-primary)] font-medium text-sm">{user.name}</p>
+                            <p className="text-xs text-[var(--brand-primary)]">{user.points} pts</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           )}
@@ -397,10 +431,10 @@ export default function Social() {
                   <button
                     key={range}
                     onClick={() => setTimeRange(range)}
-                    className={`px-4 py-2 rounded-lg font-medium transition capitalize ${
+                    className={`px-4 py-2 rounded-[var(--radius-md)] font-medium text-sm transition capitalize ${
                       timeRange === range
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-800/50 text-gray-400 hover:bg-slate-800'
+                        ? 'bg-[var(--brand-primary)] text-[var(--text-inverse)]'
+                        : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
                     }`}
                   >
                     {range === 'week' && 'This Week'}
@@ -413,47 +447,45 @@ export default function Social() {
               {/* Leaderboard List */}
               <div className="space-y-3">
                 {leaderboard.map((user) => (
-                  <div
+                  <Card
                     key={user.id}
-                    className={`bg-slate-900/50 backdrop-blur-sm border rounded-xl p-6 flex items-center gap-6 transition ${
-                      user.rank && user.rank <= 3
-                        ? 'border-yellow-500/50 shadow-lg shadow-yellow-500/10'
-                        : 'border-emerald-900/50 hover:border-emerald-700/50'
-                    }`}
+                    className={user.rank && user.rank <= 3 ? 'border-[var(--warning)]/50 shadow-[0_0_20px_rgba(245,158,11,0.1)]' : ''}
                   >
-                    {/* Rank */}
-                    <div className="text-center min-w-[60px]">
-                      <div className="text-3xl mb-1">{getRankBadge(user.rank!)}</div>
-                      {user.rank && user.rank <= 3 && (
-                        <Trophy className="w-6 h-6 text-yellow-400 mx-auto" />
-                      )}
-                    </div>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-6">
+                        {/* Rank */}
+                        <div className="text-center min-w-[60px]">
+                          <div className="text-3xl mb-1">{getRankBadge(user.rank!)}</div>
+                          {user.rank && user.rank <= 3 && (
+                            <Trophy className="w-6 h-6 text-[var(--warning)] mx-auto" />
+                          )}
+                        </div>
 
-                    {/* Avatar */}
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center text-white font-bold text-2xl">
-                      {user.name[0]}
-                    </div>
+                        {/* Avatar */}
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-white font-bold text-2xl">
+                          {user.name[0]}
+                        </div>
 
-                    {/* User Info */}
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-white mb-1">{user.name}</h3>
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="text-gray-400">Level {user.level}</span>
-                        <span className="text-emerald-400 font-semibold">{user.points} points</span>
-                        {user.streak && (
-                          <span className="text-orange-400 flex items-center gap-1">
-                            <Flame className="w-4 h-4" />
-                            {user.streak} day streak
-                          </span>
-                        )}
+                        {/* User Info */}
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">{user.name}</h3>
+                          <div className="flex items-center gap-4 text-sm">
+                            <span className="text-[var(--text-muted)]">Level {user.level}</span>
+                            <span className="text-[var(--brand-primary)] font-semibold">{user.points} points</span>
+                            {user.streak && (
+                              <span className="text-orange-400 flex items-center gap-1">
+                                <Flame className="w-4 h-4" />
+                                {user.streak} day streak
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <Button variant="primary">View Profile</Button>
                       </div>
-                    </div>
-
-                    {/* Actions */}
-                    <button className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition">
-                      View Profile
-                    </button>
-                  </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             </div>
@@ -463,54 +495,52 @@ export default function Social() {
           {activeTab === 'friends' && (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {friends.map((friend) => (
-                <div
-                  key={friend.id}
-                  className="bg-slate-900/50 backdrop-blur-sm border border-emerald-900/50 rounded-xl p-6 text-center hover:border-emerald-700/50 transition"
-                >
-                  {/* Avatar */}
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center text-white font-bold text-3xl mx-auto mb-4">
-                    {friend.name[0]}
-                  </div>
-
-                  {/* Name */}
-                  <h3 className="text-xl font-bold text-white mb-2">{friend.name}</h3>
-
-                  {/* Stats */}
-                  <div className="flex justify-center gap-6 mb-4">
-                    <div>
-                      <p className="text-2xl font-bold text-emerald-400">{friend.level}</p>
-                      <p className="text-xs text-gray-400">Level</p>
+                <Card key={friend.id} className="text-center">
+                  <CardContent className="pt-6">
+                    {/* Avatar */}
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-white font-bold text-3xl mx-auto mb-4">
+                      {friend.name[0]}
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold text-blue-400">{friend.points}</p>
-                      <p className="text-xs text-gray-400">Points</p>
-                    </div>
-                    {friend.streak && (
+
+                    {/* Name */}
+                    <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">{friend.name}</h3>
+
+                    {/* Stats */}
+                    <div className="flex justify-center gap-6 mb-4">
                       <div>
-                        <p className="text-2xl font-bold text-orange-400">{friend.streak} 🔥</p>
-                        <p className="text-xs text-gray-400">Streak</p>
+                        <p className="text-2xl font-bold text-[var(--brand-primary)]">{friend.level}</p>
+                        <p className="text-xs text-[var(--text-muted)]">Level</p>
                       </div>
-                    )}
-                  </div>
+                      <div>
+                        <p className="text-2xl font-bold text-[var(--brand-secondary)]">{friend.points}</p>
+                        <p className="text-xs text-[var(--text-muted)]">Points</p>
+                      </div>
+                      {friend.streak && (
+                        <div>
+                          <p className="text-2xl font-bold text-orange-400">{friend.streak} 🔥</p>
+                          <p className="text-xs text-[var(--text-muted)]">Streak</p>
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <button className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition">
-                      View
-                    </button>
-                    <button
-                      onClick={() => handleUnfollow(friend.id)}
-                      className="flex-1 px-4 py-2 bg-slate-800/50 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-lg font-medium transition"
-                    >
-                      Unfollow
-                    </button>
-                  </div>
-                </div>
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <Button variant="primary" className="flex-1">View</Button>
+                      <Button 
+                        variant="secondary" 
+                        className="flex-1 text-[var(--error)] hover:bg-[var(--error)]/10"
+                        onClick={() => handleUnfollow(friend.id)}
+                      >
+                        Unfollow
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
-        </div>
+        </main>
       </div>
-    </Layout>
+    </div>
   );
 }

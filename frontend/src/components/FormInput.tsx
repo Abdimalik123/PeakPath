@@ -12,6 +12,7 @@ interface FormInputProps {
   min?: string | number;
   max?: string | number;
   className?: string;
+  icon?: React.ReactNode;
 }
 
 export function FormInput({ 
@@ -25,9 +26,10 @@ export function FormInput({
   rows = 3,
   min,
   max,
-  className = ""
+  className = '',
+  icon
 }: FormInputProps) {
-  const baseInputClass = "w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition";
+  const baseInputClass = `w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] focus:ring-1 focus:ring-[var(--brand-primary)]/20 transition-all duration-200 ${icon ? 'pl-12' : ''}`;
 
   const renderInput = () => {
     switch (type) {
@@ -75,10 +77,17 @@ export function FormInput({
 
   return (
     <div className={className}>
-      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
         {label}
       </label>
-      {renderInput()}
+      <div className="relative">
+        {icon && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
+            {icon}
+          </div>
+        )}
+        {renderInput()}
+      </div>
     </div>
   );
 }

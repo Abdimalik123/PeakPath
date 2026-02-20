@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Layout from '../components/Layout';
+import { Navigation } from '../components/Navigation';
 import { Camera, Upload, X, Trash2, Calendar, TrendingDown, Image as ImageIcon, ArrowLeftRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -182,18 +182,17 @@ export default function ProgressPhotos() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="p-6 flex items-center justify-center min-h-screen">
-          <div className="w-12 h-12 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </Layout>
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin"></div>
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <div className="p-6">
-        <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <Navigation currentPage="/progress" />
+      <div className="lg:ml-64 min-h-screen">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -394,7 +393,7 @@ export default function ProgressPhotos() {
               ))}
             </div>
           )}
-        </div>
+        </main>
       </div>
 
       {/* Upload Modal */}
@@ -548,6 +547,6 @@ export default function ProgressPhotos() {
           </div>
         </div>
       )}
-    </Layout>
+    </div>
   );
 }
