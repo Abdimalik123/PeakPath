@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
+import { HabitCard } from '../components/HabitCard';
+import { Navigation } from '../components/Navigation';
+import { PageHeader } from '../components/PageHeader';
+import { EmptyState } from '../components/EmptyState';
+import { Modal } from '../components/Modal';
+import { FormInput } from '../components/FormInput';
 
 interface Habit {
   id: number;
@@ -187,49 +193,23 @@ const Habits: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#121420] text-gray-300">
-      {/* Navigation */}
-      <nav className="border-b border-white/5 bg-[#121420]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center gap-8">
-              <Link to="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)]"></div>
-                <h1 className="text-xl font-bold tracking-tight text-white">LIFE<span className="text-cyan-400">TRACKER</span></h1>
-              </Link>
-              
-              <div className="hidden md:flex items-center gap-6">
-                <Link to="/dashboard" className="text-gray-400 hover:text-white font-medium text-sm transition">DASHBOARD</Link>
-                <Link to="/workouts" className="text-gray-400 hover:text-white font-medium text-sm transition">WORKOUTS</Link>
-                <Link to="/habits" className="text-cyan-400 font-medium text-sm border-b-2 border-cyan-400 pb-1">HABITS</Link>
-                <Link to="/goals" className="text-gray-400 hover:text-white font-medium text-sm transition">GOALS</Link>
-              </div>
-            </div>
-            
-            <Link to="/profile" className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center text-[#121420] font-bold shadow-[0_0_20px_rgba(34,211,238,0.3)]">
-              U
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <Navigation currentPage="/habits" />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-white mb-2">Daily Habits</h2>
-            <p className="text-gray-400 text-sm uppercase tracking-wider">ROUTINE BUILDER // STREAK TRACKING</p>
-          </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-cyan-500 hover:bg-cyan-400 text-[#121420] px-6 py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition shadow-[0_0_20px_rgba(34,211,238,0.3)] flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Add Habit
-          </button>
-        </div>
+        <PageHeader 
+          title="Daily Habits"
+          subtitle="ROUTINE BUILDER // STREAK TRACKING"
+          actionButton={{
+            label: "Add Habit",
+            onClick: () => setShowAddModal(true),
+            icon: (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            )
+          }}
+        />
 
         {error && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl">
@@ -242,58 +222,39 @@ const Habits: React.FC = () => {
           {/* Habits List */}
           <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             {habits.length === 0 ? (
-              <div className="col-span-2 bg-[#1c1f2e] border border-white/5 p-12 rounded-[2rem] text-center">
-                <svg className="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <h3 className="text-xl font-bold text-white mb-2">No Habits Yet</h3>
-                <p className="text-gray-500 mb-6">Start building your daily routine</p>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="bg-cyan-500 hover:bg-cyan-400 text-[#121420] px-6 py-2 rounded-xl font-bold text-sm uppercase tracking-wider transition"
-                >
-                  Create First Habit
-                </button>
-              </div>
+              <EmptyState
+                className="col-span-2"
+                icon={
+                  <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                }
+                title="No Habits Yet"
+                description="Start building your daily routine"
+                actionButton={{
+                  label: "Create First Habit",
+                  onClick: () => setShowAddModal(true)
+                }}
+              />
             ) : (
-              habits.map((habit) => (
-                <div
-                  key={habit.id}
-                  onClick={() => setSelectedHabit(habit)}
-                  className="bg-[#1c1f2e] border border-white/5 p-6 rounded-[2rem] hover:border-blue-500/50 transition-all cursor-pointer group h-fit"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-400 group-hover:bg-blue-500 group-hover:text-[#121420] transition-colors">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleLogHabit(habit.id);
-                      }}
-                      className="p-2 bg-cyan-500/10 hover:bg-cyan-500 rounded-lg transition text-cyan-400 hover:text-[#121420]"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </button>
+              habits.map((habit) => {
+                const habitData = {
+                  id: habit.id.toString(),
+                  name: habit.name,
+                  completed: false, // You may want to track this from logs
+                  streak: getStreakDays(habitLogs.filter(log => log.id === habit.id)),
+                  category: habit.frequency
+                };
+                
+                return (
+                  <div key={habit.id} onClick={() => setSelectedHabit(habit)}>
+                    <HabitCard 
+                      habit={habitData}
+                      onToggle={(id) => handleLogHabit(parseInt(id))}
+                    />
                   </div>
-                  
-                  <h4 className="text-lg font-bold text-white mb-2">{habit.name}</h4>
-                  <p className="text-sm text-gray-500 mb-4">{habit.description}</p>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500 uppercase tracking-wider bg-white/5 px-3 py-1 rounded-full">
-                      {habit.frequency}
-                    </span>
-                    <span className="text-xs text-cyan-400 font-mono">
-                      {habit.reminder_time}
-                    </span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
@@ -388,94 +349,67 @@ const Habits: React.FC = () => {
         </div>
       </div>
 
-      {/* Add Habit Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1c1f2e] border border-white/5 rounded-[2rem] p-8 max-w-md w-full">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-white">Create Habit</h3>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="p-2 hover:bg-white/5 rounded-lg transition"
-              >
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        title="Create Habit"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FormInput
+            label="Habit Name"
+            value={formData.name}
+            onChange={(value) => setFormData({ ...formData, name: value })}
+            placeholder="e.g., Morning Meditation"
+            required
+          />
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Habit Name</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
-                  placeholder="e.g., Morning Meditation"
-                  required
-                />
-              </div>
+          <FormInput
+            label="Description"
+            type="textarea"
+            value={formData.description}
+            onChange={(value) => setFormData({ ...formData, description: value })}
+            placeholder="What does this habit involve?"
+            required
+          />
 
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition resize-none"
-                  rows={3}
-                  placeholder="What does this habit involve?"
-                  required
-                />
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormInput
+              label="Frequency"
+              type="select"
+              value={formData.frequency}
+              onChange={(value) => setFormData({ ...formData, frequency: value })}
+              options={[
+                { value: 'daily', label: 'Daily' },
+                { value: 'weekly', label: 'Weekly' },
+                { value: 'monthly', label: 'Monthly' }
+              ]}
+            />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Frequency</label>
-                  <select
-                    value={formData.frequency}
-                    onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-                    className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
-                  >
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Reminder Time</label>
-                  <input
-                    type="time"
-                    value={formData.reminder_time}
-                    onChange={(e) => setFormData({ ...formData, reminder_time: e.target.value })}
-                    className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Next Occurrence</label>
-                <input
-                  type="date"
-                  value={formData.next_occurrence}
-                  onChange={(e) => setFormData({ ...formData, next_occurrence: e.target.value })}
-                  className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-cyan-500 hover:bg-cyan-400 text-[#121420] py-4 rounded-xl font-bold uppercase tracking-wider text-sm transition shadow-[0_0_20px_rgba(34,211,238,0.3)]"
-              >
-                Create Habit
-              </button>
-            </form>
+            <FormInput
+              label="Reminder Time"
+              type="time"
+              value={formData.reminder_time}
+              onChange={(value) => setFormData({ ...formData, reminder_time: value })}
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <FormInput
+            label="Next Occurrence"
+            type="date"
+            value={formData.next_occurrence}
+            onChange={(value) => setFormData({ ...formData, next_occurrence: value })}
+            required
+          />
+
+          <button
+            type="submit"
+            className="w-full bg-cyan-500 hover:bg-cyan-400 text-[#121420] py-4 rounded-xl font-bold uppercase tracking-wider text-sm transition shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+          >
+            Create Habit
+          </button>
+        </form>
+      </Modal>
     </div>
   );
 };

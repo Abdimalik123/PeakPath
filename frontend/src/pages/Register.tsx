@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { register } from "../api/auth";
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { register } from '../api/auth';
+import { Navigation } from '../components/Navigation';
+import { FormInput } from '../components/FormInput';
 
 function Register() {
   const [firstname, setFirstname] = useState('')
@@ -74,19 +76,7 @@ function Register() {
 
   return (
     <div className="min-h-screen bg-[#121420] text-gray-300 font-sans selection:bg-cyan-500/30">
-      {/* Navigation */}
-      <nav className="border-b border-white/5 bg-[#121420]/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)]"></div>
-              <h1 className="text-xl font-bold text-white tracking-tight">LIFE<span className="text-cyan-400">TRACKER</span></h1>
-            </Link>
-            <Link to="/login" className="text-sm font-medium hover:text-cyan-400 transition">Login</Link>
-          </div>
-        </div>
-      </nav>
-
+      <Navigation showAuthButtons={true} />
       {/* Register Form Container */}
       <div className="max-w-md mx-auto px-4 py-16">
         <div className="bg-[#1c1f2e] border border-white/5 rounded-[2.5rem] shadow-2xl p-8 md:p-10 relative overflow-hidden">

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { login } from '../api/auth';
+import client from '../api/client';
+import { Navigation } from '../components/Navigation';
+import { FormInput } from '../components/FormInput';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -26,7 +28,7 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await login(formData);
+      const response = await client.post('/login', formData);
       
       // Check if login was successful and token exists
       if (response.data && response.data.token) {
@@ -53,26 +55,7 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#121420] text-gray-300 font-sans">
       
-      {/* Navigation */}
-      <nav className="border-b border-white/5 bg-[#121420]/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)]"></div>
-              <h1 className="text-xl font-bold tracking-tight text-white">LIFE<span className="text-cyan-400">TRACKER</span></h1>
-            </Link>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-400">Don't have an account?</span>
-              <Link 
-                to="/register" 
-                className="bg-cyan-500 hover:bg-cyan-400 text-[#121420] px-6 py-2 rounded-full text-sm font-bold transition shadow-[0_0_20px_rgba(34,211,238,0.3)]"
-              >
-                Sign Up
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation showAuthButtons={true} />
 
       {/* Login Form Section */}
       <div className="flex items-center justify-center min-h-[calc(100vh-5rem)] px-4 py-12">
@@ -100,37 +83,23 @@ const Login: React.FC = () => {
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               
-              {/* Email Field */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-bold text-white uppercase tracking-wider mb-2">
-                  Email Address
-                </label>
-                <input
+              <div className="space-y-4">
+                <FormInput
+                  label="Email Address"
                   type="email"
-                  id="email"
-                  name="email"
                   value={formData.email}
-                  onChange={handleChange}
+                  onChange={(value) => setFormData({ ...formData, email: value })}
+                  placeholder="your@email.com"
                   required
-                  className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition"
-                  placeholder="your.email@example.com"
                 />
-              </div>
 
-              {/* Password Field */}
-              <div>
-                <label htmlFor="password" className="block text-sm font-bold text-white uppercase tracking-wider mb-2">
-                  Password
-                </label>
-                <input
+                <FormInput
+                  label="Password"
                   type="password"
-                  id="password"
-                  name="password"
                   value={formData.password}
-                  onChange={handleChange}
+                  onChange={(value) => setFormData({ ...formData, password: value })}
+                  placeholder="••••••••"
                   required
-                  className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition"
-                  placeholder="Enter your password"
                 />
               </div>
 

@@ -6,6 +6,9 @@ node_modules/
 venv/
 backend/venv/
 
+# aws
+.aws/
+
 # Python cache and compiled files
 __pycache__/
 *.py[cod]
@@ -13,15 +16,40 @@ __pycache__/
 
 # Environment and sensitive files
 .env
-db.py
+*.env
+backend/.env
+
+# Terraform sensitive files
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+
+# Terraform state files (contain sensitive infrastructure details)
+terraform.tfstate
+terraform.tfstate.backup
+
+# Terraform variable values (may contain secrets/passwords)
+terraform.tfvars
+
+# Terraform lock file (optional, but often ignored)
+.terraform.lock.hcl
+
+# Terraform working directory
+.terraform/
+
+
+# Build output
+frontend/dist/
+
+# Runtime logs
+backend/logs/
+*.log
+*.tmp
 
 # OS-specific clutter
 .DS_Store
 Thumbs.db
-
-# Logs and temp files
-*.log
-*.tmp
 
 # IDE/editor settings
 .vscode/

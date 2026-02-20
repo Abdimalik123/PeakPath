@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { fetchDashboard, DashboardData } from '../api/dashboard';
+import { WorkoutCard } from '../components/WorkoutCard';
+import { GoalProgress } from '../components/GoalProgress';
+import { Navigation } from '../components/Navigation';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -67,51 +70,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#121420] text-gray-300">
       
-      {/* Navigation */}
-      <nav className="border-b border-white/5 bg-[#121420]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center gap-8">
-              <Link to="/dashboard" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)]"></div>
-                <h1 className="text-xl font-bold tracking-tight text-white">LIFE<span className="text-cyan-400">TRACKER</span></h1>
-              </Link>
-              
-              <div className="hidden md:flex items-center gap-6">
-                <Link to="/dashboard" className="text-cyan-400 font-medium text-sm border-b-2 border-cyan-400 pb-1">DASHBOARD</Link>
-                <Link to="/workouts" className="text-gray-400 hover:text-white font-medium text-sm transition">WORKOUTS</Link>
-                <Link to="/habits" className="text-gray-400 hover:text-white font-medium text-sm transition">HABITS</Link>
-                <Link to="/goals" className="text-gray-400 hover:text-white font-medium text-sm transition">GOALS</Link>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <button className="p-2 hover:bg-white/5 rounded-lg transition">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </button>
-              <Link to="/profile" className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center text-[#121420] font-bold shadow-[0_0_20px_rgba(34,211,238,0.3)] cursor-pointer">
-                {dashboardData.user.name.charAt(0)}
-              </Link>
-              <button
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  localStorage.removeItem('onboarding_complete');
-                  localStorage.removeItem('user');
-                  navigate('/');
-                }}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
-                </svg>
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation currentPage="/dashboard" />
 
       {/* Main Dashboard Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -235,28 +194,13 @@ const Dashboard: React.FC = () => {
                 <p className="text-gray-500 text-center py-8">No workouts yet. Start your first workout!</p>
               ) : (
                 <div className="space-y-4">
-                  {dashboardData.recent_workouts.map((workout, idx) => {
-                    const colors = ['cyan', 'blue', 'purple', 'emerald', 'violet'];
-                    const color = colors[idx % colors.length];
-                    
-                    return (
-                      <div key={workout.id} className="flex items-center gap-4 p-5 bg-[#0f111a] rounded-2xl border border-white/5 hover:border-white/10 transition cursor-pointer group">
-                        <div className={`w-12 h-12 bg-${color}-500/10 rounded-xl flex items-center justify-center group-hover:bg-${color}-500 transition-colors`}>
-                          <svg className={`w-6 h-6 text-${color}-400 group-hover:text-[#121420] transition-colors`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-white mb-1">{workout.type}</h4>
-                          <p className="text-xs text-gray-500 font-mono uppercase tracking-wider">{formatDate(workout.date)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-white">{workout.duration}<span className="text-gray-500 text-sm">min</span></p>
-                          <p className="text-xs text-gray-500 uppercase tracking-wider">{workout.exercise_count} exercises</p>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {dashboardData.recent_workouts.map((workout) => (
+                    <WorkoutCard 
+                      key={workout.id} 
+                      workout={workout} 
+                      onClick={(id) => console.log('Navigate to workout:', id)}
+                    />
+                  ))}
                 </div>
               )}
             </div>
@@ -277,18 +221,7 @@ const Dashboard: React.FC = () => {
               ) : (
                 <div className="space-y-5">
                   {dashboardData.active_goals.slice(0, 3).map((goal) => (
-                    <div key={goal.id}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-bold text-white uppercase tracking-wider">{goal.name}</span>
-                        <span className="text-sm font-mono text-cyan-400">{goal.progress}/{goal.target}</span>
-                      </div>
-                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-cyan-400 rounded-full shadow-[0_0_10px_#22d3ee]" 
-                          style={{width: `${goal.progress_percentage}%`}}
-                        ></div>
-                      </div>
-                    </div>
+                    <GoalProgress key={goal.id} goal={goal} />
                   ))}
                 </div>
               )}

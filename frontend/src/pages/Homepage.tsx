@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Navigation } from '../components/Navigation';
 
 const HomePage: React.FC = () => {
   const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
@@ -9,37 +10,7 @@ const HomePage: React.FC = () => {
     <div className="min-h-screen bg-[#121420] text-gray-300 font-sans selection:bg-cyan-500/30">
       
       {/* Navigation: Transparent & Sleek */}
-      <nav className="border-b border-white/5 bg-[#121420]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center gap-2">
-              {/* Logo with Cyan Glow */}
-              <div className="w-8 h-8 rounded-full bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)]"></div>
-              <h1 className="text-xl font-bold tracking-tight text-white">LIFE<span className="text-cyan-400">TRACKER</span></h1>
-            </div>
-            <div className="flex items-center gap-8">
-              {hasToken ? (
-                <Link 
-                  to="/dashboard" 
-                  className="bg-cyan-500 hover:bg-cyan-400 text-[#121420] px-6 py-2 rounded-full text-sm font-bold transition shadow-[0_0_20px_rgba(34,211,238,0.3)]"
-                >
-                  Go to Dashboard
-                </Link>
-              ) : (
-                <>
-                  <Link to="/login" className="text-sm font-medium hover:text-cyan-400 transition">Login</Link>
-                  <Link 
-                    to="/register" 
-                    className="bg-cyan-500 hover:bg-cyan-400 text-[#121420] px-6 py-2 rounded-full text-sm font-bold transition shadow-[0_0_20px_rgba(34,211,238,0.3)]"
-                  >
-                    Sign Up
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation showAuthButtons={true} />
 
       {/* Hero Section: Data-centric and Dark */}
       <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 overflow-hidden">
