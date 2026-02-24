@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Navigation } from '../components/Navigation';
 import { Camera, Upload, X, Trash2, Calendar, TrendingDown, Image as ImageIcon, ArrowLeftRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
+import client from '../api/client';
 
 interface ProgressPhoto {
   id: number;
@@ -13,7 +14,7 @@ interface ProgressPhoto {
 }
 
 export default function ProgressPhotos() {
-  const navigate = useNavigate();
+  const { showToast } = useToast();
   const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -33,54 +34,16 @@ export default function ProgressPhotos() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
     loadPhotos();
-  }, [navigate]);
+  }, []);
 
   const loadPhotos = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetchProgressPhotos();
-      // setPhotos(response.data);
-      
-      // Mock data
-      const mockPhotos: ProgressPhoto[] = [
-        {
-          id: 1,
-          url: 'https://via.placeholder.com/400x600/10b981/ffffff?text=Jan+2025',
-          date: '2025-01-01',
-          weight: 85,
-          notes: 'Starting my journey!',
-          type: 'front'
-        },
-        {
-          id: 2,
-          url: 'https://via.placeholder.com/400x600/3b82f6/ffffff?text=Feb+2025',
-          date: '2025-02-01',
-          weight: 82,
-          notes: 'Lost 3kg, feeling great!',
-          type: 'front'
-        },
-        {
-          id: 3,
-          url: 'https://via.placeholder.com/400x600/8b5cf6/ffffff?text=Mar+2025',
-          date: '2025-03-01',
-          weight: 80,
-          notes: 'Seeing real progress now',
-          type: 'front'
-        },
-      ];
-      
-      setPhotos(mockPhotos);
+      const response = await client.get('/progress-photos');
+      setPhotos(response.data.photos || []);
     } catch (error: any) {
-      if (error?.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      }
+      console.error('Failed to load progress photos:', error);
+      setPhotos([]);
     } finally {
       setLoading(false);
     }
@@ -90,7 +53,7 @@ export default function ProgressPhotos() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        alert('File size must be less than 10MB');
+        showToast('File size must be less than 10MB', 'warning');
         return;
       }
       
@@ -111,38 +74,34 @@ export default function ProgressPhotos() {
 
     setUploading(true);
     try {
-      // TODO: Implement actual file upload
-      // const formData = new FormData();
-      // formData.append('photo', newPhoto.file);
-      // formData.append('date', newPhoto.date);
-      // formData.append('weight', newPhoto.weight);
-      // formData.append('notes', newPhoto.notes);
-      // formData.append('type', newPhoto.type);
-      // await uploadProgressPhoto(formData);
+      const formData = new FormData();
+      formData.append('photo', newPhoto.file);
+      formData.append('date', newPhoto.date);
+      if (newPhoto.weight) formData.append('weight', newPhoto.weight);
+      if (newPhoto.notes) formData.append('notes', newPhoto.notes);
+      formData.append('type', newPhoto.type);
 
-      // Mock success
-      const mockNewPhoto: ProgressPhoto = {
-        id: Date.now(),
-        url: newPhoto.preview,
-        date: newPhoto.date,
-        weight: newPhoto.weight ? parseFloat(newPhoto.weight) : undefined,
-        notes: newPhoto.notes,
-        type: newPhoto.type
-      };
-      
-      setPhotos([mockNewPhoto, ...photos]);
-      setShowUploadModal(false);
-      setNewPhoto({
-        file: null,
-        preview: '',
-        date: new Date().toISOString().split('T')[0],
-        weight: '',
-        notes: '',
-        type: 'front'
+      const response = await client.post('/progress-photos', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
+
+      if (response.data.success) {
+        setPhotos([response.data.photo, ...photos]);
+        setShowUploadModal(false);
+        setNewPhoto({
+          file: null,
+          preview: '',
+          date: new Date().toISOString().split('T')[0],
+          weight: '',
+          notes: '',
+          type: 'front'
+        });
+      }
     } catch (error) {
       console.error('Failed to upload photo:', error);
-      alert('Failed to upload photo. Please try again.');
+      showToast('Failed to upload photo. Please try again.', 'error');
     } finally {
       setUploading(false);
     }
@@ -152,12 +111,13 @@ export default function ProgressPhotos() {
     if (!confirm('Delete this photo?')) return;
     
     try {
-      // TODO: API call to delete photo
-      // await deleteProgressPhoto(id);
-      setPhotos(photos.filter(p => p.id !== id));
+      const response = await client.delete(`/progress-photos/${id}`);
+      if (response.data.success) {
+        setPhotos(photos.filter(p => p.id !== id));
+      }
     } catch (error) {
       console.error('Failed to delete photo:', error);
-      alert('Failed to delete photo.');
+      showToast('Failed to delete photo.', 'error');
     }
   };
 

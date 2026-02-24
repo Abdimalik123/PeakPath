@@ -1,5 +1,5 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface StatCardProps {
   title: string;
@@ -17,8 +17,8 @@ interface StatCardProps {
 const iconColorClasses = {
   green: 'bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]',
   blue: 'bg-[var(--brand-secondary)]/15 text-[var(--brand-secondary)]',
-  purple: 'bg-purple-500/15 text-purple-400',
-  orange: 'bg-orange-500/15 text-orange-400',
+  purple: 'bg-[var(--brand-secondary)]/15 text-[var(--brand-secondary)]',
+  orange: 'bg-[var(--warning)]/15 text-[var(--warning)]',
   red: 'bg-[var(--error)]/15 text-[var(--error)]',
 };
 

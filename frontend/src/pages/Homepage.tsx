@@ -2,10 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { Card, CardContent } from '../components/Card';
+import { useAuth } from '../contexts/AuthContext';
 import { Zap, CheckCircle, TrendingUp, BarChart3 } from 'lucide-react';
 
 const HomePage: React.FC = () => {
-  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
+  const { isAuthenticated } = useAuth();
 
   const features = [
     {
@@ -49,7 +50,7 @@ const HomePage: React.FC = () => {
             Real-time analytics for the modern athlete.
           </p>
           <div className="flex justify-center gap-4">
-            {hasToken ? (
+            {isAuthenticated ? (
               <Link to="/dashboard" className="pp-btn-primary text-base px-8 py-4">
                 Open Dashboard
               </Link>

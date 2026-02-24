@@ -8,19 +8,14 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     strictPort: false,
-    watch: {
-      usePolling: true,
-    },
-    hmr: false,  // Disable hot reload for WSL
     proxy: {
       '/api': {
-        target: 'http://localhost:5400',
+        target: 'http://localhost:5000',
         changeOrigin: true,
       }
     }
   },
   optimizeDeps: {
-    force: true,  // Force re-optimization
     include: ['react', 'react-dom', 'react/jsx-dev-runtime']
   }
 })

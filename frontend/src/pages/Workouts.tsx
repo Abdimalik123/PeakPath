@@ -6,11 +6,24 @@ import { EmptyState } from '../components/EmptyState';
 import { AddWorkoutModal } from '../components/AddWorkoutModal';
 import { WorkoutDetails } from '../components/WorkoutDetails';
 import { useWorkouts } from '../hooks/useWorkouts';
+import { useToast } from '../contexts/ToastContext';
+import client from '../api/client';
+
+interface AvailableExercise {
+  id: number;
+  name: string;
+  category: string;
+  muscle_group: string;
+  equipment: string;
+  description: string;
+}
 
 const Workouts: React.FC = () => {
+  const { showToast } = useToast();
   const {
     workouts,
     selectedWorkout,
+    setSelectedWorkout,
     loading,
     error,
     formData,
@@ -19,15 +32,17 @@ const Workouts: React.FC = () => {
     fetchWorkoutDetails,
     handleSubmit,
     handleDelete,
-    removeExercise
+    addExercise,
+    removeExercise,
+    addExerciseToWorkout
   } = useWorkouts();
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
   
   // Exercise modal state
-  const [availableExercises, setAvailableExercises] = useState<any[]>([]);
-  const [filteredExercises, setFilteredExercises] = useState<any[]>([]);
+  const [availableExercises, setAvailableExercises] = useState<AvailableExercise[]>([]);
+  const [filteredExercises, setFilteredExercises] = useState<AvailableExercise[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState('');
@@ -56,6 +71,7 @@ const Workouts: React.FC = () => {
     const success = await handleSubmit(e);
     if (success) {
       setShowAddModal(false);
+      showToast('Workout logged successfully!');
     }
   };
   
@@ -84,32 +100,74 @@ const Workouts: React.FC = () => {
     if (!newExerciseForm.name || !newExerciseForm.category) {
       return;
     }
-    // Mock implementation - replace with actual API call
-    const newExercise = {
-      id: Date.now(),
-      name: newExerciseForm.name,
-      category: newExerciseForm.category,
-      muscle_group: '',
-      equipment: '',
-      description: newExerciseForm.description
-    };
-    setAvailableExercises([...availableExercises, newExercise]);
-    setCurrentExerciseForm({ ...currentExerciseForm, exercise_id: newExercise.id.toString() });
-    setIsCreatingNewExercise(false);
-    setNewExerciseForm({ name: '', category: '', description: '' });
+    try {
+      const response = await client.post('/exercises/create', {
+        name: newExerciseForm.name,
+        category: newExerciseForm.category,
+        description: newExerciseForm.description
+      });
+      if (response.data.success) {
+        // Reload exercises from API to get the new one
+        const exResponse = await client.get('/exercises');
+        if (exResponse.data.success) {
+          setAvailableExercises(exResponse.data.exercises);
+        }
+        setCurrentExerciseForm({ ...currentExerciseForm, exercise_id: response.data.exercise_id.toString() });
+        setIsCreatingNewExercise(false);
+        setNewExerciseForm({ name: '', category: '', description: '' });
+        showToast('Exercise created!');
+      }
+    } catch (err) {
+      showToast('Failed to create exercise', 'error');
+    }
   };
   
-  const handleAddExerciseToList = () => {
-    if (!currentExerciseForm.exercise_id) return;
+  const handleAddExerciseToList = async () => {
+    if (!currentExerciseForm.exercise_id) {
+      showToast('Please select an exercise', 'warning');
+      return;
+    }
     
     const selectedExercise = availableExercises.find(
       ex => ex.id === parseInt(currentExerciseForm.exercise_id)
     );
     
-    if (!selectedExercise) return;
+    if (!selectedExercise) {
+      showToast('Exercise not found', 'error');
+      return;
+    }
     
-    // This would be handled by the useWorkouts hook in a real implementation
-    resetExerciseModal();
+    // Check if we're adding to an existing workout or a new one being created
+    if (selectedWorkout) {
+      // Adding to existing workout - use API
+      const exerciseData = {
+        exercise_id: parseInt(currentExerciseForm.exercise_id),
+        sets: parseInt(currentExerciseForm.sets) || null,
+        reps: parseInt(currentExerciseForm.reps) || null,
+        weight: parseFloat(currentExerciseForm.weight) || null,
+        duration: parseInt(currentExerciseForm.duration) || null,
+        notes: currentExerciseForm.notes || null
+      };
+      
+      const success = await addExerciseToWorkout(selectedWorkout.id, exerciseData);
+      if (success) {
+        resetExerciseModal();
+      }
+    } else {
+      // Adding to new workout being created - add to temporary list
+      const exerciseToAdd = {
+        exercise_id: parseInt(currentExerciseForm.exercise_id),
+        exercise_name: selectedExercise.name,
+        sets: parseInt(currentExerciseForm.sets) || 0,
+        reps: parseInt(currentExerciseForm.reps) || 0,
+        weight: parseFloat(currentExerciseForm.weight) || 0,
+        duration: parseInt(currentExerciseForm.duration) || 0,
+        notes: currentExerciseForm.notes || ''
+      };
+      
+      addExercise(exerciseToAdd);
+      resetExerciseModal();
+    }
   };
 
   // Filter exercises when search/filter changes
@@ -129,14 +187,19 @@ const Workouts: React.FC = () => {
     setFilteredExercises(filtered);
   }, [searchQuery, selectedCategory, selectedMuscleGroup, availableExercises]);
   
-  // Load available exercises on mount
+  // Load available exercises from API on mount
   useEffect(() => {
-    // Mock data - replace with actual API call
-    setAvailableExercises([
-      { id: 1, name: 'Push-ups', category: 'Chest', muscle_group: 'Chest', equipment: 'Bodyweight' },
-      { id: 2, name: 'Squats', category: 'Legs', muscle_group: 'Quadriceps', equipment: 'Bodyweight' },
-      { id: 3, name: 'Pull-ups', category: 'Back', muscle_group: 'Lats', equipment: 'Pull-up bar' }
-    ]);
+    const fetchExercises = async () => {
+      try {
+        const response = await client.get('/exercises');
+        if (response.data.success) {
+          setAvailableExercises(response.data.exercises);
+        }
+      } catch (err) {
+        console.error('Failed to load exercises:', err);
+      }
+    };
+    fetchExercises();
   }, []);
   
   if (loading) {
@@ -193,7 +256,7 @@ const Workouts: React.FC = () => {
                     type: workout.type,
                     date: workout.date,
                     duration: workout.duration,
-                    exercise_count: 0 // You may want to track this from exercises
+                    exercise_count: workout.exercise_count || 0
                   };
                   
                   return (
@@ -209,7 +272,18 @@ const Workouts: React.FC = () => {
 
           <div className="space-y-6">
             {selectedWorkout && (
-              <WorkoutDetails workout={selectedWorkout} onDelete={handleDelete} />
+              <WorkoutDetails 
+                workout={selectedWorkout} 
+                onDelete={handleDelete}
+                onClose={() => setSelectedWorkout(null)}
+                onAddExercise={() => {
+                  if (selectedWorkout) {
+                    setShowAddExerciseModal(true);
+                  } else {
+                    showToast('Please select a workout first', 'warning');
+                  }
+                }}
+              />
             )}
           </div>
         </div>
@@ -230,11 +304,11 @@ const Workouts: React.FC = () => {
       {/* Add Exercise Modal */}
       {showAddExerciseModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-[#1c1f2e] border border-white/5 rounded-[2rem] p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="pp-card p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-white">Add Exercise</h3>
-              <button onClick={resetExerciseModal} className="p-2 hover:bg-white/5 rounded-lg transition">
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h3 className="text-2xl font-bold text-[var(--text-primary)]">Add Exercise</h3>
+              <button onClick={resetExerciseModal} className="p-2 hover:bg-[var(--bg-tertiary)] rounded-lg transition">
+                <svg className="w-6 h-6 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -245,7 +319,7 @@ const Workouts: React.FC = () => {
                 type="button"
                 onClick={() => setIsCreatingNewExercise(false)}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold uppercase tracking-wider transition ${
-                  !isCreatingNewExercise ? 'bg-cyan-500 text-[#121420]' : 'bg-[#0f111a] text-gray-400 hover:text-white'
+                  !isCreatingNewExercise ? 'pp-btn-primary' : 'pp-btn-ghost'
                 }`}
               >
                 Select Existing
@@ -254,7 +328,7 @@ const Workouts: React.FC = () => {
                 type="button"
                 onClick={() => setIsCreatingNewExercise(true)}
                 className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold uppercase tracking-wider transition ${
-                  isCreatingNewExercise ? 'bg-cyan-500 text-[#121420]' : 'bg-[#0f111a] text-gray-400 hover:text-white'
+                  isCreatingNewExercise ? 'pp-btn-primary' : 'pp-btn-ghost'
                 }`}
               >
                 Create New
@@ -264,31 +338,31 @@ const Workouts: React.FC = () => {
             {isCreatingNewExercise ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Exercise Name</label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Exercise Name</label>
                   <input
                     type="text"
                     value={newExerciseForm.name}
                     onChange={(e) => setNewExerciseForm({ ...newExerciseForm, name: e.target.value })}
-                    className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                    className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] transition"
                     placeholder="e.g., Bench Press"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category</label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Category</label>
                   <input
                     type="text"
                     value={newExerciseForm.category}
                     onChange={(e) => setNewExerciseForm({ ...newExerciseForm, category: e.target.value })}
-                    className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                    className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] transition"
                     placeholder="e.g., Chest, Cardio, Legs"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description (Optional)</label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Description (Optional)</label>
                   <textarea
                     value={newExerciseForm.description}
                     onChange={(e) => setNewExerciseForm({ ...newExerciseForm, description: e.target.value })}
-                    className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition resize-none"
+                    className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] transition resize-none"
                     rows={2}
                     placeholder="Brief description"
                   />
@@ -296,7 +370,7 @@ const Workouts: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCreateNewExercise}
-                  className="w-full bg-cyan-500 hover:bg-cyan-400 text-[#121420] py-4 rounded-xl font-bold uppercase tracking-wider text-sm transition shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+                  className="w-full pp-btn-primary"
                 >
                   Create & Continue
                 </button>
@@ -304,25 +378,25 @@ const Workouts: React.FC = () => {
             ) : (
               <form onSubmit={(e) => { e.preventDefault(); handleAddExerciseToList(); }} className="space-y-4">
                 {/* Search and Filters */}
-                <div className="space-y-3 pb-4 border-b border-white/5">
+                <div className="space-y-3 pb-4 border-b border-[var(--border-subtle)]">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Search Exercises</label>
+                    <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Search Exercises</label>
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                      className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] transition"
                       placeholder="Search by name..."
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Category</label>
+                      <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Category</label>
                       <select
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                        className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] transition"
                       >
                         <option value="">All Categories</option>
                         {getUniqueCategories().map((cat) => (
@@ -331,11 +405,11 @@ const Workouts: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Muscle Group</label>
+                      <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Muscle Group</label>
                       <select
                         value={selectedMuscleGroup}
                         onChange={(e) => setSelectedMuscleGroup(e.target.value)}
-                        className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                        className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] transition"
                       >
                         <option value="">All Muscles</option>
                         {getUniqueMuscleGroups().map((muscle) => (
@@ -347,7 +421,7 @@ const Workouts: React.FC = () => {
 
                   {isFiltering && (
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500">
+                      <span className="text-[var(--text-muted)]">
                         {filteredExercises.length === 0 ? 'No matches' :
                          filteredExercises.length > MAX_CARDS_DISPLAY ? `${filteredExercises.length} results (narrow down to see cards)` :
                          `Showing ${filteredExercises.length} exercise${filteredExercises.length !== 1 ? 's' : ''}`}
@@ -355,7 +429,7 @@ const Workouts: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => { setSearchQuery(''); setSelectedCategory(''); setSelectedMuscleGroup(''); }}
-                        className="text-cyan-400 hover:text-cyan-300 transition"
+                        className="text-[var(--brand-primary)] hover:text-[var(--brand-primary)]/80 transition"
                       >
                         Clear filters
                       </button>
@@ -366,7 +440,7 @@ const Workouts: React.FC = () => {
                 {/* Exercise Selection */}
                 {showAsCards ? (
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                    <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-3">
                       Select Exercise {currentExerciseForm.exercise_id && '✓'}
                     </label>
                     <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
@@ -374,18 +448,18 @@ const Workouts: React.FC = () => {
                         <div
                           key={exercise.id}
                           onClick={() => setCurrentExerciseForm({ ...currentExerciseForm, exercise_id: exercise.id.toString() })}
-                          className={`p-3 rounded-xl cursor-pointer transition-all ${
+                          className={`p-3 rounded-[var(--radius-md)] cursor-pointer transition-all ${
                             currentExerciseForm.exercise_id === exercise.id.toString()
-                              ? 'bg-cyan-500 text-[#121420]'
-                              : 'bg-[#0f111a] text-white hover:bg-[#1a1d2e] border border-white/5 hover:border-cyan-500/30'
+                              ? 'bg-[var(--brand-primary)] text-[var(--text-inverse)]'
+                              : 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]/80 border border-[var(--border-subtle)] hover:border-[var(--brand-primary)]/30'
                           }`}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <p className={`text-sm font-bold mb-1 ${currentExerciseForm.exercise_id === exercise.id.toString() ? 'text-[#121420]' : 'text-white'}`}>
+                              <p className={`text-sm font-bold mb-1 ${currentExerciseForm.exercise_id === exercise.id.toString() ? 'text-[var(--text-inverse)]' : 'text-[var(--text-primary)]'}`}>
                                 {exercise.name}
                               </p>
-                              <div className={`flex flex-wrap gap-2 text-xs ${currentExerciseForm.exercise_id === exercise.id.toString() ? 'text-[#121420]/70' : 'text-gray-500'}`}>
+                              <div className={`flex flex-wrap gap-2 text-xs ${currentExerciseForm.exercise_id === exercise.id.toString() ? 'text-[var(--text-inverse)]/70' : 'text-[var(--text-muted)]'}`}>
                                 {exercise.category && <span className="px-2 py-0.5 bg-black/10 rounded">{exercise.category}</span>}
                                 {exercise.muscle_group && <span className="px-2 py-0.5 bg-black/10 rounded">{exercise.muscle_group}</span>}
                                 {exercise.equipment && <span className="px-2 py-0.5 bg-black/10 rounded">{exercise.equipment}</span>}
@@ -403,11 +477,11 @@ const Workouts: React.FC = () => {
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Select Exercise</label>
+                    <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Select Exercise</label>
                     <select
                       value={currentExerciseForm.exercise_id}
                       onChange={(e) => setCurrentExerciseForm({ ...currentExerciseForm, exercise_id: e.target.value })}
-                      className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                      className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] transition"
                       required
                     >
                       <option value="">Choose an exercise</option>
@@ -418,7 +492,7 @@ const Workouts: React.FC = () => {
                       ))}
                     </select>
                     {filteredExercises.length > MAX_CARDS_DISPLAY && isFiltering && (
-                      <p className="text-xs text-cyan-400 mt-2">💡 Narrow your search to {MAX_CARDS_DISPLAY} or fewer to see clickable cards</p>
+                      <p className="text-xs text-[var(--brand-primary)] mt-2">💡 Narrow your search to {MAX_CARDS_DISPLAY} or fewer to see clickable cards</p>
                     )}
                   </div>
                 )}
@@ -426,23 +500,23 @@ const Workouts: React.FC = () => {
                 {/* Exercise Details */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Sets</label>
+                    <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Sets</label>
                     <input
                       type="number"
                       value={currentExerciseForm.sets}
                       onChange={(e) => setCurrentExerciseForm({ ...currentExerciseForm, sets: e.target.value })}
-                      className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                      className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] transition"
                       placeholder="3"
                       min="0"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Reps</label>
+                    <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Reps</label>
                     <input
                       type="number"
                       value={currentExerciseForm.reps}
                       onChange={(e) => setCurrentExerciseForm({ ...currentExerciseForm, reps: e.target.value })}
-                      className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                      className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] transition"
                       placeholder="10"
                       min="0"
                     />
@@ -451,24 +525,24 @@ const Workouts: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Weight (kg)</label>
+                    <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Weight (kg)</label>
                     <input
                       type="number"
                       step="0.5"
                       value={currentExerciseForm.weight}
                       onChange={(e) => setCurrentExerciseForm({ ...currentExerciseForm, weight: e.target.value })}
-                      className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                      className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] transition"
                       placeholder="50"
                       min="0"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Duration (min)</label>
+                    <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Duration (min)</label>
                     <input
                       type="number"
                       value={currentExerciseForm.duration}
                       onChange={(e) => setCurrentExerciseForm({ ...currentExerciseForm, duration: e.target.value })}
-                      className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+                      className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] transition"
                       placeholder="20"
                       min="0"
                     />
@@ -476,11 +550,11 @@ const Workouts: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Notes (Optional)</label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Notes (Optional)</label>
                   <textarea
                     value={currentExerciseForm.notes}
                     onChange={(e) => setCurrentExerciseForm({ ...currentExerciseForm, notes: e.target.value })}
-                    className="w-full bg-[#0f111a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition resize-none"
+                    className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] transition resize-none"
                     rows={3}
                     placeholder="Any notes about this exercise?"
                   />
@@ -488,7 +562,7 @@ const Workouts: React.FC = () => {
 
                 <button
                   type="submit"
-                  className="w-full bg-cyan-500 hover:bg-cyan-400 text-[#121420] py-4 rounded-xl font-bold uppercase tracking-wider text-sm transition shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+                  className="w-full pp-btn-primary"
                 >
                   Add Exercise
                 </button>

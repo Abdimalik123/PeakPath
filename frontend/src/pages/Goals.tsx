@@ -6,8 +6,10 @@ import { EmptyState } from '../components/EmptyState';
 import { AddGoalModal } from '../components/AddGoalModal';
 import { GoalDetails } from '../components/GoalDetails';
 import { useGoals } from '../hooks/useGoals';
+import { useToast } from '../contexts/ToastContext';
 
 const Goals: React.FC = () => {
+  const { showToast } = useToast();
   const {
     goals,
     selectedGoal,
@@ -28,6 +30,7 @@ const Goals: React.FC = () => {
     const success = await handleSubmit(e);
     if (success) {
       setShowAddModal(false);
+      showToast('Goal created!');
     }
   };
 
@@ -111,6 +114,7 @@ const Goals: React.FC = () => {
                   goal={selectedGoal} 
                   onDelete={handleDelete}
                   onUpdateProgress={handleUpdateProgress}
+                  onClose={() => setSelectedGoal(null)}
                 />
               ) : (
                 <div className="pp-card p-12 text-center sticky top-24">

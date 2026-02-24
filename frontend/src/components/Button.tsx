@@ -46,33 +46,3 @@ export function Button({
   );
 }
 
-interface ButtonLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
-  children: React.ReactNode;
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  className?: string;
-  to: string;
-}
-
-import { Link } from 'react-router-dom';
-
-export function ButtonLink({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  className = '', 
-  to,
-  ...props 
-}: ButtonLinkProps) {
-  const baseClasses = 'inline-flex items-center justify-center gap-2 font-semibold rounded-[var(--radius-md)] transition-all duration-200';
-  
-  return (
-    <Link
-      to={to}
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-      {...props}
-    >
-      {children}
-    </Link>
-  );
-}

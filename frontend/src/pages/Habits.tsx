@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
+import { useToast } from '../contexts/ToastContext';
 import { HabitCard } from '../components/HabitCard';
 import { Navigation } from '../components/Navigation';
 import { PageHeader } from '../components/PageHeader';
@@ -27,7 +27,7 @@ interface HabitLog {
 }
 
 const Habits: React.FC = () => {
-  const navigate = useNavigate();
+  const { showToast } = useToast();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [habitLogs, setHabitLogs] = useState<HabitLog[]>([]);
@@ -54,12 +54,6 @@ const Habits: React.FC = () => {
 
   const fetchHabits = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
       const response = await client.get('/habits');
       
       if (response.data.success) {
@@ -68,12 +62,7 @@ const Habits: React.FC = () => {
         setError(response.data.message);
       }
     } catch (err: any) {
-      if (err?.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      } else {
-        setError('Failed to load habits');
-      }
+      setError('Failed to load habits');
     } finally {
       setLoading(false);
     }
@@ -108,6 +97,7 @@ const Habits: React.FC = () => {
           next_occurrence: new Date().toISOString().split('T')[0]
         });
         fetchHabits();
+        showToast('Habit created!');
       } else {
         setError(response.data.message);
       }
@@ -124,6 +114,7 @@ const Habits: React.FC = () => {
       });
       
       if (response.data.success) {
+        showToast('Habit logged!');
         if (selectedHabit && selectedHabit.id === habitId) {
           fetchHabitLogs(habitId);
         }
@@ -131,7 +122,7 @@ const Habits: React.FC = () => {
         setError(response.data.message);
       }
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to log habit');
+      showToast(err?.response?.data?.message || 'Failed to log habit', 'error');
     }
   };
 
@@ -144,9 +135,10 @@ const Habits: React.FC = () => {
       if (response.data.success) {
         fetchHabits();
         setSelectedHabit(null);
+        showToast('Habit deleted');
       }
     } catch (err) {
-      setError('Failed to delete habit');
+      showToast('Failed to delete habit', 'error');
     }
   };
 
@@ -269,14 +261,26 @@ const Habits: React.FC = () => {
                       <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">{selectedHabit.name}</h3>
                       <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Habit Details</p>
                     </div>
-                    <button
-                      onClick={() => handleDelete(selectedHabit.id)}
-                      className="p-2 hover:bg-[var(--error)]/10 rounded-lg transition text-[var(--error)]"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setSelectedHabit(null)}
+                        className="p-2 hover:bg-[var(--bg-tertiary)] rounded-lg transition text-[var(--text-muted)]"
+                        title="Close"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(selectedHabit.id)}
+                        className="p-2 hover:bg-[var(--error)]/10 rounded-lg transition text-[var(--error)]"
+                        title="Delete"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-4 mb-6">
@@ -309,13 +313,13 @@ const Habits: React.FC = () => {
               </div>
 
               {/* Streak Info */}
-              <div className="bg-gradient-brand rounded-[var(--radius-lg)] p-6">
-                <h3 className="text-xl font-bold text-white mb-2">Current Streak</h3>
+              <div className="pp-card p-6">
+                <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-4">Current Streak</h3>
                 <div className="flex items-end gap-2 mb-3">
-                  <span className="text-5xl font-bold text-white">{getStreakDays(habitLogs)}</span>
-                  <span className="text-white/70 mb-2 uppercase tracking-wider text-sm">days</span>
+                  <span className="text-5xl font-bold text-[var(--brand-primary)]">{getStreakDays(habitLogs)}</span>
+                  <span className="text-[var(--text-muted)] mb-2 uppercase tracking-wider text-sm">days</span>
                 </div>
-                <p className="text-xs text-white/70 uppercase tracking-wider">Keep it going!</p>
+                <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Keep it going!</p>
               </div>
 
               {/* Recent Activity */}

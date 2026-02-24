@@ -31,5 +31,6 @@ class Workout(db.Model):
             'duration': self.duration,
             'date': self.date.isoformat() if self.date else None,
             'notes': self.notes,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'exercise_count': self.exercises.count()
         }

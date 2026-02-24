@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { createProfile } from '../api/profile';
+import { useToast } from '../contexts/ToastContext';
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -40,7 +42,7 @@ export default function Onboarding() {
       navigate('/dashboard');
     } catch (error) {
       console.error('Failed to create profile:', error);
-      alert('Failed to save profile. Please try again.');
+      showToast('Failed to save profile. Please try again.', 'error');
     } finally {
       setLoading(false);
     }

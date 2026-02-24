@@ -43,7 +43,8 @@ def create_app():
         WorkoutExercise, WorkoutTemplate, TemplateExercise,
         Habit, HabitLog, Goal, GoalLink, NutritionLog, 
         Notification, ActivityLog, UserPoint, UserAchievement, 
-        PointTransaction
+        PointTransaction, Friendship, SocialActivity, ActivityLike,
+        ActivityComment, ProgressPhoto
         )
     
     # Configure CORS with specific origins
@@ -98,6 +99,8 @@ def create_app():
     from api.activity_logs import activity_bp
     from api.workout_templates import workout_templates_bp
     from api.template_exercises import template_exercises_bp
+    from api.social import social_bp
+    from api.progress_photos import progress_photos_bp
     from api.gamification import gamification_bp
     from api.summary import summary_bp
     from api.dashboard import dashboard_bp
@@ -117,6 +120,8 @@ def create_app():
     app.register_blueprint(gamification_bp, url_prefix='/api/v1')
     app.register_blueprint(summary_bp, url_prefix='/api/v1')
     app.register_blueprint(dashboard_bp, url_prefix='/api/v1')
+    app.register_blueprint(social_bp, url_prefix='/api/v1')
+    app.register_blueprint(progress_photos_bp, url_prefix='/api/v1')
 
     # Health check endpoint
     @app.route('/health')
@@ -187,4 +192,4 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5400,debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

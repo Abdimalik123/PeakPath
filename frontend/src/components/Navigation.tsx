@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Activity, 
   LayoutDashboard, 
@@ -14,7 +15,8 @@ import {
   BarChart3,
   Camera,
   Users,
-  FileText
+  FileText,
+  Bell
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -38,20 +40,17 @@ const navItems = [
 export function Navigation({ currentPage, showAuthButtons = false }: NavigationProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated, logout } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('onboarding_complete');
-    localStorage.removeItem('user');
+    logout();
     navigate('/');
   };
 
   const isActive = (path: string) => {
     return currentPage === path || location.pathname === path;
   };
-
-  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
 
   // Public navigation (top nav for homepage/login pages)
   if (showAuthButtons) {
@@ -67,18 +66,29 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
             </Link>
             
             <div className="flex items-center gap-3">
-              <Link 
-                to="/login" 
-                className="pp-btn-ghost"
-              >
-                Sign in
-              </Link>
-              <Link 
-                to="/register" 
-                className="pp-btn-primary"
-              >
-                Get started
-              </Link>
+              {isAuthenticated ? (
+                <Link 
+                  to="/dashboard" 
+                  className="pp-btn-primary"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link 
+                    to="/login" 
+                    className="pp-btn-ghost"
+                  >
+                    Sign in
+                  </Link>
+                  <Link 
+                    to="/register" 
+                    className="pp-btn-primary"
+                  >
+                    Get started
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -116,6 +126,15 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
               </div>
               <span className="text-lg font-bold text-[var(--text-primary)]">PeakPath</span>
             </Link>
+          </div>
+
+          {/* Notifications */}
+          <div className="px-3 py-2">
+            <button className="pp-nav-link w-full text-left">
+              <Bell className="w-5 h-5" />
+              <span>Notifications</span>
+              <span className="ml-auto bg-[var(--brand-primary)] text-[var(--text-inverse)] text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+            </button>
           </div>
 
           {/* Navigation */}

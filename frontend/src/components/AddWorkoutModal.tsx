@@ -84,16 +84,16 @@ export function AddWorkoutModal({
         </div>
 
         {/* Exercises Section */}
-        <div className="border-t border-white/5 pt-6">
+        <div className="border-t border-[var(--border-subtle)] pt-6">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h4 className="text-lg font-bold text-white">Exercises (Optional)</h4>
-              <p className="text-xs text-gray-500 mt-1">Add exercises now or skip</p>
+              <h4 className="text-lg font-bold text-[var(--text-primary)]">Exercises (Optional)</h4>
+              <p className="text-xs text-[var(--text-muted)] mt-1">Add exercises now or skip</p>
             </div>
             <button
               type="button"
               onClick={onAddExercise}
-              className="px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-[#121420] rounded-lg text-xs font-bold uppercase tracking-wider transition"
+              className="px-4 py-2 bg-[var(--brand-primary)]/10 hover:bg-[var(--brand-primary)] text-[var(--brand-primary)] hover:text-[var(--text-inverse)] rounded-lg text-xs font-bold uppercase tracking-wider transition"
             >
               + Add Exercise
             </button>
@@ -102,10 +102,10 @@ export function AddWorkoutModal({
           {exercisesToAdd.length > 0 ? (
             <div className="space-y-2">
               {exercisesToAdd.map((exercise, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-[#0f111a] rounded-xl">
+                <div key={idx} className="flex items-center justify-between p-3 bg-[var(--bg-tertiary)] rounded-[var(--radius-md)]">
                   <div className="flex-1">
-                    <p className="text-sm font-bold text-white mb-1">{exercise.exercise_name}</p>
-                    <div className="flex gap-4 text-xs text-gray-500">
+                    <p className="text-sm font-bold text-[var(--text-primary)] mb-1">{exercise.exercise_name}</p>
+                    <div className="flex gap-4 text-xs text-[var(--text-muted)]">
                       {exercise.sets > 0 && <span>{exercise.sets} sets</span>}
                       {exercise.reps > 0 && <span>{exercise.reps} reps</span>}
                       {exercise.weight > 0 && <span>{exercise.weight} kg</span>}
@@ -114,7 +114,7 @@ export function AddWorkoutModal({
                   <button
                     type="button"
                     onClick={() => onRemoveExercise(idx)}
-                    className="p-1 hover:bg-red-500/10 rounded transition text-red-400"
+                    className="p-1 hover:bg-[var(--error)]/10 rounded transition text-[var(--error)]"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -124,15 +124,15 @@ export function AddWorkoutModal({
               ))}
             </div>
           ) : (
-            <div className="p-8 bg-[#0f111a] rounded-xl text-center">
-              <p className="text-xs text-gray-500">No exercises added yet. Click "Add Exercise" to select from your library.</p>
+            <div className="p-8 bg-[var(--bg-tertiary)] rounded-[var(--radius-md)] text-center">
+              <p className="text-xs text-[var(--text-muted)]">No exercises added yet. Click &quot;Add Exercise&quot; to select from your library.</p>
             </div>
           )}
         </div>
 
         <button
           type="submit"
-          className="w-full bg-cyan-500 hover:bg-cyan-400 text-[#121420] py-4 rounded-xl font-bold uppercase tracking-wider text-sm transition shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+          className="w-full pp-btn-primary"
         >
           Log Workout
         </button>

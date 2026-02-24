@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Navigation } from '../components/Navigation';
 import { Award, Trophy, Star, Zap, Target, Calendar, Dumbbell, Flame, Lock, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface Achievement {
   id: string;
@@ -18,7 +17,6 @@ interface Achievement {
 }
 
 export default function Achievements() {
-  const navigate = useNavigate();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -69,13 +67,8 @@ export default function Achievements() {
   ];
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
     loadAchievements();
-  }, [navigate]);
+  }, []);
 
   const loadAchievements = async () => {
     try {
@@ -86,10 +79,7 @@ export default function Achievements() {
       // For now, use mock data
       setAchievements(allAchievements);
     } catch (error: any) {
-      if (error?.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      }
+      console.error('Failed to load achievements:', error);
     } finally {
       setLoading(false);
     }

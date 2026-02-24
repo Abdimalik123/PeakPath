@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { PrivateRoute } from './components/PrivateRoute';
 import HomePage from './pages/Homepage';
 import Register from './pages/Register';
 import Login from './pages/Login';
@@ -21,21 +22,19 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/onboarding" element={<Onboarding />} />
       
       {/* Protected routes (after login) */}
-      
-      
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/workouts" element={<Workouts />} />
-      <Route path="/habits" element={<Habits />} />
-      <Route path="/goals" element={<Goals />} />
-      <Route path="/achievements" element={<Achievements />} />
-      <Route path="/analytics" element={<Analytics />} />
-      <Route path="/progress-photos" element={<ProgressPhotos />} />
-      <Route path="/social" element={<Social />} />
-      <Route path="/workout-templates" element={<WorkoutTemplates />} />
+      <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+      <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+      <Route path="/workouts" element={<PrivateRoute><Workouts /></PrivateRoute>} />
+      <Route path="/habits" element={<PrivateRoute><Habits /></PrivateRoute>} />
+      <Route path="/goals" element={<PrivateRoute><Goals /></PrivateRoute>} />
+      <Route path="/achievements" element={<PrivateRoute><Achievements /></PrivateRoute>} />
+      <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
+      <Route path="/progress-photos" element={<PrivateRoute><ProgressPhotos /></PrivateRoute>} />
+      <Route path="/social" element={<PrivateRoute><Social /></PrivateRoute>} />
+      <Route path="/workout-templates" element={<PrivateRoute><WorkoutTemplates /></PrivateRoute>} />
       
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />

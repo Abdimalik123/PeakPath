@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { fetchDashboard, DashboardData } from '../api/dashboard';
+import { Link } from 'react-router-dom';
+import { fetchDashboard } from '../api/dashboard';
+import type { DashboardData } from '../api/dashboard';
 import { WorkoutCard } from '../components/WorkoutCard';
 import { GoalProgress } from '../components/GoalProgress';
 import { Navigation } from '../components/Navigation';
+import { PageHeader } from '../components/PageHeader';
 import { StatCard, StatsGrid } from '../components/StatCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/Card';
-import { Button } from '../components/Button';
-import { Zap, CheckCircle, Target, Dumbbell, TrendingUp, ArrowRight } from 'lucide-react';
+import { Zap, CheckCircle, Target, Dumbbell, ArrowRight } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
-  const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,13 +62,10 @@ const Dashboard: React.FC = () => {
       <div className="lg:ml-64 min-h-screen">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           
-          {/* Welcome Section */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-1">
-              Welcome back, {dashboardData.user.name}
-            </h1>
-            <p className="text-sm text-[var(--text-muted)]">Here's your fitness overview for today</p>
-          </div>
+          <PageHeader 
+            title={`Welcome back, ${dashboardData.user.name}`}
+            subtitle="Your fitness overview for today"
+          />
 
           {/* Stats Grid */}
           <StatsGrid className="mb-8">
@@ -83,21 +80,21 @@ const Dashboard: React.FC = () => {
               title="Habits Logged"
               value={dashboardData.today.habits_logged}
               icon={CheckCircle}
-              iconColor="blue"
+              iconColor="green"
               badge="Today"
             />
             <StatCard
               title="Active Goals"
               value={dashboardData.active_goals.length}
               icon={Target}
-              iconColor="purple"
+              iconColor="green"
               badge="Active"
             />
             <StatCard
               title="Recent Workouts"
               value={dashboardData.recent_workouts.length}
               icon={Dumbbell}
-              iconColor="orange"
+              iconColor="green"
               badge="Recent"
             />
           </StatsGrid>
@@ -116,7 +113,6 @@ const Dashboard: React.FC = () => {
                       <CardTitle>Weekly Activity</CardTitle>
                       <CardDescription>Training volume over the last 7 days</CardDescription>
                     </div>
-                    <TrendingUp className="w-5 h-5 text-[var(--brand-primary)]" />
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -125,13 +121,11 @@ const Dashboard: React.FC = () => {
                       const totalActivity = day.workouts + day.habits;
                       const maxActivity = Math.max(...dashboardData.weekly_activity.map(d => d.workouts + d.habits), 1);
                       const height = `${(totalActivity / maxActivity) * 100}%`;
-                      const colors = ['bg-[var(--brand-primary)]', 'bg-[var(--brand-secondary)]', 'bg-purple-500', 'bg-orange-500'];
-                      const colorClass = colors[idx % colors.length];
                       
                       return (
                         <div key={idx} className="flex-1 flex flex-col items-center gap-2">
                           <div className="w-full bg-[var(--bg-tertiary)] rounded-t-[var(--radius-sm)] relative group cursor-pointer" style={{height: height || '5%'}}>
-                            <div className={`absolute inset-0 ${colorClass} rounded-t-[var(--radius-sm)] transition-all group-hover:opacity-80`}></div>
+                            <div className="absolute inset-0 bg-[var(--brand-primary)] rounded-t-[var(--radius-sm)] transition-all group-hover:opacity-80"></div>
                             <span className="absolute -top-7 left-1/2 -translate-x-1/2 text-xs font-medium text-[var(--text-primary)] opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
                               {day.workouts}W / {day.habits}H
                             </span>
@@ -166,7 +160,7 @@ const Dashboard: React.FC = () => {
                         <WorkoutCard 
                           key={workout.id} 
                           workout={workout} 
-                          onClick={(id) => console.log('Navigate to workout:', id)}
+                          onClick={() => {}}
                         />
                       ))}
                     </div>
@@ -203,22 +197,23 @@ const Dashboard: React.FC = () => {
               </Card>
 
               {/* Quick Actions */}
-              <Card className="bg-gradient-brand border-none">
-                <CardContent className="text-white">
-                  <h3 className="text-lg font-semibold mb-1">Quick Actions</h3>
-                  <p className="text-sm text-white/70 mb-4">Command Center</p>
-                  
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                  <CardDescription>Command Center</CardDescription>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-2">
-                    <Link to="/workouts" className="flex items-center gap-3 p-3 bg-white/20 hover:bg-white/30 rounded-[var(--radius-md)] transition text-sm font-medium">
-                      <Zap className="w-4 h-4" />
+                    <Link to="/workouts" className="flex items-center gap-3 p-3 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80 rounded-[var(--radius-md)] transition text-sm font-medium text-[var(--text-primary)]">
+                      <Zap className="w-4 h-4 text-[var(--brand-primary)]" />
                       Log Workout
                     </Link>
-                    <Link to="/habits" className="flex items-center gap-3 p-3 bg-white/20 hover:bg-white/30 rounded-[var(--radius-md)] transition text-sm font-medium">
-                      <CheckCircle className="w-4 h-4" />
+                    <Link to="/habits" className="flex items-center gap-3 p-3 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80 rounded-[var(--radius-md)] transition text-sm font-medium text-[var(--text-primary)]">
+                      <CheckCircle className="w-4 h-4 text-[var(--brand-primary)]" />
                       Complete Habit
                     </Link>
-                    <Link to="/goals" className="flex items-center gap-3 p-3 bg-white/20 hover:bg-white/30 rounded-[var(--radius-md)] transition text-sm font-medium">
-                      <Target className="w-4 h-4" />
+                    <Link to="/goals" className="flex items-center gap-3 p-3 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80 rounded-[var(--radius-md)] transition text-sm font-medium text-[var(--text-primary)]">
+                      <Target className="w-4 h-4 text-[var(--brand-primary)]" />
                       View Goals
                     </Link>
                   </div>

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Navigation } from '../components/Navigation';
-import { Dumbbell, Plus, X, Star, Search, Filter, Copy, Trash2, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Navigation } from '../components/Navigation';
+import { useToast } from '../contexts/ToastContext';
+import { Dumbbell, Plus, X, Star, Search, Filter, Copy, Trash2, Play } from 'lucide-react';
+import client from '../api/client';
 
 interface Exercise {
   name: string;
@@ -26,6 +28,7 @@ interface WorkoutTemplate {
 
 export default function WorkoutTemplates() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -185,47 +188,74 @@ export default function WorkoutTemplates() {
   ];
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
     loadTemplates();
-  }, [navigate]);
+  }, []);
 
   const loadTemplates = async () => {
     try {
-      // TODO: Load custom templates from API
-      // const response = await fetchWorkoutTemplates();
-      // const customTemplates = response.data;
+      const response = await client.get('/workout-templates');
+      const customTemplates = response.data.templates || [];
       
-      // For now, combine built-in templates with mock custom ones
-      setTemplates([...builtInTemplates]);
+      // Combine built-in templates with custom ones from API
+      setTemplates([...builtInTemplates, ...customTemplates]);
     } catch (error: any) {
-      if (error?.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      }
+      console.error('Failed to load custom templates:', error);
+      // Fallback to just built-in templates if API fails
+      setTemplates([...builtInTemplates]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUseTemplate = (template: WorkoutTemplate) => {
-    // TODO: Navigate to workout creation with template pre-filled
-    // For now, just show a message
-    alert(`Using template: ${template.name}. This would create a new workout with these exercises.`);
-    navigate('/workouts');
+  const handleUseTemplate = async (template: WorkoutTemplate) => {
+    try {
+      // Create workout from template
+      const workoutData = {
+        type: template.name,
+        duration: template.duration || 60,
+        date: new Date().toISOString().split('T')[0],
+        notes: `Created from template: ${template.description || template.name}`,
+        exercises: template.exercises.map(ex => ({
+          exercise_name: ex.name,
+          sets: ex.sets,
+          reps: typeof ex.reps === 'string' ? parseInt(ex.reps) || 10 : ex.reps,
+          weight: 0,
+          duration: 0,
+          notes: ex.notes || ''
+        }))
+      };
+
+      const response = await client.post('/workouts', workoutData);
+      
+      if (response.data.success) {
+        showToast(`Workout created from: ${template.name}`);
+        navigate('/workouts');
+      } else {
+        showToast('Failed to create workout from template', 'error');
+      }
+    } catch (error) {
+      console.error('Failed to create workout from template:', error);
+      showToast('Failed to create workout. Please try again.', 'error');
+    }
   };
 
   const handleSaveAsCustom = (template: WorkoutTemplate) => {
     // TODO: Save as custom template
-    alert('Template saved to your custom templates!');
+    showToast('Template saved to your custom templates!');
   };
 
-  const handleDeleteCustom = (templateId: string) => {
+  const handleDeleteCustom = async (templateId: string) => {
     if (!confirm('Delete this custom template?')) return;
-    setTemplates(templates.filter(t => t.id !== templateId));
+    
+    try {
+      const response = await client.delete(`/workout-templates/${templateId}`);
+      if (response.data.success) {
+        setTemplates(templates.filter(t => t.id !== templateId));
+      }
+    } catch (error) {
+      console.error('Failed to delete template:', error);
+      showToast('Failed to delete template. Please try again.', 'error');
+    }
   };
 
   const toggleFavorite = (templateId: string) => {

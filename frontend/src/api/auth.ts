@@ -12,6 +12,4 @@ export const register = (data: {
 }) =>
   client.post('/register', data);
 
-export const logout = () => {
-  localStorage.removeItem('token');
-};
+// Logout is now handled by AuthContext.logout()

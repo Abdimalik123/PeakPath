@@ -32,9 +32,34 @@ def create_workout():
         # Add exercises if provided
         exercises_data = data.get('exercises', [])
         for ex_data in exercises_data:
+            exercise_id = ex_data.get('exercise_id')
+            
+            # If no exercise_id but exercise_name provided, look up or create
+            if not exercise_id and ex_data.get('exercise_name'):
+                exercise = Exercise.query.filter_by(
+                    name=ex_data['exercise_name'],
+                    user_id=g.user['id']
+                ).first()
+                if not exercise:
+                    # Also check for global/shared exercises (user_id=None or any user)
+                    exercise = Exercise.query.filter_by(
+                        name=ex_data['exercise_name']
+                    ).first()
+                if not exercise:
+                    exercise = Exercise(
+                        name=ex_data['exercise_name'],
+                        user_id=g.user['id']
+                    )
+                    db.session.add(exercise)
+                    db.session.flush()
+                exercise_id = exercise.id
+            
+            if not exercise_id:
+                continue  # Skip exercises with no valid ID or name
+            
             workout_exercise = WorkoutExercise(
                 workout_id=workout.id,
-                exercise_id=ex_data['exercise_id'],
+                exercise_id=exercise_id,
                 sets=ex_data.get('sets'),
                 reps=ex_data.get('reps'),
                 weight=ex_data.get('weight'),
@@ -204,5 +229,71 @@ def delete_workout(workout_id):
         current_app.logger.error(f"Error deleting workout: {e}")
         return jsonify({
             "success": False, 
+            "message": "Internal server error"
+        }), 500
+
+
+@workouts_bp.route('/workouts/<int:workout_id>/exercises', methods=['POST'])
+@login_required
+def add_exercise_to_workout(workout_id):
+    data = request.get_json()
+    
+    try:
+        # Verify workout exists and belongs to user
+        workout = Workout.query.filter_by(
+            id=workout_id,
+            user_id=g.user['id']
+        ).first()
+        
+        if not workout:
+            return jsonify({
+                "success": False, 
+                "message": "Workout not found"
+            }), 404
+        
+        # Verify exercise exists
+        exercise_id = data.get('exercise_id')
+        exercise = Exercise.query.get(exercise_id)
+        if not exercise:
+            return jsonify({
+                "success": False,
+                "message": "Exercise not found"
+            }), 404
+        
+        # Add exercise to workout
+        workout_exercise = WorkoutExercise(
+            workout_id=workout_id,
+            exercise_id=exercise_id,
+            sets=data.get('sets'),
+            reps=data.get('reps'),
+            weight=data.get('weight'),
+            duration=data.get('duration'),
+            notes=data.get('notes')
+        )
+        
+        db.session.add(workout_exercise)
+        db.session.commit()
+        
+        log_activity(g.user['id'], "added", "exercise_to_workout", workout_exercise.id)
+        
+        return jsonify({
+            "success": True,
+            "message": "Exercise added to workout successfully",
+            "exercise": {
+                'id': exercise.id,
+                'name': exercise.name,
+                'sets': workout_exercise.sets,
+                'reps': workout_exercise.reps,
+                'weight': float(workout_exercise.weight) if workout_exercise.weight else None,
+                'duration': workout_exercise.duration,
+                'notes': workout_exercise.notes
+            }
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error adding exercise to workout: {e}")
+        return jsonify({
+            "success": False,
             "message": "Internal server error"
         }), 500

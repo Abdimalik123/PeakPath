@@ -3,7 +3,7 @@ import { Navigation } from '../components/Navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
 import { Button } from '../components/Button';
 import { Users, Trophy, TrendingUp, UserPlus, Heart, MessageCircle, Award, Flame, Dumbbell, Target } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
 import client from '../api/client';
 
 interface User {
@@ -30,7 +30,7 @@ interface ActivityItem {
 }
 
 export default function Social() {
-  const navigate = useNavigate();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'feed' | 'leaderboard' | 'friends'>('feed');
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('week');
@@ -39,169 +39,90 @@ export default function Social() {
   const [leaderboard, setLeaderboard] = useState<User[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
   const [suggestions, setSuggestions] = useState<User[]>([]);
-
-  // Mock current user - Replace with actual API call
-  const currentUser = {
-    id: 1,
-    name: 'You',
-    level: 8,
-    points: 850,
-    rank: 12,
-    streak: 12
-  };
-
-  // Mock data - Replace with actual API calls when backend is ready
-  const mockActivities: ActivityItem[] = [
-    {
-      id: 1,
-      user: { id: 2, name: 'Sarah Chen', level: 10, points: 1200 },
-      type: 'workout',
-      action: 'completed a workout',
-      details: 'Push Day - Chest Focus • 60 min • 7 exercises',
-      timestamp: '2 hours ago',
-      likes: 12,
-      comments: 3,
-      isLiked: false
-    },
-    {
-      id: 2,
-      user: { id: 3, name: 'Mike Johnson', level: 15, points: 2100 },
-      type: 'achievement',
-      action: 'unlocked an achievement',
-      details: '🏆 Century Club - Complete 100 workouts',
-      timestamp: '4 hours ago',
-      likes: 24,
-      comments: 8,
-      isLiked: true
-    },
-    {
-      id: 3,
-      user: { id: 4, name: 'Emma Davis', level: 7, points: 680 },
-      type: 'goal',
-      action: 'completed a goal',
-      details: '🎯 Lose 10kg - Goal achieved!',
-      timestamp: '1 day ago',
-      likes: 45,
-      comments: 12,
-      isLiked: true
-    },
-    {
-      id: 4,
-      user: { id: 5, name: 'Alex Rivera', level: 12, points: 1500 },
-      type: 'habit',
-      action: 'reached a streak',
-      details: '30 day habit streak!',
-      timestamp: '1 day ago',
-      likes: 18,
-      comments: 5,
-      isLiked: false
-    },
-    {
-      id: 5,
-      user: { id: 6, name: 'Lisa Park', level: 9, points: 950 },
-      type: 'workout',
-      action: 'completed a workout',
-      details: 'HIIT Cardio Blast • 20 min • 5 exercises',
-      timestamp: '2 days ago',
-      likes: 8,
-      comments: 2,
-      isLiked: false
-    }
-  ];
-
-  const mockLeaderboard: User[] = [
-    { id: 101, name: 'Dragon Warrior', level: 25, points: 5420, rank: 1, streak: 87 },
-    { id: 102, name: 'Iron Mike', level: 23, points: 4850, rank: 2, streak: 45 },
-    { id: 103, name: 'Fitness Queen', level: 22, points: 4320, rank: 3, streak: 62 },
-    { id: 104, name: 'Gym Rat Pro', level: 20, points: 3900, rank: 4, streak: 38 },
-    { id: 105, name: 'Beast Mode', level: 19, points: 3560, rank: 5, streak: 41 },
-    { id: 106, name: 'Grind Master', level: 18, points: 3200, rank: 6, streak: 29 },
-    { id: 107, name: 'Strong Sarah', level: 17, points: 2980, rank: 7, streak: 52 },
-    { id: 108, name: 'Power Lifter', level: 16, points: 2750, rank: 8, streak: 23 },
-    { id: 109, name: 'Cardio King', level: 15, points: 2450, rank: 9, streak: 67 },
-    { id: 110, name: 'Flex Master', level: 14, points: 2200, rank: 10, streak: 15 },
-  ];
-
-  const mockFriends: User[] = [
-    { id: 2, name: 'Sarah Chen', level: 10, points: 1200, isFollowing: true, streak: 23 },
-    { id: 3, name: 'Mike Johnson', level: 15, points: 2100, isFollowing: true, streak: 45 },
-    { id: 4, name: 'Emma Davis', level: 7, points: 680, isFollowing: true, streak: 12 },
-    { id: 5, name: 'Alex Rivera', level: 12, points: 1500, isFollowing: true, streak: 34 },
-  ];
-
-  const mockSuggestions: User[] = [
-    { id: 201, name: 'Chris Lee', level: 11, points: 1350, isFollowing: false },
-    { id: 202, name: 'Jenny Wilson', level: 9, points: 920, isFollowing: false },
-    { id: 203, name: 'Tom Harris', level: 13, points: 1680, isFollowing: false },
-  ];
+  const [currentUser, setCurrentUser] = useState<User>({ id: 0, name: 'You', level: 1, points: 0, rank: 0, streak: 0 });
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
     loadSocialData();
-  }, [navigate, timeRange]);
+  }, [timeRange]);
 
   const loadSocialData = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API calls when backend endpoints are ready
-      // const [activitiesRes, leaderboardRes, friendsRes, suggestionsRes] = await Promise.all([
-      //   client.get('/social/feed'),
-      //   client.get(`/social/leaderboard?range=${timeRange}`),
-      //   client.get('/social/friends'),
-      //   client.get('/social/suggestions')
-      // ]);
-      // setActivities(activitiesRes.data);
-      // setLeaderboard(leaderboardRes.data);
-      // setFriends(friendsRes.data);
-      // setSuggestions(suggestionsRes.data);
+      const [activitiesRes, leaderboardRes, friendsRes, suggestionsRes] = await Promise.all([
+        client.get('/social/feed'),
+        client.get(`/social/leaderboard?range=${timeRange}`),
+        client.get('/social/friends'),
+        client.get('/social/suggestions')
+      ]);
       
-      // Using mock data for now
-      setActivities(mockActivities);
-      setLeaderboard(mockLeaderboard);
-      setFriends(mockFriends);
-      setSuggestions(mockSuggestions);
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
+      setActivities(activitiesRes.data.activities || []);
+      setLeaderboard(leaderboardRes.data.leaderboard || []);
+      setFriends(friendsRes.data.friends || []);
+      setSuggestions(suggestionsRes.data.suggestions || []);
+      if (leaderboardRes.data.current_user) {
+        setCurrentUser(leaderboardRes.data.current_user);
+      }
     } catch (error: any) {
       console.error('Social load error:', error);
-      if (error?.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      }
+      showToast('Failed to load social data', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLike = (activityId: number) => {
-    setActivities(activities.map(activity =>
-      activity.id === activityId
-        ? {
-            ...activity,
-            likes: activity.isLiked ? activity.likes - 1 : activity.likes + 1,
-            isLiked: !activity.isLiked
-          }
-        : activity
-    ));
-  };
-
-  const handleFollow = (userId: number) => {
-    setSuggestions(suggestions.map(user =>
-      user.id === userId ? { ...user, isFollowing: true } : user
-    ));
-    const newFriend = suggestions.find(u => u.id === userId);
-    if (newFriend) {
-      setFriends([...friends, { ...newFriend, isFollowing: true }]);
-      setSuggestions(suggestions.filter(u => u.id !== userId));
+  const handleLike = async (activityId: number) => {
+    try {
+      const response = await client.post(`/social/activities/${activityId}/like`);
+      if (response.data.success) {
+        setActivities(activities.map(activity =>
+          activity.id === activityId
+            ? {
+                ...activity,
+                likes: response.data.likes_count,
+                isLiked: response.data.action === 'liked'
+              }
+            : activity
+        ));
+      }
+    } catch (error) {
+      console.error('Failed to like activity:', error);
+      // Optimistic update on error
+      setActivities(activities.map(activity =>
+        activity.id === activityId
+          ? {
+              ...activity,
+              likes: activity.isLiked ? activity.likes - 1 : activity.likes + 1,
+              isLiked: !activity.isLiked
+            }
+          : activity
+      ));
     }
   };
 
-  const handleUnfollow = (userId: number) => {
-    setFriends(friends.filter(f => f.id !== userId));
+  const handleFollow = async (userId: number) => {
+    try {
+      const response = await client.post(`/social/friends/${userId}`);
+      if (response.data.success) {
+        // Remove from suggestions and reload data to get updated friends list
+        loadSocialData();
+      }
+    } catch (error) {
+      console.error('Failed to add friend:', error);
+      showToast('Failed to add friend. Please try again.', 'error');
+    }
+  };
+
+  const handleUnfollow = async (userId: number) => {
+    try {
+      const response = await client.delete(`/social/friends/${userId}`);
+      if (response.data.success) {
+        setFriends(friends.filter(f => f.id !== userId));
+      }
+    } catch (error) {
+      console.error('Failed to remove friend:', error);
+      // Optimistic update on error
+      setFriends(friends.filter(f => f.id !== userId));
+    }
   };
 
   const getActivityIcon = (type: string) => {

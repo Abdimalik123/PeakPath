@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, g, current_app
 from database import db
-from models import WorkoutTemplate
+from models import WorkoutTemplate, TemplateExercise
 from api.auth import login_required
 from utils.logging import log_activity
 
@@ -39,7 +39,7 @@ def add_workout_template():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
-# Get all templates for user
+# Get all templates for user (custom templates only)
 @workout_templates_bp.route('/workout-templates', methods=['GET'])
 @login_required
 def get_workout_templates():
@@ -48,12 +48,34 @@ def get_workout_templates():
     try:
         templates = WorkoutTemplate.query.filter_by(user_id=user_id).all()
         
-        result = [{
-            "id": t.id, 
-            "name": t.name, 
-            "description": t.description, 
-            "created_at": t.created_at
-        } for t in templates]
+        result = []
+        for t in templates:
+            # Get exercises for this template
+            template_exercises = TemplateExercise.query.filter_by(template_id=t.id).all()
+            
+            exercises = []
+            for te in template_exercises:
+                exercises.append({
+                    'name': te.exercise_name,
+                    'sets': te.sets,
+                    'reps': te.reps or '',
+                    'rest': te.rest_seconds,
+                    'notes': te.notes
+                })
+            
+            result.append({
+                "id": str(t.id),
+                "name": t.name, 
+                "description": t.description or '',
+                "category": "custom",
+                "duration": 0,
+                "difficulty": "intermediate",
+                "exercises": exercises,
+                "equipment": [],
+                "isCustom": True,
+                "isFavorite": False,
+                "created_at": t.created_at.isoformat() if t.created_at else None
+            })
         
         return jsonify({"success": True, "templates": result}), 200
         

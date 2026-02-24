@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 
 interface Workout {
@@ -8,6 +7,7 @@ interface Workout {
   type: string;
   duration: number;
   notes: string;
+  exercise_count?: number;
 }
 
 interface Exercise {
@@ -35,8 +35,16 @@ interface ExerciseToAdd {
   notes: string;
 }
 
+interface ExerciseData {
+  exercise_id: number;
+  sets: number | null;
+  reps: number | null;
+  weight: number | null;
+  duration: number | null;
+  notes: string | null;
+}
+
 export function useWorkouts() {
-  const navigate = useNavigate();
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [selectedWorkout, setSelectedWorkout] = useState<WorkoutDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,12 +64,6 @@ export function useWorkouts() {
 
   const fetchWorkouts = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
       const response = await client.get('/workouts');
       
       if (response.data.success) {
@@ -70,12 +72,7 @@ export function useWorkouts() {
         setError(response.data.message);
       }
     } catch (err: any) {
-      if (err?.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      } else {
-        setError('Failed to load workouts');
-      }
+      setError('Failed to load workouts');
     } finally {
       setLoading(false);
     }
@@ -142,6 +139,20 @@ export function useWorkouts() {
     }
   };
 
+  const addExerciseToWorkout = async (workoutId: number, exerciseData: ExerciseData) => {
+    try {
+      const response = await client.post(`/workouts/${workoutId}/exercises`, exerciseData);
+      if (response.data.success) {
+        fetchWorkoutDetails(workoutId);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      setError('Failed to add exercise to workout');
+      return false;
+    }
+  };
+
   const addExercise = (exercise: ExerciseToAdd) => {
     setExercisesToAdd([...exercisesToAdd, exercise]);
   };
@@ -153,6 +164,7 @@ export function useWorkouts() {
   return {
     workouts,
     selectedWorkout,
+    setSelectedWorkout,
     loading,
     error,
     formData,
@@ -163,6 +175,7 @@ export function useWorkouts() {
     handleDelete,
     addExercise,
     removeExercise,
+    addExerciseToWorkout,
     setError
   };
 }

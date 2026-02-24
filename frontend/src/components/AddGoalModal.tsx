@@ -81,7 +81,7 @@ export function AddGoalModal({
 
         <button
           type="submit"
-          className="w-full bg-cyan-500 hover:bg-cyan-400 text-[#121420] py-4 rounded-xl font-bold uppercase tracking-wider text-sm transition shadow-[0_0_20px_rgba(34,211,238,0.3)]"
+          className="w-full pp-btn-primary"
         >
           Create Goal
         </button>

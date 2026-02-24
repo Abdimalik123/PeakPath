@@ -9,14 +9,14 @@ export interface DashboardData {
     habits_logged: number;
   };
   recent_workouts: Array<{
-    id: number;
+    id: string;
     type: string;
     duration: number;
     date: string;
     exercise_count: number;
   }>;
   active_goals: Array<{
-    id: number;
+    id: string;
     name: string;
     type: string;
     target: number;

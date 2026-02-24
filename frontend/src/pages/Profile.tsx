@@ -1,13 +1,14 @@
 import { User, Activity, TrendingUp, Save, AlertCircle, LogOut } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import client from '../api/client';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { Navigation } from '../components/Navigation';
 import { FormInput } from '../components/FormInput';
 import { getProfile, updateProfile } from '../api/profile';
 
 export default function Profile() {
-  const navigate = useNavigate();
+  const { user: authUser, logout } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -29,21 +30,15 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setUserInfo({
-          firstname: payload.firstname || '',
-          lastname: payload.lastname || '',
-          email: payload.email || '',
-        });
-      } catch (e) {
-        console.error('Failed to parse token:', e);
-      }
+    if (authUser) {
+      setUserInfo({
+        firstname: authUser.firstname || '',
+        lastname: authUser.lastname || '',
+        email: authUser.email || '',
+      });
     }
     loadProfile();
-  }, []);
+  }, [authUser]);
 
   const loadProfile = async () => {
     try {
@@ -57,10 +52,7 @@ export default function Profile() {
         activity_level: response.data.activity_level || '',
       });
     } catch (error: any) {
-      if (error?.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      } else if (error?.response?.status === 404) {
+      if (error?.response?.status === 404) {
         setError('Profile not found. Please complete onboarding.');
       } else {
         setError('Failed to load profile');

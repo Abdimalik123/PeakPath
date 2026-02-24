@@ -36,20 +36,20 @@ export function WorkoutCard({ workout, onClick }: WorkoutCardProps) {
 
   return (
     <div 
-      className="bg-[#1c1f2e] border border-white/5 p-5 rounded-2xl hover:border-cyan-500/50 transition-all cursor-pointer group"
+      className="pp-card p-5 hover:border-[var(--brand-primary)]/50 transition-all cursor-pointer group"
       onClick={() => onClick?.(workout.id)}
     >
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center group-hover:bg-cyan-500 transition-colors">
-          <DumbbellIcon className="w-6 h-6 text-cyan-400 group-hover:text-[#121420] transition-colors" />
+        <div className="w-12 h-12 bg-[var(--brand-primary)]/10 rounded-[var(--radius-md)] flex items-center justify-center group-hover:bg-[var(--brand-primary)] transition-colors">
+          <DumbbellIcon className="w-6 h-6 text-[var(--brand-primary)] group-hover:text-[var(--text-inverse)] transition-colors" />
         </div>
         <div className="flex-1">
-          <h4 className="font-bold text-white mb-1">{workout.type}</h4>
-          <p className="text-xs text-gray-500 font-mono uppercase tracking-wider">{formatDate(workout.date)}</p>
+          <h4 className="font-bold text-[var(--text-primary)] mb-1">{workout.type}</h4>
+          <p className="text-xs text-[var(--text-muted)] font-mono uppercase tracking-wider">{formatDate(workout.date)}</p>
         </div>
         <div className="text-right">
-          <p className="font-bold text-white">{workout.duration}<span className="text-gray-500 text-sm">min</span></p>
-          <p className="text-xs text-gray-500 uppercase tracking-wider">{workout.exercise_count} exercises</p>
+          <p className="font-bold text-[var(--text-primary)]">{workout.duration}<span className="text-[var(--text-muted)] text-sm">min</span></p>
+          <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">{workout.exercise_count} exercises</p>
         </div>
       </div>
     </div>

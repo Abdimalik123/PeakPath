@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register } from '../api/auth';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { Navigation } from '../components/Navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/Card';
 import { Button } from '../components/Button';
@@ -14,6 +16,8 @@ function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -57,8 +61,9 @@ function Register() {
       
       const token = response.data.token;
       if (token) {
-        localStorage.setItem('token', token);
+        login(token);
         localStorage.removeItem('onboarding_complete');
+        showToast('Account created successfully!');
         setSuccessMessage('Profile created! Let\'s set up your metrics...');
 
         setTimeout(() => navigate('/onboarding'), 1500);

@@ -18,6 +18,9 @@ from .activity_log import ActivityLog
 from .user_point import UserPoint
 from .user_achievement import UserAchievement
 from .point_transaction import PointTransaction
+from .friendship import Friendship
+from .social_activity import SocialActivity, ActivityLike, ActivityComment
+from .progress_photo import ProgressPhoto
 
 __all__ = [
     'User',
@@ -37,5 +40,10 @@ __all__ = [
     'UserPoint',
     'UserAchievement',
     'PointTransaction',
-    'GoalLink'
+    'GoalLink',
+    'Friendship',
+    'SocialActivity',
+    'ActivityLike',
+    'ActivityComment',
+    'ProgressPhoto'
 ]

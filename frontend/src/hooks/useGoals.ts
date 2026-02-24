@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import client from '../api/client';
 
 interface Goal {
@@ -15,7 +14,6 @@ interface Goal {
 }
 
 export function useGoals() {
-  const navigate = useNavigate();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,12 +33,6 @@ export function useGoals() {
 
   const fetchGoals = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
       const response = await client.get('/goals');
       
       if (response.data.success) {
@@ -49,12 +41,7 @@ export function useGoals() {
         setError(response.data.message);
       }
     } catch (err: any) {
-      if (err?.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      } else {
-        setError('Failed to load goals');
-      }
+      setError('Failed to load goals');
     } finally {
       setLoading(false);
     }
