@@ -7,6 +7,10 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 from dotenv import load_dotenv
+from prometheus_client import generate_latest, Counter
+from flask import Response
+
+REQUEST_COUNT = Counter('app_request_total', 'Total number of requests')
 
 # Load environment variables from .env file
 load_dotenv()
@@ -27,6 +31,7 @@ def create_app():
         raise EnvironmentError('DB_PASSWORD is not set')
     DATABASE_URL = f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-change-me')
     app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -185,6 +190,17 @@ def create_app():
             "error": "Rate limit exceeded"
         }), 429
 
+    
+    @app.before_request
+    def count_requests():
+        REQUEST_COUNT.inc()
+
+    @app.route('/metrics')
+    def metrics():
+        return Response(generate_latest(), mimetype='text/plain')
+    
+    
+
     return app
 
 
@@ -192,4 +208,4 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true')

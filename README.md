@@ -20,23 +20,21 @@ Backend
 - Marshmallow for serialization
 
 Infrastructure
-- Docker (both frontend and backend are containerized)
-- Nginx serves the frontend and proxies API requests to the backend
+- Docker Compose on a Hetzner VPS
+- Nginx reverse proxy with SSL (Let's Encrypt / Certbot)
 - Gunicorn as the production WSGI server
-- AWS ECS for container orchestration
-- AWS ECR for storing Docker images
-- Terraform for infrastructure as code
+- Prometheus metrics endpoint for Grafana monitoring
 
 DevOps
 
 Here's what we're doing on the DevOps side:
 
-- Containerization — Both the frontend and backend have their own Dockerfiles. The backend runs behind Gunicorn with 4 workers, and the frontend is an Nginx container serving the built React app.
-- CI/CD — GitHub Actions pipeline that builds Docker images, pushes them to ECR, and deploys to ECS on every push to `main`. No manual deploys needed.
-- Infrastructure as Code — Terraform manages the AWS infrastructure (ECS cluster, services, networking). Everything is reproducible and version controlled.
+- Containerization — Both the frontend and backend have their own Dockerfiles. The backend runs behind Gunicorn with 4 workers, and the frontend is built as static files served by Nginx.
+- Deployment — Single Hetzner VPS running Docker Compose. `deploy.sh` handles building and starting all containers. `init-ssl.sh` handles first-time SSL certificate setup.
 - Database Migrations — Flask-Migrate handles schema changes. The entrypoint script automatically runs pending migrations on container startup, with a fallback to create tables if no migrations exist yet.
-- Health Checks — The backend has a `/health` endpoint that checks database connectivity. The frontend Nginx container has its own health check for the load balancer.
-- Environment Config — All secrets and config are managed through environment variables (`.env` files locally, ECS task definitions in production). Nothing sensitive is hardcoded.
+- Health Checks — The backend has a `/health` endpoint that checks database connectivity, proxied through Nginx.
+- Monitoring — Prometheus metrics at `/metrics` for Grafana dashboards.
+- Environment Config — All secrets and config are managed through environment variables (`.env` file on the server). Nothing sensitive is hardcoded.
 - Rate Limiting — API endpoints are rate-limited (200 req/min by default) to prevent abuse.
 - Logging — Rotating log files on the backend, structured with timestamps and log levels.
 
@@ -82,7 +80,8 @@ PeakPath/
 │   │   └── api/        # Axios client and API helpers
 │   ├── Dockerfile
 │   └── nginx/          # Nginx config for production
-├── .github/workflows/  # CI/CD pipeline
-├── deploy.sh           # Manual deployment script
-└── terraform/          # AWS infrastructure definitions
+├── nginx/              # Nginx reverse proxy config (SSL + proxying)
+├── docker-compose.yml  # Production stack definition
+├── deploy.sh           # Deployment script for Hetzner VPS
+└── init-ssl.sh         # First-time Let's Encrypt SSL setup
 ```

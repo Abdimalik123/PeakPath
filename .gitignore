@@ -6,10 +6,6 @@ node_modules/
 venv/
 backend/venv/
 
-# aws
-.aws/
-aws/
-
 # Python cache and compiled files
 __pycache__/
 *.py[cod]
@@ -19,26 +15,6 @@ __pycache__/
 .env
 *.env
 backend/.env
-
-# Terraform sensitive files
-terraform/terraform.tfvars
-terraform/.terraform/
-terraform/*.tfstate
-terraform/*.tfstate.backup
-
-# Terraform state files (contain sensitive infrastructure details)
-terraform.tfstate
-terraform.tfstate.backup
-
-# Terraform variable values (may contain secrets/passwords)
-terraform.tfvars
-
-# Terraform lock file (optional, but often ignored)
-.terraform.lock.hcl
-
-# Terraform working directory
-.terraform/
-
 
 # Build output
 frontend/dist/
