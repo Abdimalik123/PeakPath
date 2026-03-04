@@ -5,15 +5,8 @@ from datetime import datetime
 
 def create_social_activity(user_id, activity_type, action, details, reference_id=None, reference_type=None):
     """
-    Helper function to create social activity entries
-    
-    Args:
-        user_id: ID of the user performing the action
-        activity_type: Type of activity (workout, goal, achievement, habit)
-        action: Action description (e.g., "completed a workout", "unlocked an achievement")
-        details: Detailed description of the activity
-        reference_id: ID of the related entity (workout_id, goal_id, etc.)
-        reference_type: Type of the reference (workouts, goals, achievements, habits)
+    Create a social activity entry in its own committed transaction.
+    Isolated so failures here never affect the caller's transaction.
     """
     try:
         activity = SocialActivity(
@@ -36,9 +29,12 @@ def create_social_activity(user_id, activity_type, action, details, reference_id
 
 def create_workout_activity(user_id, workout):
     """Create social activity for completed workout"""
-    exercise_count = len(workout.exercises) if hasattr(workout, 'exercises') else 0
+    try:
+        exercise_count = len(workout.exercises) if hasattr(workout, 'exercises') else 0
+    except Exception:
+        exercise_count = 0
     details = f"{workout.type} • {workout.duration} min • {exercise_count} exercises"
-    
+
     return create_social_activity(
         user_id=user_id,
         activity_type='workout',
@@ -57,7 +53,7 @@ def create_goal_activity(user_id, goal, action_type='completed'):
     else:
         action = 'created a goal'
         details = f"🎯 {goal.name}"
-    
+
     return create_social_activity(
         user_id=user_id,
         activity_type='goal',
@@ -71,7 +67,7 @@ def create_goal_activity(user_id, goal, action_type='completed'):
 def create_achievement_activity(user_id, achievement):
     """Create social activity for unlocking achievement"""
     details = f"🏆 {achievement.name} - {achievement.description}"
-    
+
     return create_social_activity(
         user_id=user_id,
         activity_type='achievement',
@@ -84,8 +80,8 @@ def create_achievement_activity(user_id, achievement):
 
 def create_habit_activity(user_id, habit, streak_days):
     """Create social activity for habit streak milestone"""
-    details = f"{streak_days} day habit streak!"
-    
+    details = f"{streak_days} day streak on: {habit.name}!"
+
     return create_social_activity(
         user_id=user_id,
         activity_type='habit',

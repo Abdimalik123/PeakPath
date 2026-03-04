@@ -6,6 +6,7 @@ Endpoints call these functions after a successful action. Each function handles:
 2. Checking achievements
 3. Syncing goal progress
 4. Sending notifications
+5. Creating social activity
 """
 from flask import current_app
 from utils.gamification_helper import (
@@ -42,11 +43,18 @@ def _handle_completed_goals(user_id, completed_goals):
     """Award points and send notifications for completed goals."""
     from models.goal import Goal
     from database import db
+    from utils.social_helpers import create_goal_activity
 
     for goal in completed_goals:
         result = award_points(user_id, "goal_completed", entity_type="goal", entity_id=goal.id)
         _handle_reward_result(user_id, result)
         notify_goal_completed(user_id, goal.name)
+
+        # Create social activity for completed goal
+        try:
+            create_goal_activity(user_id, goal, action_type='completed')
+        except Exception as e:
+            current_app.logger.warning(f"Failed to create social activity for goal: {e}")
 
     # Check goal achievements
     completed_count = Goal.query.filter(
@@ -61,6 +69,7 @@ def on_workout_logged(user_id, workout):
     """Called after a workout is successfully created."""
     try:
         from models.workout import Workout
+        from utils.social_helpers import create_workout_activity
 
         # 1. Award points
         result = award_points(
@@ -74,7 +83,13 @@ def on_workout_logged(user_id, workout):
         achievements = check_workout_achievements(user_id, workout_count)
         _handle_achievements(user_id, achievements)
 
-        # 3. Sync goal progress
+        # 3. Create social activity
+        try:
+            create_workout_activity(user_id, workout)
+        except Exception as e:
+            current_app.logger.warning(f"Failed to create social activity for workout: {e}")
+
+        # 4. Sync goal progress
         completed_goals = sync_goal_progress(
             user_id, "workout",
             entity_id=workout.id,
@@ -91,6 +106,8 @@ def on_habit_logged(user_id, habit_id, habit_log):
     """Called after a habit completion is logged."""
     try:
         from models.habit_log import HabitLog
+        from models.habit import Habit
+        from utils.social_helpers import create_habit_activity
 
         if not habit_log.completed:
             return
@@ -109,7 +126,17 @@ def on_habit_logged(user_id, habit_id, habit_log):
         achievements = check_habit_achievements(user_id, total_logs)
         _handle_achievements(user_id, achievements)
 
-        # 3. Sync goal progress
+        # 3. Create social activity on first completion and every 7-day milestone
+        try:
+            streak = HabitLog.query.filter_by(habit_id=habit_id, completed=True).count()
+            if streak == 1 or streak % 7 == 0:
+                habit = Habit.query.get(habit_id)
+                if habit:
+                    create_habit_activity(user_id, habit, streak)
+        except Exception as e:
+            current_app.logger.warning(f"Failed to create social activity for habit: {e}")
+
+        # 4. Sync goal progress
         completed_goals = sync_goal_progress(
             user_id, "habit",
             entity_id=habit_id,

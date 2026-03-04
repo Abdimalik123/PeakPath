@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { useToast } from '../contexts/ToastContext';
-import { Dumbbell, Plus, X, Star, Search, Filter, Copy, Trash2, Play } from 'lucide-react';
+import { Dumbbell, Plus, X, Star, Search, Copy, Trash2, Play, CheckCircle } from 'lucide-react';
 import client from '../api/client';
 
 interface Exercise {
@@ -26,6 +26,22 @@ interface WorkoutTemplate {
   isFavorite?: boolean;
 }
 
+interface DraftExercise {
+  exercise_name: string;
+  sets: number;
+  reps: number;
+  weight: number;
+  notes: string;
+}
+
+interface WorkoutDraft {
+  type: string;
+  duration: number;
+  date: string;
+  notes: string;
+  exercises: DraftExercise[];
+}
+
 export default function WorkoutTemplates() {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -35,6 +51,8 @@ export default function WorkoutTemplates() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<WorkoutTemplate | null>(null);
+  const [workoutDraft, setWorkoutDraft] = useState<WorkoutDraft | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Pre-built templates
   const builtInTemplates: WorkoutTemplate[] = [
@@ -163,7 +181,7 @@ export default function WorkoutTemplates() {
         { name: 'Warrior I & II', sets: 2, reps: '45 sec each', rest: '30 sec' },
         { name: 'Triangle Pose', sets: 2, reps: '45 sec each', rest: '30 sec' },
         { name: 'Pigeon Pose', sets: 2, reps: '60 sec each', rest: '30 sec' },
-        { name: 'Child\'s Pose', sets: 1, reps: '2 min', rest: 'None' }
+        { name: "Child's Pose", sets: 1, reps: '2 min', rest: 'None' }
       ]
     },
     {
@@ -195,58 +213,70 @@ export default function WorkoutTemplates() {
     try {
       const response = await client.get('/workout-templates');
       const customTemplates = response.data.templates || [];
-      
-      // Combine built-in templates with custom ones from API
       setTemplates([...builtInTemplates, ...customTemplates]);
     } catch (error: any) {
       console.error('Failed to load custom templates:', error);
-      // Fallback to just built-in templates if API fails
       setTemplates([...builtInTemplates]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUseTemplate = async (template: WorkoutTemplate) => {
-    try {
-      // Create workout from template
-      const workoutData = {
-        type: template.name,
-        duration: template.duration || 60,
-        date: new Date().toISOString().split('T')[0],
-        notes: `Created from template: ${template.description || template.name}`,
-        exercises: template.exercises.map(ex => ({
-          exercise_name: ex.name,
-          sets: ex.sets,
-          reps: typeof ex.reps === 'string' ? parseInt(ex.reps) || 10 : ex.reps,
-          weight: 0,
-          duration: 0,
-          notes: ex.notes || ''
-        }))
-      };
+  // Instead of immediately POSTing, open a pre-filled editable form
+  const handleUseTemplate = (template: WorkoutTemplate) => {
+    const draft: WorkoutDraft = {
+      type: template.name,
+      duration: template.duration || 60,
+      date: new Date().toISOString().split('T')[0],
+      notes: `From template: ${template.name}`,
+      exercises: template.exercises.map(ex => ({
+        exercise_name: ex.name,
+        sets: ex.sets,
+        reps: typeof ex.reps === 'string' ? parseInt(ex.reps) || 10 : ex.reps,
+        weight: 0,
+        notes: ex.notes || ''
+      }))
+    };
+    setWorkoutDraft(draft);
+    setSelectedTemplate(null);
+  };
 
-      const response = await client.post('/workouts', workoutData);
-      
+  // Only called when user explicitly clicks "Save Workout"
+  const handleSubmitWorkout = async () => {
+    if (!workoutDraft) return;
+    setSubmitting(true);
+    try {
+      const response = await client.post('/workouts', workoutDraft);
       if (response.data.success) {
-        showToast(`Workout created from: ${template.name}`);
+        showToast(`Workout logged successfully!`);
+        setWorkoutDraft(null);
         navigate('/workouts');
       } else {
-        showToast('Failed to create workout from template', 'error');
+        showToast('Failed to save workout', 'error');
       }
     } catch (error) {
-      console.error('Failed to create workout from template:', error);
-      showToast('Failed to create workout. Please try again.', 'error');
+      console.error('Failed to save workout:', error);
+      showToast('Failed to save workout. Please try again.', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const updateDraftExercise = (index: number, field: keyof DraftExercise, value: string | number) => {
+    if (!workoutDraft) return;
+    const updated = { ...workoutDraft };
+    updated.exercises = updated.exercises.map((ex, i) =>
+      i === index ? { ...ex, [field]: value } : ex
+    );
+    setWorkoutDraft(updated);
+  };
+
   const handleSaveAsCustom = (template: WorkoutTemplate) => {
-    // TODO: Save as custom template
     showToast('Template saved to your custom templates!');
   };
 
   const handleDeleteCustom = async (templateId: string) => {
     if (!confirm('Delete this custom template?')) return;
-    
     try {
       const response = await client.delete(`/workout-templates/${templateId}`);
       if (response.data.success) {
@@ -259,7 +289,7 @@ export default function WorkoutTemplates() {
   };
 
   const toggleFavorite = (templateId: string) => {
-    setTemplates(templates.map(t => 
+    setTemplates(templates.map(t =>
       t.id === templateId ? { ...t, isFavorite: !t.isFavorite } : t
     ));
   };
@@ -285,7 +315,7 @@ export default function WorkoutTemplates() {
   const filteredTemplates = templates.filter(template => {
     const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory;
     const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         template.description.toLowerCase().includes(searchTerm.toLowerCase());
+      template.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -313,64 +343,62 @@ export default function WorkoutTemplates() {
 
           {/* Search and Filter */}
           <div className="flex flex-col md:flex-row gap-4 mb-6">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
+                placeholder="Search templates..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search templates..."
-                className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-emerald-900/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-emerald-900/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
+          </div>
 
-            {/* Category Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
-                    selectedCategory === category.id
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-800/50 text-gray-400 hover:bg-slate-800'
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
+          {/* Category Tabs */}
+          <div className="flex gap-2 mb-6 flex-wrap">
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  selectedCategory === cat.id
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-slate-800/50 text-gray-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
           </div>
 
           {/* Templates Grid */}
           {filteredTemplates.length === 0 ? (
-            <div className="text-center py-12">
-              <Dumbbell className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400">No templates found</p>
+            <div className="text-center py-16 text-gray-500">
+              <Dumbbell className="w-12 h-12 mx-auto mb-4 opacity-30" />
+              <p className="text-lg">No templates found</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTemplates.map((template) => (
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredTemplates.map(template => (
                 <div
                   key={template.id}
-                  className="bg-slate-900/50 backdrop-blur-sm border border-emerald-900/50 rounded-xl p-6 hover:border-emerald-700/50 transition"
+                  className="bg-slate-900/80 border border-emerald-900/30 rounded-2xl p-6 flex flex-col"
                 >
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-white mb-2">{template.name}</h3>
-                      <p className="text-sm text-gray-400 mb-3">{template.description}</p>
-                    </div>
+                  {/* Template Header */}
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="text-white font-bold text-lg leading-tight flex-1 pr-2">{template.name}</h3>
                     <button
                       onClick={() => toggleFavorite(template.id)}
-                      className={`p-2 rounded-lg transition ${
+                      className={`transition ${
                         template.isFavorite ? 'text-yellow-400' : 'text-gray-600 hover:text-yellow-400'
                       }`}
                     >
                       <Star className={`w-5 h-5 ${template.isFavorite ? 'fill-current' : ''}`} />
                     </button>
                   </div>
+
+                  <p className="text-gray-400 text-sm mb-4">{template.description}</p>
 
                   {/* Meta Info */}
                   <div className="flex items-center gap-4 text-sm mb-4">
@@ -396,7 +424,7 @@ export default function WorkoutTemplates() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mt-auto">
                     <button
                       onClick={() => setSelectedTemplate(template)}
                       className="flex-1 px-4 py-2 bg-slate-800/50 hover:bg-slate-800 text-white rounded-lg text-sm font-medium transition"
@@ -465,50 +493,30 @@ export default function WorkoutTemplates() {
               </div>
             </div>
 
-            {/* Equipment Needed */}
+            {/* Exercise List */}
             <div className="mb-6">
-              <h3 className="text-lg font-bold text-white mb-3">Equipment Needed</h3>
-              <div className="flex flex-wrap gap-2">
-                {selectedTemplate.equipment.map((item, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1.5 bg-slate-800/50 rounded-lg text-sm text-gray-300"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Exercises */}
-            <div className="mb-6">
-              <h3 className="text-lg font-bold text-white mb-3">Exercises</h3>
-              <div className="space-y-3">
+              <h3 className="text-white font-semibold mb-4">Exercises</h3>
+              <div className="space-y-4">
                 {selectedTemplate.exercises.map((exercise, index) => (
-                  <div
-                    key={index}
-                    className="bg-slate-800/50 rounded-lg p-4"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                          <span className="text-emerald-400 font-bold">{index + 1}</span>
-                        </div>
-                        <h4 className="font-semibold text-white">{exercise.name}</h4>
-                      </div>
+                  <div key={index} className="flex items-start gap-4">
+                    <div className="w-8 h-8 rounded-full bg-emerald-600/20 border border-emerald-600/40 flex items-center justify-center text-emerald-400 text-sm font-bold flex-shrink-0 mt-0.5">
+                      {index + 1}
                     </div>
-                    <div className="ml-11 space-y-1">
-                      <p className="text-gray-300">
-                        <span className="text-gray-400">Sets:</span> {exercise.sets} × <span className="text-gray-400">Reps:</span> {exercise.reps}
-                      </p>
-                      {exercise.rest && (
+                    <div>
+                      <p className="text-white font-medium">{exercise.name}</p>
+                      <div className="ml-0 space-y-1">
                         <p className="text-gray-300">
-                          <span className="text-gray-400">Rest:</span> {exercise.rest}
+                          <span className="text-gray-400">Sets:</span> {exercise.sets} × <span className="text-gray-400">Reps:</span> {exercise.reps}
                         </p>
-                      )}
-                      {exercise.notes && (
-                        <p className="text-sm text-gray-500 italic">{exercise.notes}</p>
-                      )}
+                        {exercise.rest && (
+                          <p className="text-gray-300">
+                            <span className="text-gray-400">Rest:</span> {exercise.rest}
+                          </p>
+                        )}
+                        {exercise.notes && (
+                          <p className="text-sm text-gray-500 italic">{exercise.notes}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -539,6 +547,149 @@ export default function WorkoutTemplates() {
                   Save as Custom
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Workout Log Form Modal — shown after clicking Start */}
+      {workoutDraft && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-emerald-900/50 rounded-2xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-1">Log Workout</h2>
+                <p className="text-gray-400 text-sm">Fill in your actual weights and reps, then save.</p>
+              </div>
+              <button
+                onClick={() => setWorkoutDraft(null)}
+                className="p-2 hover:bg-white/10 rounded-lg"
+              >
+                <X className="w-6 h-6 text-gray-400" />
+              </button>
+            </div>
+
+            {/* Workout Meta Fields */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Workout Name</label>
+                <input
+                  type="text"
+                  value={workoutDraft.type}
+                  onChange={e => setWorkoutDraft({ ...workoutDraft, type: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-800 border border-emerald-900/40 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Date</label>
+                <input
+                  type="date"
+                  value={workoutDraft.date}
+                  onChange={e => setWorkoutDraft({ ...workoutDraft, date: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-800 border border-emerald-900/40 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Duration (min)</label>
+                <input
+                  type="number"
+                  value={workoutDraft.duration}
+                  onChange={e => setWorkoutDraft({ ...workoutDraft, duration: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 bg-slate-800 border border-emerald-900/40 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
+                <input
+                  type="text"
+                  value={workoutDraft.notes}
+                  onChange={e => setWorkoutDraft({ ...workoutDraft, notes: e.target.value })}
+                  className="w-full px-3 py-2 bg-slate-800 border border-emerald-900/40 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Exercise Table */}
+            <div className="mb-6">
+              <h3 className="text-white font-semibold mb-3">Exercises</h3>
+              <div className="space-y-3">
+                {/* Column Headers */}
+                <div className="grid grid-cols-12 gap-2 text-xs text-gray-500 uppercase px-1">
+                  <div className="col-span-4">Exercise</div>
+                  <div className="col-span-2 text-center">Sets</div>
+                  <div className="col-span-2 text-center">Reps</div>
+                  <div className="col-span-2 text-center">Weight (kg)</div>
+                  <div className="col-span-2 text-center">Notes</div>
+                </div>
+
+                {workoutDraft.exercises.map((ex, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-2 items-center bg-slate-800/40 rounded-xl px-3 py-2">
+                    <div className="col-span-4 text-white text-sm font-medium truncate" title={ex.exercise_name}>
+                      {ex.exercise_name}
+                    </div>
+                    <div className="col-span-2">
+                      <input
+                        type="number"
+                        min={1}
+                        value={ex.sets}
+                        onChange={e => updateDraftExercise(index, 'sets', parseInt(e.target.value) || 1)}
+                        className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm text-center focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <input
+                        type="number"
+                        min={1}
+                        value={ex.reps}
+                        onChange={e => updateDraftExercise(index, 'reps', parseInt(e.target.value) || 1)}
+                        className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm text-center focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={ex.weight}
+                        onChange={e => updateDraftExercise(index, 'weight', parseFloat(e.target.value) || 0)}
+                        className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm text-center focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <input
+                        type="text"
+                        value={ex.notes}
+                        placeholder="—"
+                        onChange={e => updateDraftExercise(index, 'notes', e.target.value)}
+                        className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 placeholder-gray-600"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Save / Cancel */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleSubmitWorkout}
+                disabled={submitting}
+                className="flex-1 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition flex items-center justify-center gap-2"
+              >
+                {submitting ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <CheckCircle className="w-5 h-5" />
+                )}
+                {submitting ? 'Saving...' : 'Save Workout'}
+              </button>
+              <button
+                onClick={() => setWorkoutDraft(null)}
+                className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded-xl font-semibold transition"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
