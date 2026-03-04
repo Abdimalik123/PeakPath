@@ -44,7 +44,7 @@ EOF
 docker compose up -d nginx
 
 echo -e "${YELLOW}Step 2: Requesting SSL certificate from Let's Encrypt...${NC}"
-docker compose run --rm certbot certonly \
+docker compose run --rm --entrypoint certbot certbot certonly \
     --webroot \
     --webroot-path=/var/www/certbot \
     --email "${CERT_EMAIL}" \
