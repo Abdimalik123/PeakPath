@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, g, current_app
 from database import db
-from models import Exercise
+from models import Exercise, Workout, WorkoutExercise
 from utils.logging import log_activity
 from api.auth import login_required
 
@@ -78,8 +78,27 @@ def get_exercises():
         # Execute query
         exercises = query.order_by(Exercise.name).all()
         
-        result = [exercise.to_dict() for exercise in exercises]
-        
+        result = []
+        for exercise in exercises:
+            ex_dict = exercise.to_dict()
+            # Fetch last performance for this exercise
+            last_we = db.session.query(WorkoutExercise).join(
+                Workout, WorkoutExercise.workout_id == Workout.id
+            ).filter(
+                WorkoutExercise.exercise_id == exercise.id,
+                Workout.user_id == g.user['id']
+            ).order_by(Workout.date.desc(), Workout.created_at.desc()).first()
+            if last_we:
+                ex_dict['last_performance'] = {
+                    'weight': float(last_we.weight) if last_we.weight else None,
+                    'reps': last_we.reps,
+                    'sets': last_we.sets,
+                    'date': last_we.workout.date.isoformat() if last_we.workout and last_we.workout.date else None
+                }
+            else:
+                ex_dict['last_performance'] = None
+            result.append(ex_dict)
+
         return jsonify({"success": True, "exercises": result}), 200
         
     except Exception as e:

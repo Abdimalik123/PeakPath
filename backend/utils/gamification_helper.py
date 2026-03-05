@@ -19,22 +19,42 @@ ACHIEVEMENT_DEFINITIONS = {
     # Workout milestones
     "first_workout": {
         "name": "First Step",
-        "description": "Log your first workout",
+        "description": "Complete your first workout",
         "type": "workout",
     },
     "workouts_10": {
-        "name": "Getting Consistent",
-        "description": "Log 10 workouts",
+        "name": "Getting Started",
+        "description": "Complete 10 workouts",
         "type": "workout",
     },
     "workouts_50": {
-        "name": "Dedicated Athlete",
-        "description": "Log 50 workouts",
+        "name": "Dedicated",
+        "description": "Complete 50 workouts",
         "type": "workout",
     },
     "workouts_100": {
         "name": "Century Club",
-        "description": "Log 100 workouts",
+        "description": "Complete 100 workouts",
+        "type": "workout",
+    },
+    "workouts_500": {
+        "name": "Legend",
+        "description": "Complete 500 workouts",
+        "type": "workout",
+    },
+    "early_bird": {
+        "name": "Early Bird",
+        "description": "Complete 20 morning workouts (before 9 AM)",
+        "type": "workout",
+    },
+    "night_owl": {
+        "name": "Night Owl",
+        "description": "Complete 20 evening workouts (after 8 PM)",
+        "type": "workout",
+    },
+    "variety_seeker": {
+        "name": "Variety Seeker",
+        "description": "Try 10 different workout types",
         "type": "workout",
     },
     # Habit milestones
@@ -43,31 +63,113 @@ ACHIEVEMENT_DEFINITIONS = {
         "description": "Complete a habit for the first time",
         "type": "habit",
     },
-    "habits_logged_50": {
+    "habits_created_5": {
         "name": "Habit Builder",
+        "description": "Create 5 habits",
+        "type": "habit",
+    },
+    "habits_created_10": {
+        "name": "Habit Master",
+        "description": "Create 10 habits",
+        "type": "habit",
+    },
+    "habits_logged_50": {
+        "name": "Daily Grind",
         "description": "Log 50 habit completions",
         "type": "habit",
     },
-    "habits_logged_200": {
-        "name": "Habit Machine",
-        "description": "Log 200 habit completions",
+    "habit_consistency_90": {
+        "name": "Consistency King",
+        "description": "90% habit completion rate over 30 days",
         "type": "habit",
     },
+    # Streak milestones
+    "streak_habit_7": {
+        "name": "Week Warrior",
+        "description": "Maintain a 7-day habit streak",
+        "type": "streak",
+    },
+    "streak_habit_30": {
+        "name": "Month Master",
+        "description": "Maintain a 30-day habit streak",
+        "type": "streak",
+    },
+    "streak_habit_60": {
+        "name": "Iron Will",
+        "description": "Maintain a 60-day habit streak",
+        "type": "streak",
+    },
+    "streak_habit_100": {
+        "name": "Unbreakable",
+        "description": "Maintain a 100-day habit streak",
+        "type": "streak",
+    },
+    "streak_workout_7": {
+        "name": "On Fire",
+        "description": "7-day workout streak",
+        "type": "streak",
+    },
+    "streak_workout_14": {
+        "name": "Blazing",
+        "description": "14-day workout streak",
+        "type": "streak",
+    },
+    "streak_workout_30": {
+        "name": "Inferno",
+        "description": "30-day workout streak",
+        "type": "streak",
+    },
     # Goal milestones
+    "first_goal": {
+        "name": "Dreamer",
+        "description": "Set your first goal",
+        "type": "goal",
+    },
     "first_goal_completed": {
-        "name": "Goal Getter",
-        "description": "Complete your first goal",
+        "name": "Achiever",
+        "description": "Complete 1 goal",
         "type": "goal",
     },
     "goals_completed_5": {
-        "name": "Ambitious",
+        "name": "Goal Crusher",
         "description": "Complete 5 goals",
+        "type": "goal",
+    },
+    "goals_completed_10": {
+        "name": "Overachiever",
+        "description": "Complete 10 goals",
         "type": "goal",
     },
     "goals_completed_20": {
         "name": "Unstoppable",
         "description": "Complete 20 goals",
         "type": "goal",
+    },
+    "goal_early": {
+        "name": "Speed Demon",
+        "description": "Complete a goal 30 days early",
+        "type": "goal",
+    },
+    # Special
+    "welcome": {
+        "name": "Welcome",
+        "description": "Complete onboarding",
+        "type": "special",
+    },
+    "perfect_week": {
+        "name": "Perfect Week",
+        "description": "Workout every day for a week",
+        "type": "special",
+    },
+    "weekend_warrior": {
+        "name": "Weekend Warrior",
+        "description": "Workout 10 Saturdays in a row",
+        "type": "special",
+    },
+    "transformer": {
+        "name": "Transformer",
+        "description": "Upload before and after photos",
+        "type": "special",
     },
     # Level milestones
     "level_5": {
@@ -221,36 +323,96 @@ def _grant_achievement(user_id, achievement_key):
 def check_workout_achievements(user_id, workout_count):
     """Check and grant workout-related achievements."""
     earned = []
-    thresholds = {1: "first_workout", 10: "workouts_10", 50: "workouts_50", 100: "workouts_100"}
+    thresholds = {1: "first_workout", 10: "workouts_10", 50: "workouts_50", 100: "workouts_100", 500: "workouts_500"}
     for threshold, key in thresholds.items():
         if workout_count >= threshold:
             achievement = _grant_achievement(user_id, key)
             if achievement:
                 earned.append(achievement)
+
+    # Variety Seeker: 10 different workout types
+    try:
+        from models import Workout
+        distinct_types = db.session.query(Workout.type).filter(
+            Workout.user_id == user_id
+        ).distinct().count()
+        if distinct_types >= 10:
+            achievement = _grant_achievement(user_id, "variety_seeker")
+            if achievement:
+                earned.append(achievement)
+    except Exception:
+        pass
+
     return earned
 
 
 def check_habit_achievements(user_id, total_habit_logs):
     """Check and grant habit-related achievements."""
     earned = []
-    thresholds = {1: "first_habit_log", 50: "habits_logged_50", 200: "habits_logged_200"}
+    thresholds = {1: "first_habit_log", 50: "habits_logged_50"}
     for threshold, key in thresholds.items():
         if total_habit_logs >= threshold:
             achievement = _grant_achievement(user_id, key)
             if achievement:
                 earned.append(achievement)
+
+    # Habit creation milestones
+    try:
+        from models import Habit
+        habit_count = Habit.query.filter_by(user_id=user_id).count()
+        creation_thresholds = {5: "habits_created_5", 10: "habits_created_10"}
+        for threshold, key in creation_thresholds.items():
+            if habit_count >= threshold:
+                achievement = _grant_achievement(user_id, key)
+                if achievement:
+                    earned.append(achievement)
+    except Exception:
+        pass
+
     return earned
 
 
 def check_goal_achievements(user_id, completed_goals_count):
     """Check and grant goal-related achievements."""
     earned = []
-    thresholds = {1: "first_goal_completed", 5: "goals_completed_5", 20: "goals_completed_20"}
+    thresholds = {1: "first_goal_completed", 5: "goals_completed_5", 10: "goals_completed_10", 20: "goals_completed_20"}
     for threshold, key in thresholds.items():
         if completed_goals_count >= threshold:
             achievement = _grant_achievement(user_id, key)
             if achievement:
                 earned.append(achievement)
+
+    # First goal created
+    try:
+        from models import Goal
+        goal_count = Goal.query.filter_by(user_id=user_id).count()
+        if goal_count >= 1:
+            achievement = _grant_achievement(user_id, "first_goal")
+            if achievement:
+                earned.append(achievement)
+    except Exception:
+        pass
+
+    return earned
+
+
+def check_streak_achievements(user_id, workout_streak=0, habit_streak=0):
+    """Check and grant streak-related achievements."""
+    earned = []
+    workout_thresholds = {7: "streak_workout_7", 14: "streak_workout_14", 30: "streak_workout_30"}
+    for threshold, key in workout_thresholds.items():
+        if workout_streak >= threshold:
+            achievement = _grant_achievement(user_id, key)
+            if achievement:
+                earned.append(achievement)
+
+    habit_thresholds = {7: "streak_habit_7", 30: "streak_habit_30", 60: "streak_habit_60", 100: "streak_habit_100"}
+    for threshold, key in habit_thresholds.items():
+        if habit_streak >= threshold:
+            achievement = _grant_achievement(user_id, key)
+            if achievement:
+                earned.append(achievement)
+
     return earned
 
 

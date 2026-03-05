@@ -10,6 +10,7 @@ class Workout(db.Model):
     duration = db.Column(db.Integer)  # in minutes
     date = db.Column(db.Date, index=True)
     notes = db.Column(db.Text)
+    rpe = db.Column(db.Integer)  # Rate of Perceived Exertion (1-10)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -31,6 +32,7 @@ class Workout(db.Model):
             'duration': self.duration,
             'date': self.date.isoformat() if self.date else None,
             'notes': self.notes,
+            'rpe': self.rpe,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'exercise_count': self.exercises.count()
         }

@@ -122,12 +122,49 @@ def get_dashboard():
                     "habits": habits_count
                 })
             
+            # Workout streak calculation
+            result = conn.execute(
+                db.text("""
+                    SELECT DISTINCT date FROM workouts
+                    WHERE user_id = :user_id
+                    ORDER BY date DESC
+                """),
+                {"user_id": user_id}
+            )
+            workout_dates = {row[0] for row in result.fetchall()}
+
+            current_streak = 0
+            check_date = today
+            # Allow today or yesterday as streak start
+            if check_date not in workout_dates:
+                check_date = today - timedelta(days=1)
+            while check_date in workout_dates:
+                current_streak += 1
+                check_date -= timedelta(days=1)
+
+            # Longest streak
+            longest_streak = 0
+            if workout_dates:
+                sorted_dates = sorted(workout_dates)
+                temp = 1
+                for i in range(1, len(sorted_dates)):
+                    if (sorted_dates[i] - sorted_dates[i-1]).days == 1:
+                        temp += 1
+                    else:
+                        longest_streak = max(longest_streak, temp)
+                        temp = 1
+                longest_streak = max(longest_streak, temp)
+
             dashboard = {
                 "user": user_info,
                 "today": today_stats,
                 "recent_workouts": recent_workouts,
                 "active_goals": active_goals,
-                "weekly_activity": weekly_activity
+                "weekly_activity": weekly_activity,
+                "streaks": {
+                    "current_workout_streak": current_streak,
+                    "longest_workout_streak": longest_streak
+                }
             }
             
             return jsonify({"success": True, "dashboard": dashboard}), 200

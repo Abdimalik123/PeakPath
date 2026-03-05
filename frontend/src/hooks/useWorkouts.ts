@@ -56,7 +56,8 @@ export function useWorkouts() {
     type: '',
     duration: '',
     date: new Date().toISOString().split('T')[0],
-    notes: ''
+    notes: '',
+    rpe: ''
   });
 
   useEffect(() => {
@@ -100,6 +101,7 @@ export function useWorkouts() {
         duration: parseInt(formData.duration),
         date: formData.date,
         notes: formData.notes,
+        rpe: formData.rpe ? parseInt(formData.rpe) : null,
         exercises: exercisesToAdd.map(ex => ({
           exercise_id: ex.exercise_id,
           sets: ex.sets || null,
@@ -120,7 +122,7 @@ export function useWorkouts() {
         setPrsAchieved(response.data.prs_achieved);
       }
 
-      setFormData({ type: '', duration: '', date: new Date().toISOString().split('T')[0], notes: '' });
+      setFormData({ type: '', duration: '', date: new Date().toISOString().split('T')[0], notes: '', rpe: '' });
       setExercisesToAdd([]);
       fetchWorkouts();
       return true;

@@ -24,7 +24,8 @@ def create_workout():
             type=data['type'],
             duration=data['duration'],
             date=data.get('date', datetime.now().date()),
-            notes=data.get('notes')
+            notes=data.get('notes'),
+            rpe=data.get('rpe')
         )
         
         db.session.add(workout)
@@ -301,7 +302,9 @@ def update_workout(workout_id):
             workout.date = data['date']
         if 'notes' in data:
             workout.notes = data['notes']
-        
+        if 'rpe' in data:
+            workout.rpe = data['rpe']
+
         db.session.commit()
         log_activity(g.user['id'], "updated", "workout", workout_id)
         

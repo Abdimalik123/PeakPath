@@ -19,6 +19,12 @@ interface AvailableExercise {
   muscle_group: string;
   equipment: string;
   description: string;
+  last_performance?: {
+    weight: number | null;
+    reps: number | null;
+    sets: number | null;
+    date: string | null;
+  } | null;
 }
 
 const Workouts: React.FC = () => {
@@ -462,6 +468,11 @@ const Workouts: React.FC = () => {
                                 {exercise.muscle_group && <span className="px-2 py-0.5 bg-black/10 rounded">{exercise.muscle_group}</span>}
                                 {exercise.equipment && <span className="px-2 py-0.5 bg-black/10 rounded">{exercise.equipment}</span>}
                               </div>
+                              {exercise.last_performance && (
+                                <p className={`text-xs mt-1 font-semibold ${currentExerciseForm.exercise_id === exercise.id.toString() ? 'text-[var(--text-inverse)]/80' : 'text-[var(--brand-primary)]'}`}>
+                                  Last: {exercise.last_performance.weight ? `${exercise.last_performance.weight}kg` : ''}{exercise.last_performance.weight && exercise.last_performance.reps ? ' x ' : ''}{exercise.last_performance.reps ? `${exercise.last_performance.reps} reps` : ''}{exercise.last_performance.sets ? ` (${exercise.last_performance.sets} sets)` : ''}
+                                </p>
+                              )}
                             </div>
                             {currentExerciseForm.exercise_id === exercise.id.toString() && (
                               <svg className="w-5 h-5 flex-shrink-0 ml-2" fill="currentColor" viewBox="0 0 20 20">
@@ -485,7 +496,7 @@ const Workouts: React.FC = () => {
                       <option value="">Choose an exercise</option>
                       {(isFiltering ? filteredExercises : availableExercises).map((exercise) => (
                         <option key={exercise.id} value={exercise.id}>
-                          {exercise.name} {exercise.category && `• ${exercise.category}`} {exercise.muscle_group && `• ${exercise.muscle_group}`}
+                          {exercise.name} {exercise.category && `• ${exercise.category}`} {exercise.muscle_group && `• ${exercise.muscle_group}`}{exercise.last_performance ? ` • Last: ${exercise.last_performance.weight || ''}kg x ${exercise.last_performance.reps || ''} reps` : ''}
                         </option>
                       ))}
                     </select>

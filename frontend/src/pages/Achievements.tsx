@@ -107,6 +107,8 @@ export default function Achievements() {
     if (type === 'workout') return 'dumbbell';
     if (type === 'habit') return 'calendar';
     if (type === 'goal') return 'target';
+    if (type === 'streak') return 'flame';
+    if (type === 'special') return 'star';
     if (type === 'level') return 'star';
     if (type === 'points') return 'trophy';
     return 'star';
@@ -116,15 +118,27 @@ export default function Achievements() {
     if (type === 'workout') return 'workouts';
     if (type === 'habit') return 'habits';
     if (type === 'goal') return 'goals';
+    if (type === 'streak') return 'streaks';
+    if (type === 'special') return 'special';
     return 'special';
   };
 
   const getRarityForAchievement = (key: string): Achievement['rarity'] => {
-    if (key.includes('first') || key.includes('1')) return 'common';
-    if (key.includes('10') || key.includes('50')) return 'rare';
-    if (key.includes('100') || key.includes('20')) return 'epic';
-    if (key.includes('500') || key.includes('5000')) return 'legendary';
-    return 'common';
+    const rarityMap: Record<string, Achievement['rarity']> = {
+      'first_workout': 'common', 'workouts_10': 'common', 'workouts_50': 'rare',
+      'workouts_100': 'epic', 'workouts_500': 'legendary',
+      'early_bird': 'rare', 'night_owl': 'rare', 'variety_seeker': 'rare',
+      'first_habit_log': 'common', 'habits_created_5': 'common', 'habits_created_10': 'epic',
+      'habits_logged_50': 'rare', 'habit_consistency_90': 'legendary',
+      'streak_habit_7': 'rare', 'streak_habit_30': 'epic', 'streak_habit_60': 'legendary', 'streak_habit_100': 'legendary',
+      'streak_workout_7': 'rare', 'streak_workout_14': 'epic', 'streak_workout_30': 'legendary',
+      'first_goal': 'common', 'first_goal_completed': 'common', 'goals_completed_5': 'rare',
+      'goals_completed_10': 'epic', 'goals_completed_20': 'legendary', 'goal_early': 'epic',
+      'welcome': 'common', 'perfect_week': 'epic', 'weekend_warrior': 'rare', 'transformer': 'epic',
+      'level_5': 'common', 'level_10': 'rare', 'level_25': 'legendary',
+      'points_500': 'common', 'points_1000': 'rare', 'points_5000': 'legendary',
+    };
+    return rarityMap[key] || 'common';
   };
 
   const getIconComponent = (iconName: string) => {

@@ -6,13 +6,38 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useToast } from '../contexts/ToastContext';
 import client from '../api/client';
 
-interface WeightEntry {
+interface MeasurementEntry {
   id: number;
   weight_kg: number;
   measured_at: string;
   notes?: string;
   body_fat_percentage?: number;
+  chest?: number;
+  waist?: number;
+  hips?: number;
+  bicep_left?: number;
+  bicep_right?: number;
+  thigh_left?: number;
+  thigh_right?: number;
+  calf_left?: number;
+  calf_right?: number;
+  neck?: number;
+  shoulders?: number;
 }
+
+type MeasurementKey = 'weight_kg' | 'body_fat_percentage' | 'chest' | 'waist' | 'hips' | 'bicep_left' | 'thigh_left' | 'neck' | 'shoulders';
+
+const MEASUREMENT_OPTIONS: { key: MeasurementKey; label: string; unit: string }[] = [
+  { key: 'weight_kg', label: 'Weight', unit: 'kg' },
+  { key: 'body_fat_percentage', label: 'Body Fat', unit: '%' },
+  { key: 'chest', label: 'Chest', unit: 'cm' },
+  { key: 'waist', label: 'Waist', unit: 'cm' },
+  { key: 'hips', label: 'Hips', unit: 'cm' },
+  { key: 'bicep_left', label: 'Biceps', unit: 'cm' },
+  { key: 'thigh_left', label: 'Thighs', unit: 'cm' },
+  { key: 'neck', label: 'Neck', unit: 'cm' },
+  { key: 'shoulders', label: 'Shoulders', unit: 'cm' },
+];
 
 interface WeightStats {
   current_weight: number;
@@ -26,13 +51,21 @@ interface WeightStats {
 
 export function WeightTracker() {
   const { showToast } = useToast();
-  const [weights, setWeights] = useState<WeightEntry[]>([]);
+  const [weights, setWeights] = useState<MeasurementEntry[]>([]);
   const [stats, setStats] = useState<WeightStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLogModal, setShowLogModal] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState<MeasurementKey>('weight_kg');
   const [formData, setFormData] = useState({
     weight_kg: '',
     body_fat_percentage: '',
+    chest: '',
+    waist: '',
+    hips: '',
+    bicep_left: '',
+    thigh_left: '',
+    neck: '',
+    shoulders: '',
     notes: '',
     measured_at: new Date().toISOString().split('T')[0]
   });
@@ -75,21 +108,25 @@ export function WeightTracker() {
     }
 
     try {
-      const response = await client.post('/body-measurements', {
+      const payload: Record<string, any> = {
         weight_kg: parseFloat(formData.weight_kg),
-        body_fat_percentage: formData.body_fat_percentage ? parseFloat(formData.body_fat_percentage) : null,
         notes: formData.notes || null,
         measured_at: formData.measured_at
-      });
+      };
+      const optionalFields = ['body_fat_percentage', 'chest', 'waist', 'hips', 'bicep_left', 'thigh_left', 'neck', 'shoulders'] as const;
+      for (const field of optionalFields) {
+        if (formData[field]) payload[field] = parseFloat(formData[field]);
+      }
+
+      const response = await client.post('/body-measurements', payload);
 
       if (response.data.success) {
-        showToast('Weight logged successfully!', 'success');
+        showToast('Measurements logged successfully!', 'success');
         setShowLogModal(false);
         setFormData({
-          weight_kg: '',
-          body_fat_percentage: '',
-          notes: '',
-          measured_at: new Date().toISOString().split('T')[0]
+          weight_kg: '', body_fat_percentage: '', chest: '', waist: '', hips: '',
+          bicep_left: '', thigh_left: '', neck: '', shoulders: '',
+          notes: '', measured_at: new Date().toISOString().split('T')[0]
         });
         fetchWeights();
         fetchStats();
@@ -99,13 +136,16 @@ export function WeightTracker() {
     }
   };
 
-  // Prepare chart data
+  const selectedOption = MEASUREMENT_OPTIONS.find(o => o.key === selectedMetric)!;
+
+  // Prepare chart data for selected metric
   const chartData = weights
     .slice()
+    .filter(w => w[selectedMetric] != null)
     .reverse()
     .map(w => ({
       date: new Date(w.measured_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      weight: w.weight_kg
+      value: w[selectedMetric] as number
     }));
 
   if (loading) {
@@ -125,17 +165,34 @@ export function WeightTracker() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Scale className="w-5 h-5 text-[var(--brand-primary)]" />
-              <CardTitle>Weight Tracking</CardTitle>
+              <CardTitle>Body Tracking</CardTitle>
             </div>
             <Button onClick={() => setShowLogModal(true)} className="pp-btn-primary">
               <Plus className="w-4 h-4 mr-2" />
-              Log Weight
+              Log Measurements
             </Button>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Metric Selector */}
+          <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
+            {MEASUREMENT_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setSelectedMetric(opt.key)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+                  selectedMetric === opt.key
+                    ? 'bg-[var(--brand-primary)] text-white'
+                    : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
           {/* Stats Grid */}
-          {stats && stats.current_weight && (
+          {selectedMetric === 'weight_kg' && stats && stats.current_weight && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="p-4 rounded-lg bg-[var(--bg-tertiary)]">
                 <p className="text-xs text-[var(--text-muted)] mb-1">Current</p>
@@ -204,7 +261,8 @@ export function WeightTracker() {
                   />
                   <Line
                     type="monotone"
-                    dataKey="weight"
+                    dataKey="value"
+                    name={`${selectedOption.label} (${selectedOption.unit})`}
                     stroke="var(--brand-primary)"
                     strokeWidth={2}
                     dot={{ fill: 'var(--brand-primary)', r: 4 }}
@@ -215,9 +273,9 @@ export function WeightTracker() {
           ) : (
             <div className="text-center py-12">
               <Scale className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4 opacity-50" />
-              <p className="text-[var(--text-muted)] mb-4">No weight data yet</p>
+              <p className="text-[var(--text-muted)] mb-4">No {selectedOption.label.toLowerCase()} data yet</p>
               <Button onClick={() => setShowLogModal(true)} className="pp-btn-primary">
-                Log Your First Weight
+                Log Your First Measurements
               </Button>
             </div>
           )}
@@ -227,9 +285,9 @@ export function WeightTracker() {
       {/* Log Weight Modal */}
       {showLogModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--bg-secondary)] rounded-xl max-w-md w-full p-6">
+          <div className="bg-[var(--bg-secondary)] rounded-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-[var(--text-primary)]">Log Weight</h3>
+              <h3 className="text-xl font-bold text-[var(--text-primary)]">Log Measurements</h3>
               <button
                 onClick={() => setShowLogModal(false)}
                 className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
@@ -266,6 +324,34 @@ export function WeightTracker() {
                   className="w-full px-4 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-default)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)]"
                   placeholder="15.0"
                 />
+              </div>
+
+              {/* Body Circumference Measurements */}
+              <div className="border-t border-[var(--border-default)] pt-3 mt-3">
+                <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">Circumference (cm) - optional</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { key: 'chest' as const, label: 'Chest' },
+                    { key: 'waist' as const, label: 'Waist' },
+                    { key: 'hips' as const, label: 'Hips' },
+                    { key: 'bicep_left' as const, label: 'Biceps' },
+                    { key: 'thigh_left' as const, label: 'Thighs' },
+                    { key: 'neck' as const, label: 'Neck' },
+                    { key: 'shoulders' as const, label: 'Shoulders' },
+                  ].map(({ key, label }) => (
+                    <div key={key}>
+                      <label className="block text-xs text-[var(--text-muted)] mb-1">{label}</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formData[key]}
+                        onChange={(e) => setFormData({ ...formData, [key]: e.target.value })}
+                        className="w-full px-3 py-1.5 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-default)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--brand-primary)]"
+                        placeholder="0.0"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div>

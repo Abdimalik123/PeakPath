@@ -29,6 +29,10 @@ export interface DashboardData {
     workouts: number;
     habits: number;
   }>;
+  streaks: {
+    current_workout_streak: number;
+    longest_workout_streak: number;
+  };
 }
 
 export const fetchDashboard = async (): Promise<DashboardData> => {

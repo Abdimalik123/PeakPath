@@ -9,7 +9,7 @@ import { Navigation } from '../components/Navigation';
 import { PageHeader } from '../components/PageHeader';
 import { StatCard, StatsGrid } from '../components/StatCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/Card';
-import { Zap, CheckCircle, Target, Dumbbell, ArrowRight } from 'lucide-react';
+import { Zap, CheckCircle, Target, Dumbbell, ArrowRight, Flame } from 'lucide-react';
 import { WorkoutHeatmap } from '../components/WorkoutHeatmap';
 import { DailyQuestsWidget } from '../components/DailyQuestsWidget';
 import { WeightTracker } from '../components/WeightTracker';
@@ -113,11 +113,11 @@ const Dashboard: React.FC = () => {
               badge="Active"
             />
             <StatCard
-              title="Recent Workouts"
-              value={dashboardData.recent_workouts.length}
-              icon={Dumbbell}
+              title="Workout Streak"
+              value={dashboardData.streaks?.current_workout_streak || 0}
+              icon={Flame}
               iconColor="green"
-              badge="Recent"
+              badge={`Best: ${dashboardData.streaks?.longest_workout_streak || 0}`}
             />
           </StatsGrid>
 

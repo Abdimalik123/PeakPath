@@ -366,13 +366,8 @@ export default function Social() {
                           />
                         </div>
 
-                        {/* Like + comment buttons */}
+                        {/* Comment button */}
                         <div className="flex items-center gap-6 mb-3">
-                          <button onClick={() => handleLike(activity.id)}
-                            className={`flex items-center gap-2 transition ${activity.isLiked ? 'text-[var(--error)]' : 'text-[var(--text-muted)] hover:text-[var(--error)]'}`}>
-                            <Heart className={`w-5 h-5 ${activity.isLiked ? 'fill-current' : ''}`} />
-                            <span>{activity.likes}</span>
-                          </button>
                           <button onClick={() => toggleComments(activity.id)}
                             className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--brand-secondary)] transition">
                             <MessageCircle className="w-5 h-5" />

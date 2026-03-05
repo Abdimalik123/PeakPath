@@ -23,6 +23,7 @@ interface AddWorkoutModalProps {
     duration: string;
     date: string;
     notes: string;
+    rpe: string;
   };
   setFormData: (data: any) => void;
   exercisesToAdd: ExerciseToAdd[];
@@ -79,6 +80,14 @@ export function AddWorkoutModal({
               required
             />
           </div>
+
+          <FormInput
+            label="RPE - Rate of Perceived Exertion (1-10)"
+            type="number"
+            value={formData.rpe}
+            onChange={(value) => setFormData({ ...formData, rpe: value })}
+            placeholder="7"
+          />
 
           <FormInput
             label="Notes (Optional)"
