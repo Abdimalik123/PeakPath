@@ -51,7 +51,7 @@ def create_app():
         Habit, HabitLog, Goal, GoalLink, NutritionLog, 
         Notification, ActivityLog, UserPoint, UserAchievement, 
         PointTransaction, Friendship, SocialActivity, ActivityLike,
-        ActivityComment, ProgressPhoto
+        ActivityComment, ProgressPhoto, BodyMeasurement
         )
     from models.personal_record import PersonalRecord
     from models.group import Group, GroupMember, GroupPost
@@ -129,6 +129,7 @@ def create_app():
     from api.programs import programs_bp
     from api.cardio import cardio_bp
     from api.achievement_discovery import achievement_discovery_bp
+    from api.body_measurements import body_measurements_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/v1')
@@ -159,6 +160,7 @@ def create_app():
     app.register_blueprint(programs_bp, url_prefix='/api/v1')
     app.register_blueprint(cardio_bp, url_prefix='/api/v1')
     app.register_blueprint(achievement_discovery_bp, url_prefix='/api/v1')
+    app.register_blueprint(body_measurements_bp, url_prefix='/api/v1')
 
     # Health check endpoint
     @app.route('/health')

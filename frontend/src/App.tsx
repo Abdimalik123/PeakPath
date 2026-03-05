@@ -4,6 +4,7 @@ import HomePage from './pages/Homepage';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
+import { EnhancedOnboarding } from './components/EnhancedOnboarding';
 import Profile from './pages/Profile';
 import Dashboard from './pages/DashBoard';
 import Workouts from './pages/Workouts';
@@ -28,7 +29,8 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/onboarding" element={<Onboarding />} />
+      <Route path="/onboarding" element={<EnhancedOnboarding />} />
+      <Route path="/onboarding-basic" element={<Onboarding />} />
       
       {/* Protected routes (after login) */}
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />

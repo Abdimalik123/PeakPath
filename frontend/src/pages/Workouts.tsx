@@ -8,6 +8,8 @@ import { WorkoutDetails } from '../components/WorkoutDetails';
 import { PRCelebration } from '../components/PRCelebration';
 import { useWorkouts } from '../hooks/useWorkouts';
 import { useToast } from '../contexts/ToastContext';
+import { RepeatWorkoutButton } from '../components/RepeatWorkoutButton';
+import { EmptyStateGuide } from '../components/EmptyStateGuide';
 import client from '../api/client';
 
 interface AvailableExercise {
@@ -239,20 +241,12 @@ const Workouts: React.FC = () => {
             {/* Workouts List */}
             <div className="lg:col-span-2 space-y-4">
               {workouts.length === 0 ? (
-                <EmptyState
-                  icon={
-                    <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  }
-                  title="No Workouts Yet"
-                  description="Start tracking your fitness journey"
-                  actionButton={{
-                    label: "Log First Workout",
-                    onClick: () => setShowAddModal(true)
-                  }}
-                />
+                <EmptyStateGuide type="workouts" />
               ) : (
+                <>
+                <div className="mb-4">
+                  <RepeatWorkoutButton onSuccess={() => window.location.reload()} />
+                </div>
                 workouts.map((workout) => {
                   const workoutData = {
                     id: workout.id.toString(),
@@ -270,6 +264,7 @@ const Workouts: React.FC = () => {
                     />
                   );
                 })
+                </>
               )}
             </div>
 

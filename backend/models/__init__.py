@@ -21,6 +21,7 @@ from .point_transaction import PointTransaction
 from .friendship import Friendship
 from .social_activity import SocialActivity, ActivityLike, ActivityComment
 from .progress_photo import ProgressPhoto
+from .body_measurement import BodyMeasurement
 
 __all__ = [
     'User',
@@ -45,5 +46,6 @@ __all__ = [
     'SocialActivity',
     'ActivityLike',
     'ActivityComment',
-    'ProgressPhoto'
+    'ProgressPhoto',
+    'BodyMeasurement'
 ]

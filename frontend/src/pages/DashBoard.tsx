@@ -12,6 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Zap, CheckCircle, Target, Dumbbell, ArrowRight } from 'lucide-react';
 import { WorkoutHeatmap } from '../components/WorkoutHeatmap';
 import { DailyQuestsWidget } from '../components/DailyQuestsWidget';
+import { WeightTracker } from '../components/WeightTracker';
+import { EmptyStateGuide } from '../components/EmptyStateGuide';
 
 const Dashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -79,6 +81,13 @@ const Dashboard: React.FC = () => {
           <div className="mb-8">
             <WorkoutHeatmap />
           </div>
+
+          {/* Empty State Guide for new users */}
+          {dashboardData.recent_workouts.length === 0 && dashboardData.active_goals.length === 0 && (
+            <div className="mb-8">
+              <EmptyStateGuide type="dashboard" />
+            </div>
+          )}
 
           {/* Stats Grid */}
           <StatsGrid className="mb-8">
@@ -188,6 +197,9 @@ const Dashboard: React.FC = () => {
               {/* Daily Quests */}
               <DailyQuestsWidget />
               
+              {/* Weight Tracker */}
+              <WeightTracker />
+
               {/* Active Goals */}
               <Card>
                 <CardHeader>
