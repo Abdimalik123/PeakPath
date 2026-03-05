@@ -79,6 +79,55 @@ def get_goals():
                 "updated_at": goal.updated_at.isoformat() if goal.updated_at else None,
                 "links_count": GoalLink.query.filter_by(goal_id=goal.id).count(),
             }
+
+            # Calculate pace info
+            pace_info = None
+            if goal.deadline and goal.progress < goal.target:
+                from datetime import date as date_type
+                deadline = goal.deadline if isinstance(goal.deadline, date_type) else date.fromisoformat(str(goal.deadline))
+                days_remaining = (deadline - date.today()).days
+                remaining = goal.target - goal.progress
+
+                if days_remaining > 0:
+                    days_elapsed = (date.today() - goal.created_at.date()).days if goal.created_at else 0
+                    if days_elapsed > 0:
+                        current_rate = goal.progress / days_elapsed  # progress per day
+                        required_rate = remaining / days_remaining
+
+                        if current_rate > 0:
+                            projected_completion_days = remaining / current_rate
+                            on_track = projected_completion_days <= days_remaining
+                        else:
+                            on_track = False
+                            projected_completion_days = None
+
+                        pace_info = {
+                            'days_remaining': days_remaining,
+                            'remaining_progress': remaining,
+                            'current_rate': round(current_rate, 2),
+                            'required_rate': round(required_rate, 2),
+                            'on_track': on_track,
+                            'status': 'on_track' if on_track else 'behind'
+                        }
+                    else:
+                        pace_info = {
+                            'days_remaining': days_remaining,
+                            'remaining_progress': remaining,
+                            'current_rate': 0,
+                            'required_rate': round(remaining / days_remaining, 2),
+                            'on_track': True,
+                            'status': 'just_started'
+                        }
+                elif days_remaining <= 0:
+                    pace_info = {
+                        'days_remaining': 0,
+                        'remaining_progress': remaining,
+                        'on_track': False,
+                        'status': 'overdue'
+                    }
+
+            goal_dict['pace_info'] = pace_info
+
             goals_list.append(goal_dict)
 
         return jsonify({"success": True, "goals": goals_list}), 200
@@ -126,6 +175,54 @@ def get_goal(goal_id):
             "updated_at": goal.updated_at.isoformat() if goal.updated_at else None,
             "links": links_list,
         }
+
+        # Calculate pace info
+        pace_info = None
+        if goal.deadline and goal.progress < goal.target:
+            from datetime import date as date_type
+            deadline = goal.deadline if isinstance(goal.deadline, date_type) else date.fromisoformat(str(goal.deadline))
+            days_remaining = (deadline - date.today()).days
+            remaining = goal.target - goal.progress
+
+            if days_remaining > 0:
+                days_elapsed = (date.today() - goal.created_at.date()).days if goal.created_at else 0
+                if days_elapsed > 0:
+                    current_rate = goal.progress / days_elapsed  # progress per day
+                    required_rate = remaining / days_remaining
+
+                    if current_rate > 0:
+                        projected_completion_days = remaining / current_rate
+                        on_track = projected_completion_days <= days_remaining
+                    else:
+                        on_track = False
+                        projected_completion_days = None
+
+                    pace_info = {
+                        'days_remaining': days_remaining,
+                        'remaining_progress': remaining,
+                        'current_rate': round(current_rate, 2),
+                        'required_rate': round(required_rate, 2),
+                        'on_track': on_track,
+                        'status': 'on_track' if on_track else 'behind'
+                    }
+                else:
+                    pace_info = {
+                        'days_remaining': days_remaining,
+                        'remaining_progress': remaining,
+                        'current_rate': 0,
+                        'required_rate': round(remaining / days_remaining, 2),
+                        'on_track': True,
+                        'status': 'just_started'
+                    }
+            elif days_remaining <= 0:
+                pace_info = {
+                    'days_remaining': 0,
+                    'remaining_progress': remaining,
+                    'on_track': False,
+                    'status': 'overdue'
+                }
+
+        goal_dict['pace_info'] = pace_info
 
         return jsonify({"success": True, "goal": goal_dict}), 200
 

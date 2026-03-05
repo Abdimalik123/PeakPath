@@ -5,6 +5,7 @@ import { StatCard, StatsGrid } from '../components/StatCard';
 import { TrendingUp, Dumbbell, Calendar, Target, Flame, Award, Activity } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import client from '../api/client';
+import { ExerciseProgressionChart } from '../components/ExerciseProgressionChart';
 
 interface AnalyticsStats {
   totalWorkouts: number;
@@ -27,6 +28,8 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('month');
   const [stats, setStats] = useState<AnalyticsStats | null>(null);
+  const [selectedExerciseId, setSelectedExerciseId] = useState<number | null>(null);
+  const [exercises, setExercises] = useState<{id: number, name: string}[]>([]);
 
   // Mock data - Replace with actual API calls when backend is ready
   const mockStats: AnalyticsStats = {
@@ -110,6 +113,16 @@ export default function Analytics() {
       } else {
         // Fallback to mock data
         setStats(mockStats);
+      }
+      // Fetch exercises list
+      try {
+        const exercisesRes = await client.get('/exercises');
+        if (exercisesRes.data.success || Array.isArray(exercisesRes.data)) {
+          const exercisesList = Array.isArray(exercisesRes.data) ? exercisesRes.data : exercisesRes.data.exercises || [];
+          setExercises(exercisesList.map((e: any) => ({ id: e.id, name: e.name })));
+        }
+      } catch (exerciseError) {
+        console.error('Failed to load exercises:', exerciseError);
       }
     } catch (error: any) {
       console.error('Failed to load analytics:', error);
@@ -360,6 +373,44 @@ export default function Analytics() {
                     <Bar dataKey="goals" fill="#8b5cf6" name="Goals Completed" />
                   </BarChart>
                 </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Exercise Progression */}
+          <div className="mb-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-[var(--brand-primary)]" />
+                  <CardTitle>Exercise Progression</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <select
+                    value={selectedExerciseId ?? ''}
+                    onChange={(e) => setSelectedExerciseId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full sm:w-64 px-3 py-2 rounded-[var(--radius-md)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] border border-[var(--border-default)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
+                  >
+                    <option value="">Select an exercise...</option>
+                    {exercises.map((exercise) => (
+                      <option key={exercise.id} value={exercise.id}>
+                        {exercise.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {selectedExerciseId ? (
+                  <ExerciseProgressionChart
+                    exerciseId={selectedExerciseId}
+                    exerciseName={exercises.find((e) => e.id === selectedExerciseId)?.name || ''}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-48 text-[var(--text-muted)]">
+                    <p>Select an exercise above to view your progression over time.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

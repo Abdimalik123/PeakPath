@@ -59,6 +59,7 @@ def create_app():
     from models.activity_reaction import ActivityReaction
     from models.workout_program import WorkoutProgram, ProgramWorkout, ProgramExercise, ProgramEnrollment
     from models.cardio_workout import CardioWorkout
+    from models.scheduled_workout import ScheduledWorkout
     
     # Configure CORS with specific origins
     FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
@@ -130,6 +131,7 @@ def create_app():
     from api.cardio import cardio_bp
     from api.achievement_discovery import achievement_discovery_bp
     from api.body_measurements import body_measurements_bp
+    from api.schedule import schedule_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/v1')
@@ -161,6 +163,7 @@ def create_app():
     app.register_blueprint(cardio_bp, url_prefix='/api/v1')
     app.register_blueprint(achievement_discovery_bp, url_prefix='/api/v1')
     app.register_blueprint(body_measurements_bp, url_prefix='/api/v1')
+    app.register_blueprint(schedule_bp, url_prefix='/api/v1')
 
     # Health check endpoint
     @app.route('/health')

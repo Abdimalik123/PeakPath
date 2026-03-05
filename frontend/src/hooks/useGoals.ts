@@ -11,6 +11,14 @@ interface Goal {
   deadline: string;
   created_at: string;
   updated_at: string;
+  pace_info?: {
+    status: string;
+    days_remaining: number;
+    remaining_progress: number;
+    current_rate: number;
+    required_rate: number;
+    on_track: boolean;
+  } | null;
 }
 
 export function useGoals() {

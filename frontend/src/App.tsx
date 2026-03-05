@@ -21,6 +21,7 @@ import GroupDetail from './pages/GroupDetail';
 import Messages from './pages/Messages';
 import Programs from './pages/Programs';
 import CardioLogger from './pages/CardioLogger';
+import Schedule from './pages/Schedule';
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
       <Route path="/messages" element={<PrivateRoute><Messages /></PrivateRoute>} />
       <Route path="/programs" element={<PrivateRoute><Programs /></PrivateRoute>} />
       <Route path="/cardio" element={<PrivateRoute><CardioLogger /></PrivateRoute>} />
+      <Route path="/schedule" element={<PrivateRoute><Schedule /></PrivateRoute>} />
       
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />

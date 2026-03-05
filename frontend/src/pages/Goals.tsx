@@ -102,6 +102,18 @@ const Goals: React.FC = () => {
                   return (
                     <div key={goal.id} onClick={() => setSelectedGoal(goal)}>
                       <GoalProgress goal={goalData} />
+                      {goal.pace_info && (goal.pace_info.status === 'behind' || goal.pace_info.status === 'overdue') && (
+                        <div className={`mt-2 px-3 py-2 rounded-lg text-xs font-medium ${
+                          goal.pace_info.status === 'overdue'
+                            ? 'bg-[var(--error)]/10 text-[var(--error)]'
+                            : 'bg-orange-500/10 text-orange-500'
+                        }`}>
+                          {goal.pace_info.status === 'overdue'
+                            ? `Overdue — ${goal.pace_info.remaining_progress} remaining`
+                            : `Behind pace — ${goal.pace_info.days_remaining} days left, need ${goal.pace_info.required_rate}/day (current: ${goal.pace_info.current_rate}/day)`
+                          }
+                        </div>
+                      )}
                     </div>
                   );
                 })

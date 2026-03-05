@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
   Activity, LayoutDashboard, Dumbbell, Target, Calendar, User, LogOut,
   Menu, X, Trophy, BarChart3, Camera, Users, FileText, Bell,
-  Heart, MessageCircle, UserPlus, Check, Award, Flame, TrendingUp
+  Heart, MessageCircle, UserPlus, Check, Award, Flame, TrendingUp, CalendarDays
 } from 'lucide-react';
 import client from '../api/client';
 import { NotificationsBell } from './NotificationsBell';
@@ -30,6 +30,7 @@ const navItems = [
   { path: '/habits', icon: Calendar, label: 'Habits' },
   { path: '/goals', icon: Target, label: 'Goals' },
   { path: '/programs', icon: FileText, label: 'Programs' },
+  { path: '/schedule', icon: CalendarDays, label: 'Schedule' },
   { path: '/challenges', icon: Trophy, label: 'Challenges' },
   { path: '/achievements', icon: Award, label: 'Achievements' },
   { path: '/analytics', icon: BarChart3, label: 'Analytics' },

@@ -206,3 +206,79 @@ def get_weekly_summary():
     except Exception as e:
         current_app.logger.error(f"Error fetching weekly summary: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@summary_bp.route('/summary/weekly/notify', methods=['POST'])
+@login_required
+def send_weekly_summary_notification():
+    """Generate and send weekly summary as a notification"""
+    user_id = g.user['id']
+
+    try:
+        with db.engine.connect() as conn:
+            today = datetime.now().date()
+            week_start = today - timedelta(days=today.weekday())
+            week_end = week_start + timedelta(days=6)
+
+            # Get workout count
+            result = conn.execute(
+                db.text("SELECT COUNT(*) FROM workouts WHERE user_id = :uid AND date >= :ws AND date <= :we"),
+                {"uid": user_id, "ws": week_start, "we": week_end}
+            )
+            workout_count = result.fetchone()[0]
+
+            # Get total duration
+            result = conn.execute(
+                db.text("SELECT COALESCE(SUM(duration), 0) FROM workouts WHERE user_id = :uid AND date >= :ws AND date <= :we"),
+                {"uid": user_id, "ws": week_start, "we": week_end}
+            )
+            total_duration = result.fetchone()[0]
+
+            # Get habits logged
+            result = conn.execute(
+                db.text("""
+                    SELECT COUNT(hl.id) FROM habit_logs hl
+                    JOIN habits h ON hl.habit_id = h.id
+                    WHERE h.user_id = :uid AND hl.timestamp >= :ws AND hl.timestamp <= :we
+                """),
+                {"uid": user_id, "ws": week_start, "we": week_end}
+            )
+            habits_count = result.fetchone()[0]
+
+            # Get points earned
+            result = conn.execute(
+                db.text("SELECT COALESCE(SUM(points), 0) FROM point_transactions WHERE user_id = :uid AND created_at >= :ws AND created_at <= :we"),
+                {"uid": user_id, "ws": week_start, "we": week_end}
+            )
+            points = result.fetchone()[0]
+
+            # Build summary message
+            parts = [f"Your week: {workout_count} workouts"]
+            if total_duration > 0:
+                parts.append(f"{total_duration} min trained")
+            if habits_count > 0:
+                parts.append(f"{habits_count} habits logged")
+            if points > 0:
+                parts.append(f"+{points} points earned")
+
+            message = " | ".join(parts)
+
+            from utils.notification_helper import create_notification
+            create_notification(
+                user_id=user_id,
+                notification_type='weekly_summary',
+                message=message,
+                priority='medium',
+                action_url='/analytics'
+            )
+            db.session.commit()
+
+            return jsonify({
+                'success': True,
+                'message': 'Weekly summary notification sent',
+                'summary_message': message
+            }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error sending weekly summary notification: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
