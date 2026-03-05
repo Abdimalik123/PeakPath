@@ -14,6 +14,12 @@ import Analytics from './pages/Analytics';
 import ProgressPhotos from './pages/ProgressPhotos';
 import Social from './pages/Social';
 import WorkoutTemplates from './pages/WorkoutTemplates';
+import Challenges from './pages/Challenges';
+import Groups from './pages/Groups';
+import GroupDetail from './pages/GroupDetail';
+import Messages from './pages/Messages';
+import Programs from './pages/Programs';
+import CardioLogger from './pages/CardioLogger';
 
 function App() {
   return (
@@ -35,6 +41,12 @@ function App() {
       <Route path="/progress-photos" element={<PrivateRoute><ProgressPhotos /></PrivateRoute>} />
       <Route path="/social" element={<PrivateRoute><Social /></PrivateRoute>} />
       <Route path="/workout-templates" element={<PrivateRoute><WorkoutTemplates /></PrivateRoute>} />
+      <Route path="/challenges" element={<PrivateRoute><Challenges /></PrivateRoute>} />
+      <Route path="/groups" element={<PrivateRoute><Groups /></PrivateRoute>} />
+      <Route path="/groups/:groupId" element={<PrivateRoute><GroupDetail /></PrivateRoute>} />
+      <Route path="/messages" element={<PrivateRoute><Messages /></PrivateRoute>} />
+      <Route path="/programs" element={<PrivateRoute><Programs /></PrivateRoute>} />
+      <Route path="/cardio" element={<PrivateRoute><CardioLogger /></PrivateRoute>} />
       
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />

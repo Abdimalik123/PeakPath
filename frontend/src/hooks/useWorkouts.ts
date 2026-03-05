@@ -50,6 +50,7 @@ export function useWorkouts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exercisesToAdd, setExercisesToAdd] = useState<ExerciseToAdd[]>([]);
+  const [prsAchieved, setPrsAchieved] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     type: '',
@@ -114,6 +115,11 @@ export function useWorkouts() {
         return false;
       }
 
+      // Check for PRs achieved
+      if (response.data.prs_achieved && response.data.prs_achieved.length > 0) {
+        setPrsAchieved(response.data.prs_achieved);
+      }
+
       setFormData({ type: '', duration: '', date: new Date().toISOString().split('T')[0], notes: '' });
       setExercisesToAdd([]);
       fetchWorkouts();
@@ -170,6 +176,8 @@ export function useWorkouts() {
     formData,
     setFormData,
     exercisesToAdd,
+    prsAchieved,
+    setPrsAchieved,
     fetchWorkoutDetails,
     handleSubmit,
     handleDelete,

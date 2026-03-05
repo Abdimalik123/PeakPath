@@ -9,6 +9,8 @@ import os
 from dotenv import load_dotenv
 from prometheus_client import generate_latest, Counter
 from flask import Response
+from models.challenge import Challenge, ChallengeParticipant
+from models.daily_quest import DailyQuest, UserDailyQuest
 
 REQUEST_COUNT = Counter('app_request_total', 'Total number of requests')
 
@@ -51,6 +53,12 @@ def create_app():
         PointTransaction, Friendship, SocialActivity, ActivityLike,
         ActivityComment, ProgressPhoto
         )
+    from models.personal_record import PersonalRecord
+    from models.group import Group, GroupMember, GroupPost
+    from models.message import Conversation, Message
+    from models.activity_reaction import ActivityReaction
+    from models.workout_program import WorkoutProgram, ProgramWorkout, ProgramExercise, ProgramEnrollment
+    from models.cardio_workout import CardioWorkout
     
     # Configure CORS with specific origins
     FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
@@ -109,6 +117,18 @@ def create_app():
     from api.gamification import gamification_bp
     from api.summary import summary_bp
     from api.dashboard import dashboard_bp
+    from api.analytics import analytics_bp
+    from api.exercise_library import exercise_library_bp
+    from api.personal_records import pr_bp
+    from api.challenges import challenges_bp
+    from api.daily_quests import daily_quests_bp
+    from api.leaderboard import leaderboard_bp
+    from api.groups import groups_bp
+    from api.messages import messages_bp
+    from api.reactions import reactions_bp
+    from api.programs import programs_bp
+    from api.cardio import cardio_bp
+    from api.achievement_discovery import achievement_discovery_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/v1')
@@ -127,6 +147,18 @@ def create_app():
     app.register_blueprint(dashboard_bp, url_prefix='/api/v1')
     app.register_blueprint(social_bp, url_prefix='/api/v1')
     app.register_blueprint(progress_photos_bp, url_prefix='/api/v1')
+    app.register_blueprint(analytics_bp, url_prefix='/api/v1')
+    app.register_blueprint(exercise_library_bp, url_prefix='/api/v1')
+    app.register_blueprint(pr_bp, url_prefix='/api/v1')
+    app.register_blueprint(challenges_bp, url_prefix='/api/v1')
+    app.register_blueprint(daily_quests_bp, url_prefix='/api/v1')
+    app.register_blueprint(leaderboard_bp, url_prefix='/api/v1')
+    app.register_blueprint(groups_bp, url_prefix='/api/v1')
+    app.register_blueprint(messages_bp, url_prefix='/api/v1')
+    app.register_blueprint(reactions_bp, url_prefix='/api/v1')
+    app.register_blueprint(programs_bp, url_prefix='/api/v1')
+    app.register_blueprint(cardio_bp, url_prefix='/api/v1')
+    app.register_blueprint(achievement_discovery_bp, url_prefix='/api/v1')
 
     # Health check endpoint
     @app.route('/health')

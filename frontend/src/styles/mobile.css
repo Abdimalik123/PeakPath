@@ -1,0 +1,98 @@
+/* Mobile-Specific Optimizations for PeakPath */
+
+/* Ensure all pages have proper mobile padding */
+@media (max-width: 1024px) {
+  .lg\:ml-64 {
+    padding-top: 4rem !important;
+  }
+}
+
+/* Improve form inputs on mobile */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  textarea,
+  select {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+  
+  /* Better spacing for mobile cards */
+  .pp-card,
+  .pp-stat-card {
+    margin-bottom: 1rem;
+  }
+  
+  /* Stack grid items on mobile */
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Full width buttons on mobile */
+  .pp-btn-primary,
+  .pp-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Reduce padding on mobile */
+  .px-8 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  .py-8 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* Improve touch targets */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  input[type="button"],
+  input[type="submit"] {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+/* Better mobile navigation */
+@media (max-width: 1024px) {
+  .pp-nav-link {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
+
+/* Responsive tables */
+@media (max-width: 768px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+/* Mobile-friendly modals */
+@media (max-width: 640px) {
+  .modal-content,
+  [role="dialog"] {
+    max-width: 95vw !important;
+    margin: 0.5rem;
+  }
+}

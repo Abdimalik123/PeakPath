@@ -41,8 +41,9 @@ def _get_workout_details(workout_id):
 @social_bp.route('/social/feed', methods=['GET'])
 @login_required
 def get_activity_feed():
-    """Get activity feed from accepted friends and self only"""
+    """Get activity feed from accepted friends and self only with reactions"""
     try:
+        from models.activity_reaction import ActivityReaction
         user_id = g.user['id']
 
         friends = db.session.query(Friendship.friend_id).filter(
@@ -99,6 +100,22 @@ def get_activity_feed():
             if activity.activity_type == 'workout' and activity.reference_id:
                 entry['workout'] = _get_workout_details(activity.reference_id)
 
+            # Add reactions data
+            reactions = ActivityReaction.query.filter_by(activity_id=activity.id).all()
+            reaction_summary = {}
+            user_reactions = []
+            
+            for r in reactions:
+                if r.reaction_type not in reaction_summary:
+                    reaction_summary[r.reaction_type] = 0
+                reaction_summary[r.reaction_type] += 1
+                
+                if r.user_id == user_id:
+                    user_reactions.append(r.reaction_type)
+            
+            entry['reactions'] = reaction_summary
+            entry['user_reactions'] = user_reactions
+
             result.append(entry)
 
         return jsonify({'success': True, 'activities': result}), 200
@@ -142,6 +159,62 @@ def get_leaderboard():
     except Exception as e:
         current_app.logger.error(f"Error fetching leaderboard: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@social_bp.route('/social/users/search', methods=['GET'])
+@login_required
+def search_users():
+    """Search for users by name or email"""
+    try:
+        user_id = g.user['id']
+        query = request.args.get('q', '').strip()
+        
+        if not query or len(query) < 2:
+            return jsonify({'success': False, 'message': 'Query must be at least 2 characters'}), 400
+        
+        # Search by name or email (case-insensitive)
+        search_pattern = f"%{query}%"
+        users = User.query.filter(
+            User.id != user_id,  # Exclude self
+            or_(
+                User.firstname.ilike(search_pattern),
+                User.lastname.ilike(search_pattern),
+                User.email.ilike(search_pattern)
+            )
+        ).limit(20).all()
+        
+        # Get existing friendships to show status
+        existing_friendships = {}
+        if users:
+            user_ids = [u.id for u in users]
+            friendships = Friendship.query.filter(
+                or_(
+                    and_(Friendship.user_id == user_id, Friendship.friend_id.in_(user_ids)),
+                    and_(Friendship.friend_id == user_id, Friendship.user_id.in_(user_ids))
+                )
+            ).all()
+            
+            for f in friendships:
+                other_id = f.friend_id if f.user_id == user_id else f.user_id
+                existing_friendships[other_id] = f.status
+        
+        results = []
+        for user in users:
+            up = UserPoint.query.filter_by(user_id=user.id).first()
+            results.append({
+                'id': user.id,
+                'name': f"{user.firstname or ''} {user.lastname or ''}".strip() or user.email.split('@')[0],
+                'email': user.email,
+                'level': up.level if up else 1,
+                'points': up.total_points if up else 0,
+                'friendship_status': existing_friendships.get(user.id, None),
+            })
+        
+        return jsonify({'success': True, 'users': results}), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"Error searching users: {e}")
+        return jsonify({'success': False, 'message': 'Failed to search users'}), 500
 
 
 @social_bp.route('/social/friends', methods=['GET'])

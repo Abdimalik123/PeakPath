@@ -4,11 +4,14 @@ import { fetchDashboard } from '../api/dashboard';
 import type { DashboardData } from '../api/dashboard';
 import { WorkoutCard } from '../components/WorkoutCard';
 import { GoalProgress } from '../components/GoalProgress';
+import { WeeklyOverview } from '../components/WeeklyOverview';
 import { Navigation } from '../components/Navigation';
 import { PageHeader } from '../components/PageHeader';
 import { StatCard, StatsGrid } from '../components/StatCard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/Card';
 import { Zap, CheckCircle, Target, Dumbbell, ArrowRight } from 'lucide-react';
+import { WorkoutHeatmap } from '../components/WorkoutHeatmap';
+import { DailyQuestsWidget } from '../components/DailyQuestsWidget';
 
 const Dashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -59,13 +62,23 @@ const Dashboard: React.FC = () => {
       <Navigation currentPage="/dashboard" />
 
       {/* Main Content - with sidebar offset */}
-      <div className="lg:ml-64 min-h-screen">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="lg:ml-64 min-h-screen pt-16 lg:pt-0">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
           
           <PageHeader 
             title={`Welcome back, ${dashboardData.user.name}`}
             subtitle="Your fitness overview for today"
           />
+
+          {/* Weekly Overview */}
+          <div className="mb-8">
+            <WeeklyOverview />
+          </div>
+
+          {/* Workout Heatmap */}
+          <div className="mb-8">
+            <WorkoutHeatmap />
+          </div>
 
           {/* Stats Grid */}
           <StatsGrid className="mb-8">
@@ -171,6 +184,9 @@ const Dashboard: React.FC = () => {
 
             {/* Right Column */}
             <div className="space-y-6">
+              
+              {/* Daily Quests */}
+              <DailyQuestsWidget />
               
               {/* Active Goals */}
               <Card>

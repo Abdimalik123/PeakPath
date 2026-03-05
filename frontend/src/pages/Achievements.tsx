@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navigation } from '../components/Navigation';
 import { Award, Trophy, Star, Zap, Target, Calendar, Dumbbell, Flame, Lock, Check } from 'lucide-react';
+import client from '../api/client';
 
 interface Achievement {
   id: string;
@@ -72,17 +73,58 @@ export default function Achievements() {
 
   const loadAchievements = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetchAchievements();
-      // setAchievements(response.data);
-      
-      // For now, use mock data
-      setAchievements(allAchievements);
+      const response = await client.get('/gamification/achievements');
+      if (response.data.success) {
+        // Map backend achievements to frontend format
+        const mappedAchievements = response.data.achievements.map((ach: any) => ({
+          id: ach.key,
+          name: ach.name,
+          description: ach.description,
+          icon: getIconForType(ach.type),
+          rarity: getRarityForAchievement(ach.key),
+          unlocked: ach.earned,
+          unlockedAt: ach.earned_at,
+          progress: ach.progress || 0,
+          target: ach.target || 1,
+          category: mapTypeToCategory(ach.type),
+          points: 25 // Default points
+        }));
+        setAchievements(mappedAchievements);
+      } else {
+        // Fallback to mock data
+        setAchievements(allAchievements);
+      }
     } catch (error: any) {
       console.error('Failed to load achievements:', error);
+      // Fallback to mock data on error
+      setAchievements(allAchievements);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getIconForType = (type: string): string => {
+    if (type === 'workout') return 'dumbbell';
+    if (type === 'habit') return 'calendar';
+    if (type === 'goal') return 'target';
+    if (type === 'level') return 'star';
+    if (type === 'points') return 'trophy';
+    return 'star';
+  };
+
+  const mapTypeToCategory = (type: string): Achievement['category'] => {
+    if (type === 'workout') return 'workouts';
+    if (type === 'habit') return 'habits';
+    if (type === 'goal') return 'goals';
+    return 'special';
+  };
+
+  const getRarityForAchievement = (key: string): Achievement['rarity'] => {
+    if (key.includes('first') || key.includes('1')) return 'common';
+    if (key.includes('10') || key.includes('50')) return 'rare';
+    if (key.includes('100') || key.includes('20')) return 'epic';
+    if (key.includes('500') || key.includes('5000')) return 'legendary';
+    return 'common';
   };
 
   const getIconComponent = (iconName: string) => {

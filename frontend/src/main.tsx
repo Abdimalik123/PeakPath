@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import App from './App'
 import './index.css'
+import './styles/mobile.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

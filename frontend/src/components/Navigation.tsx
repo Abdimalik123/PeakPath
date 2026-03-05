@@ -7,6 +7,7 @@ import {
   Heart, MessageCircle, UserPlus, Check, Award, Flame, TrendingUp
 } from 'lucide-react';
 import client from '../api/client';
+import { NotificationsBell } from './NotificationsBell';
 
 interface NotificationItem {
   id: number;
@@ -25,13 +26,18 @@ interface NavigationProps {
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/workouts', icon: Dumbbell, label: 'Workouts' },
+  { path: '/cardio', icon: TrendingUp, label: 'Cardio' },
   { path: '/habits', icon: Calendar, label: 'Habits' },
   { path: '/goals', icon: Target, label: 'Goals' },
-  { path: '/achievements', icon: Trophy, label: 'Achievements' },
+  { path: '/programs', icon: FileText, label: 'Programs' },
+  { path: '/challenges', icon: Trophy, label: 'Challenges' },
+  { path: '/achievements', icon: Award, label: 'Achievements' },
   { path: '/analytics', icon: BarChart3, label: 'Analytics' },
   { path: '/progress-photos', icon: Camera, label: 'Progress' },
   { path: '/social', icon: Users, label: 'Social' },
-  { path: '/workout-templates', icon: FileText, label: 'Templates' },
+  { path: '/groups', icon: UserPlus, label: 'Groups' },
+  { path: '/messages', icon: MessageCircle, label: 'Messages' },
+  { path: '/workout-templates', icon: Bell, label: 'Templates' },
   { path: '/profile', icon: User, label: 'Profile' },
 ];
 
@@ -155,14 +161,25 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
 
   return (
     <>
+      {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-[var(--radius-md)]"
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-lg shadow-lg"
+        aria-label="Toggle menu"
       >
-        {isMobileOpen ? <X className="w-5 h-5 text-[var(--text-primary)]" /> : <Menu className="w-5 h-5 text-[var(--text-primary)]" />}
+        {isMobileOpen ? <X className="w-6 h-6 text-[var(--text-primary)]" /> : <Menu className="w-6 h-6 text-[var(--text-primary)]" />}
       </button>
 
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)] transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)] transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} overflow-y-auto`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-5 border-b border-[var(--border-default)]">
@@ -175,7 +192,10 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
           </div>
 
           {/* Notifications button + panel */}
-          <div className="px-3 py-2 relative" ref={notifRef}>
+          <div className="px-3 py-2">
+            <NotificationsBell />
+          </div>
+          <div className="px-3 py-2 relative hidden" ref={notifRef}>
             <button
               onClick={handleBellClick}
               className="pp-nav-link w-full text-left"

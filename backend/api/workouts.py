@@ -5,6 +5,7 @@ from api.auth import login_required
 from utils.logging import log_activity
 from utils.validators import validate_request, WorkoutSchema
 from utils.rewards import on_workout_logged
+from utils.pr_tracker import check_and_update_prs
 from sqlalchemy import desc
 from datetime import datetime
 
@@ -71,6 +72,10 @@ def create_workout():
         db.session.commit()
         log_activity(g.user['id'], "created", "workout", workout.id)
 
+        # Check for PRs
+        workout_exercises = WorkoutExercise.query.filter_by(workout_id=workout.id).all()
+        prs_achieved = check_and_update_prs(g.user['id'], workout.id, workout_exercises)
+
         # Award points, check achievements, sync goals
         on_workout_logged(g.user['id'], workout)
         db.session.commit()
@@ -79,7 +84,8 @@ def create_workout():
             "success": True,
             "message": "Workout logged successfully",
             "workout_id": workout.id,
-            "workout": workout.to_dict()
+            "workout": workout.to_dict(),
+            "prs_achieved": prs_achieved
         }), 201
         
     except Exception as e:

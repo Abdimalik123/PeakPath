@@ -1,7 +1,9 @@
-from flask import Blueprint, jsonify, g, current_app
+from flask import Blueprint, request, jsonify, g, current_app
 from database import db
+from models import UserPoint, UserAchievement
 from api.auth import login_required
 from utils.gamification_helper import get_user_stats, ACHIEVEMENT_DEFINITIONS
+from utils.achievement_progress import get_achievement_progress, get_achievement_target
 
 gamification_bp = Blueprint('gamification_bp', __name__)
 
@@ -24,7 +26,7 @@ def get_stats():
 @gamification_bp.route('/gamification/achievements', methods=['GET'])
 @login_required
 def get_achievements():
-    """Get all achievements with earned status for the user."""
+    """Get all achievements with earned status and progress for the user."""
     user_id = g.user['id']
 
     try:
@@ -33,15 +35,25 @@ def get_achievements():
         earned = UserAchievement.query.filter_by(user_id=user_id).all()
         earned_keys = {a.achievement_type for a in earned}
         earned_map = {a.achievement_type: a for a in earned}
+        
+        # Get progress toward all achievements
+        progress_data = get_achievement_progress(user_id)
 
         all_achievements = []
         for key, definition in ACHIEVEMENT_DEFINITIONS.items():
+            is_earned = key in earned_keys
+            current_progress = progress_data.get(key, 0)
+            target = get_achievement_target(key)
+            
             entry = {
                 "key": key,
                 "name": definition["name"],
                 "description": definition["description"],
                 "type": definition["type"],
-                "earned": key in earned_keys,
+                "earned": is_earned,
+                "progress": current_progress,
+                "target": target,
+                "progress_percentage": int((current_progress / target) * 100) if target > 0 else 0
             }
             if key in earned_map:
                 entry["earned_at"] = earned_map[key].earned_at.isoformat()

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Navigation } from '../components/Navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
 import { Button } from '../components/Button';
+import { UserSearch } from '../components/UserSearch';
+import { EmojiReactions } from '../components/EmojiReactions';
 import {
   Users, Trophy, TrendingUp, UserPlus, Heart, MessageCircle, Award,
   Flame, Dumbbell, Target, Clock, Check, X, ChevronDown, ChevronUp, Send
@@ -355,6 +357,15 @@ export default function Social() {
                           </div>
                         )}
 
+                        {/* Emoji Reactions */}
+                        <div className="mb-4">
+                          <EmojiReactions 
+                            activityId={activity.id} 
+                            reactions={activity.reactions || {}} 
+                            userReactions={activity.user_reactions || []} 
+                          />
+                        </div>
+
                         {/* Like + comment buttons */}
                         <div className="flex items-center gap-6 mb-3">
                           <button onClick={() => handleLike(activity.id)}
@@ -486,6 +497,19 @@ export default function Social() {
           {/* ── FRIENDS ── */}
           {activeTab === 'friends' && (
             <div className="space-y-8">
+              {/* User Search */}
+              <div>
+                <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-[var(--brand-primary)]" />
+                  Find Friends
+                </h2>
+                <Card>
+                  <CardContent className="pt-6">
+                    <UserSearch onFriendAdded={loadSocialData} />
+                  </CardContent>
+                </Card>
+              </div>
+
               {friendRequests.length > 0 && (
                 <div>
                   <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2"><Clock className="w-5 h-5 text-[var(--brand-primary)]" />Friend Requests ({friendRequests.length})</h2>

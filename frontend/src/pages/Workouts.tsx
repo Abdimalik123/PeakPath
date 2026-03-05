@@ -5,6 +5,7 @@ import { PageHeader } from '../components/PageHeader';
 import { EmptyState } from '../components/EmptyState';
 import { AddWorkoutModal } from '../components/AddWorkoutModal';
 import { WorkoutDetails } from '../components/WorkoutDetails';
+import { PRCelebration } from '../components/PRCelebration';
 import { useWorkouts } from '../hooks/useWorkouts';
 import { useToast } from '../contexts/ToastContext';
 import client from '../api/client';
@@ -29,6 +30,8 @@ const Workouts: React.FC = () => {
     formData,
     setFormData,
     exercisesToAdd,
+    prsAchieved,
+    setPrsAchieved,
     fetchWorkoutDetails,
     handleSubmit,
     handleDelete,
@@ -570,6 +573,14 @@ const Workouts: React.FC = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* PR Celebration Modal */}
+      {prsAchieved.length > 0 && (
+        <PRCelebration 
+          prs={prsAchieved} 
+          onClose={() => setPrsAchieved([])} 
+        />
       )}
     </div>
   );

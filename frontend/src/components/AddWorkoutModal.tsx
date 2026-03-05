@@ -1,6 +1,8 @@
 import React from 'react';
 import { Modal } from './Modal';
 import { FormInput } from './FormInput';
+import { LastWorkoutComparison } from './LastWorkoutComparison';
+import { RestTimer } from './RestTimer';
 
 interface ExerciseToAdd {
   exercise_id: number;
@@ -55,6 +57,11 @@ export function AddWorkoutModal({
             required
           />
 
+          {/* Show last workout comparison */}
+          {formData.type && formData.type.length > 2 && (
+            <LastWorkoutComparison workoutType={formData.type} />
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <FormInput
               label="Duration (minutes)"
@@ -81,6 +88,11 @@ export function AddWorkoutModal({
             placeholder="How did it go?"
             rows={2}
           />
+        </div>
+
+        {/* Rest Timer */}
+        <div className="border-t border-[var(--border-subtle)] pt-6">
+          <RestTimer defaultSeconds={90} />
         </div>
 
         {/* Exercises Section */}

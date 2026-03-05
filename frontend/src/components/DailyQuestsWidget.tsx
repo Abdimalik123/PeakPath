@@ -1,0 +1,179 @@
+import { useEffect, useState } from 'react';
+import { Trophy, CheckCircle, Loader } from 'lucide-react';
+import client from '../api/client';
+import { useToast } from '../contexts/ToastContext';
+
+interface Quest {
+  id: number;
+  quest: {
+    id: number;
+    quest_type: string;
+    title: string;
+    description: string;
+    points_reward: number;
+    target_value: number;
+    icon: string;
+  };
+  current_progress: number;
+  is_completed: boolean;
+  progress_percentage: number;
+}
+
+export function DailyQuestsWidget() {
+  const [quests, setQuests] = useState<Quest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    loadQuests();
+  }, []);
+
+  const loadQuests = async () => {
+    try {
+      setLoading(true);
+      const response = await client.get('/daily-quests');
+      if (response.data.success) {
+        setQuests(response.data.quests || []);
+      }
+    } catch (error) {
+      console.error('Failed to load daily quests:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const completeQuest = async (questId: number) => {
+    try {
+      const response = await client.post(`/daily-quests/${questId}/complete`);
+      if (response.data.success) {
+        showToast(`Quest completed! +${response.data.points_awarded} points`, 'success');
+        loadQuests(); // Reload to update UI
+      }
+    } catch (error: any) {
+      showToast(error.response?.data?.message || 'Failed to complete quest', 'error');
+    }
+  };
+
+  const completedCount = quests.filter(q => q.is_completed).length;
+  const totalPoints = quests.reduce((sum, q) => sum + (q.is_completed ? q.quest.points_reward : 0), 0);
+
+  if (loading) {
+    return (
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-lg p-6">
+        <div className="flex items-center justify-center py-8">
+          <Loader className="w-6 h-6 text-[var(--brand-primary)] animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-[var(--bg-secondary)] to-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-lg p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Trophy className="w-5 h-5 text-yellow-500" />
+            <h3 className="text-lg font-bold text-[var(--text-primary)]">Daily Quests</h3>
+          </div>
+          <p className="text-sm text-[var(--text-muted)]">
+            {completedCount}/{quests.length} completed • {totalPoints} points earned
+          </p>
+        </div>
+        {completedCount === quests.length && quests.length > 0 && (
+          <div className="text-2xl animate-bounce">🎉</div>
+        )}
+      </div>
+
+      {/* Quests List */}
+      <div className="space-y-4">
+        {quests.length === 0 ? (
+          <p className="text-center text-[var(--text-muted)] py-4">No quests available today</p>
+        ) : (
+          quests.map((quest) => (
+            <div
+              key={quest.id}
+              className={`relative overflow-hidden rounded-lg border transition-all ${
+                quest.is_completed
+                  ? 'bg-green-500/10 border-green-500/30'
+                  : 'bg-[var(--bg-secondary)] border-[var(--border-default)] hover:border-[var(--brand-primary)]/30'
+              }`}
+            >
+              {/* Progress Background */}
+              <div
+                className="absolute inset-0 bg-gradient-to-r from-[var(--brand-primary)]/10 to-transparent transition-all"
+                style={{ width: `${quest.progress_percentage}%` }}
+              />
+
+              {/* Content */}
+              <div className="relative p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 flex-1">
+                    <div className="text-2xl mt-1">{quest.quest.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-bold text-[var(--text-primary)] text-sm">
+                          {quest.quest.title}
+                        </h4>
+                        {quest.is_completed && (
+                          <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-xs text-[var(--text-muted)] mb-2">
+                        {quest.quest.description}
+                      </p>
+                      
+                      {/* Progress Bar */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              quest.is_completed
+                                ? 'bg-green-500'
+                                : 'bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)]'
+                            }`}
+                            style={{ width: `${quest.progress_percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-[var(--text-muted)] whitespace-nowrap">
+                          {quest.current_progress}/{quest.quest.target_value}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Points Badge */}
+                  <div className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
+                    quest.is_completed
+                      ? 'bg-green-500/20 text-green-500'
+                      : 'bg-yellow-500/20 text-yellow-500'
+                  }`}>
+                    +{quest.quest.points_reward} pts
+                  </div>
+                </div>
+
+                {/* Manual Complete Button (for testing) */}
+                {!quest.is_completed && quest.current_progress >= quest.quest.target_value && (
+                  <button
+                    onClick={() => completeQuest(quest.id)}
+                    className="mt-3 w-full px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/90 text-white text-xs font-bold rounded-lg transition"
+                  >
+                    Claim Reward
+                  </button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Completion Celebration */}
+      {completedCount === quests.length && quests.length > 0 && (
+        <div className="mt-6 p-4 bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-500/30 rounded-lg text-center">
+          <p className="text-sm font-bold text-green-500 mb-1">🎊 All Quests Complete! 🎊</p>
+          <p className="text-xs text-[var(--text-muted)]">Come back tomorrow for new quests</p>
+        </div>
+      )}
+    </div>
+  );
+}
