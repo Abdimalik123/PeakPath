@@ -1,7 +1,7 @@
 """
 Input validation schemas using Marshmallow
 """
-from marshmallow import Schema, fields, validate, ValidationError, validates_schema
+from marshmallow import Schema, fields, validate, ValidationError, validates_schema, EXCLUDE
 from datetime import datetime
 
 
@@ -9,9 +9,13 @@ class WorkoutSchema(Schema):
     """Validation schema for workout creation"""
     type = fields.Str(required=True, validate=validate.Length(min=1, max=100))
     duration = fields.Int(required=True, validate=validate.Range(min=1, max=1440))  # Max 24 hours
-    date = fields.Date(required=True)
+    date = fields.Date(required=False, load_default=None)
     notes = fields.Str(allow_none=True, validate=validate.Length(max=500))
+    rpe = fields.Int(allow_none=True, validate=validate.Range(min=1, max=10))
     exercises = fields.List(fields.Dict(), required=False)
+
+    class Meta:
+        unknown = EXCLUDE
 
 
 class ExerciseSchema(Schema):

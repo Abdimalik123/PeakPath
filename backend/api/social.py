@@ -4,7 +4,7 @@ from models import User, Friendship, SocialActivity, ActivityLike, ActivityComme
 from api.auth import login_required
 from utils.logging import log_activity
 from sqlalchemy import or_, and_, desc
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 social_bp = Blueprint('social', __name__)
 
@@ -76,6 +76,8 @@ def get_activity_feed():
         result = []
         for activity in activities:
             user = User.query.get(activity.user_id)
+            if not user:
+                continue
             user_points = UserPoint.query.filter_by(user_id=activity.user_id).first()
 
             entry = {
@@ -129,24 +131,47 @@ def get_activity_feed():
 @login_required
 def get_leaderboard():
     try:
+        from models import PointTransaction
+        from sqlalchemy import func
         user_id = g.user['id']
         time_range = request.args.get('range', 'week')
 
-        query = db.session.query(
-            User.id, User.firstname, User.lastname, User.email,
-            UserPoint.total_points, UserPoint.level
-        ).outerjoin(UserPoint, User.id == UserPoint.user_id)
-        query = query.order_by(UserPoint.total_points.desc().nullslast())
-        users = query.limit(100).all()
+        if time_range == 'week':
+            since = datetime.now(timezone.utc) - timedelta(days=7)
+        elif time_range == 'month':
+            since = datetime.now(timezone.utc) - timedelta(days=30)
+        else:
+            since = None
+
+        if since is not None:
+            points_subq = db.session.query(
+                PointTransaction.user_id,
+                func.coalesce(func.sum(PointTransaction.points), 0).label('period_points')
+            ).filter(PointTransaction.created_at >= since).group_by(PointTransaction.user_id).subquery()
+
+            rows = db.session.query(
+                User.id, User.firstname, User.lastname, User.email,
+                func.coalesce(points_subq.c.period_points, 0).label('pts'),
+                UserPoint.level
+            ).outerjoin(points_subq, User.id == points_subq.c.user_id)\
+             .outerjoin(UserPoint, User.id == UserPoint.user_id)\
+             .order_by(desc('pts')).limit(100).all()
+        else:
+            rows = db.session.query(
+                User.id, User.firstname, User.lastname, User.email,
+                func.coalesce(UserPoint.total_points, 0).label('pts'),
+                UserPoint.level
+            ).outerjoin(UserPoint, User.id == UserPoint.user_id)\
+             .order_by(desc('pts')).limit(100).all()
 
         leaderboard = []
         current_user_data = None
-        for rank, u in enumerate(users, start=1):
+        for rank, u in enumerate(rows, start=1):
             entry = {
                 'id': u[0],
                 'name': f"{u[1] or ''} {u[2] or ''}".strip() or u[3].split('@')[0],
                 'level': u[5] or 1,
-                'points': u[4] or 0,
+                'points': int(u[4] or 0),
                 'rank': rank,
                 'streak': 0,
             }
@@ -257,6 +282,8 @@ def get_friend_requests():
         requests = []
         for f in pending:
             sender = User.query.get(f.user_id)
+            if not sender:
+                continue
             up = UserPoint.query.filter_by(user_id=f.user_id).first()
             requests.append({
                 'friendship_id': f.id,
@@ -282,7 +309,7 @@ def accept_friend_request(friendship_id):
             return jsonify({'success': False, 'message': 'Friend request not found'}), 404
 
         friendship.status = 'accepted'
-        friendship.updated_at = datetime.utcnow()
+        friendship.updated_at = datetime.now(timezone.utc)
 
         # Notify the sender that their request was accepted
         from utils.notifications import notify_friend_accepted
@@ -377,7 +404,7 @@ def add_friend(friend_id):
                 if existing.user_id == friend_id:
                     # They already sent us a request — auto-accept
                     existing.status = 'accepted'
-                    existing.updated_at = datetime.utcnow()
+                    existing.updated_at = datetime.now(timezone.utc)
                     db.session.commit()
                     return jsonify({'success': True, 'message': 'Friend request accepted'}), 200
                 else:
@@ -472,6 +499,8 @@ def get_comments(activity_id):
         result = []
         for c in comments:
             user = User.query.get(c.user_id)
+            if not user:
+                continue
             result.append({
                 'id': c.id,
                 'user_id': c.user_id,
@@ -532,7 +561,10 @@ def add_comment(activity_id):
 
 
 def _format_timestamp(dt):
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
+    # Ensure dt is timezone-aware to avoid subtraction error
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
     diff = now - dt
     if diff.days > 365:
         return f"{diff.days // 365} year{'s' if diff.days // 365 > 1 else ''} ago"

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 interface Exercise {
   exercise_id: number;
@@ -45,7 +46,7 @@ export function WorkoutDetails({ workout, onDelete, onAddExercise, onClose }: Wo
   }
 
   return (
-    <div className="pp-card p-6 sticky top-24">
+    <div className="pp-card p-6 sticky top-20">
       <div className="flex justify-between items-start mb-6">
         <div>
           <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">Workout Details</h3>
@@ -77,22 +78,22 @@ export function WorkoutDetails({ workout, onDelete, onAddExercise, onClose }: Wo
 
       <div className="space-y-3 mb-6">
         <div className="flex justify-between items-center p-3 bg-[var(--bg-tertiary)] rounded-[var(--radius-md)]">
-          <span className="text-sm text-[var(--text-muted)] uppercase tracking-wider">Type</span>
+          <span className="text-sm text-[var(--text-muted)]">Type</span>
           <span className="text-sm font-bold text-[var(--text-primary)]">{workout.type}</span>
         </div>
         <div className="flex justify-between items-center p-3 bg-[var(--bg-tertiary)] rounded-[var(--radius-md)]">
-          <span className="text-sm text-[var(--text-muted)] uppercase tracking-wider">Duration</span>
+          <span className="text-sm text-[var(--text-muted)]">Duration</span>
           <span className="text-sm font-bold text-[var(--text-primary)]">{workout.duration} min</span>
         </div>
         <div className="flex justify-between items-center p-3 bg-[var(--bg-tertiary)] rounded-[var(--radius-md)]">
-          <span className="text-sm text-[var(--text-muted)] uppercase tracking-wider">Date</span>
+          <span className="text-sm text-[var(--text-muted)]">Date</span>
           <span className="text-sm font-bold text-[var(--text-primary)]">{formatDate(workout.date)}</span>
         </div>
       </div>
 
       <div className="mb-6">
         <div className="flex justify-between items-center mb-3">
-          <h4 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Exercises</h4>
+          <h4 className="text-sm font-bold text-[var(--text-primary)]">Exercises</h4>
           <button
             onClick={() => onAddExercise?.(workout.id)}
             className="pp-btn-ghost text-xs py-1.5 px-3"
@@ -131,10 +132,22 @@ export function WorkoutDetails({ workout, onDelete, onAddExercise, onClose }: Wo
 
       {workout.notes && (
         <div className="mt-6 pt-6 border-t border-[var(--border-subtle)]">
-          <h4 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-2">Notes</h4>
+          <h4 className="text-sm font-bold text-[var(--text-primary)] mb-2">Notes</h4>
           <p className="text-sm text-[var(--text-muted)]">{workout.notes}</p>
         </div>
       )}
+
+      {/* Start Similar Workout */}
+      <Link
+        to={`/active-workout?type=${encodeURIComponent(workout.type)}`}
+        className="mt-6 w-full flex items-center justify-center gap-2 py-3 bg-[var(--brand-primary)] text-[var(--text-inverse)] font-bold rounded-xl hover:opacity-90 transition text-sm"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Start {workout.type} Workout
+      </Link>
     </div>
   );
 }

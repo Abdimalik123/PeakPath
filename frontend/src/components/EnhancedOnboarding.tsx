@@ -38,8 +38,6 @@ export function EnhancedOnboarding() {
     fitness_level: '',
     workouts_per_week: '',
     
-    // Step 5: Sample Workout
-    create_sample: true
   });
 
   const totalSteps = 5;
@@ -80,91 +78,49 @@ export function EnhancedOnboarding() {
     setLoading(true);
 
     try {
-      // 1. Update user profile
+      // 1. Update user profile — this is the critical step
       await client.put('/profile', {
         age: parseInt(formData.age),
         gender: formData.gender,
         height: parseInt(formData.height),
-        fitness_level: formData.fitness_level,
-        workout_frequency: parseInt(formData.workouts_per_week),
-        primary_goal: formData.primary_goal
+        current_weight: parseFloat(formData.current_weight),
+        goal_weight: parseFloat(formData.goal_weight) || undefined,
       });
 
-      // 2. Log initial weight
-      await client.post('/body-measurements', {
-        weight_kg: parseFloat(formData.current_weight),
-        measured_at: new Date().toISOString().split('T')[0],
-        notes: 'Initial weight from onboarding'
-      });
+      // Mark onboarding complete immediately after profile succeeds
+      localStorage.setItem('onboarding_complete', 'true');
 
-      // 3. Create weight goal if applicable
-      if (formData.goal_weight && formData.primary_goal !== 'maintain_weight') {
-        const target = parseFloat(formData.goal_weight);
-        const current = parseFloat(formData.current_weight);
-        const goalTitle = target < current ? 'Lose Weight' : 'Gain Weight';
-        
-        await client.post('/goals', {
-          title: `Reach ${target}kg`,
-          description: goalTitle,
-          target: Math.abs(target - current),
-          progress: 0,
-          category: 'weight',
-          deadline: null
+      // Log initial weight (non-fatal)
+      try {
+        await client.post('/body-measurements', {
+          weight_kg: parseFloat(formData.current_weight),
+          measured_at: new Date().toISOString().split('T')[0],
+          notes: 'Initial weight from onboarding'
         });
-      }
+      } catch (e) { console.warn('Could not log initial weight:', e); }
 
-      // 4. Create sample workout if selected
-      if (formData.create_sample) {
-        const sampleWorkout = {
-          type: 'Full Body Workout',
-          duration: 45,
-          date: new Date().toISOString().split('T')[0],
-          notes: 'Welcome workout! Log your first session.',
-          exercises: [
-            { exercise_name: 'Squat', sets: 3, reps: 10, weight: 0, notes: 'Bodyweight or barbell' },
-            { exercise_name: 'Push-ups', sets: 3, reps: 10, weight: 0, notes: '' },
-            { exercise_name: 'Plank', sets: 3, reps: 30, weight: 0, notes: '30 seconds each' }
-          ]
-        };
-
-        await client.post('/workouts', sampleWorkout);
-      }
-
-      // 5. Create starter habits
-      const starterHabits = [
-        {
-          name: 'Drink 2L Water',
-          description: 'Stay hydrated throughout the day',
-          frequency: 'daily',
-          reminder_time: '09:00:00',
-          next_occurrence: new Date().toISOString().split('T')[0]
-        },
-        {
-          name: 'Get 8 Hours Sleep',
-          description: 'Prioritize recovery and rest',
-          frequency: 'daily',
-          reminder_time: '22:00:00',
-          next_occurrence: new Date().toISOString().split('T')[0]
-        }
-      ];
-
-      for (const habit of starterHabits) {
-        await client.post('/habits', habit);
+      // Create weight goal if applicable (non-fatal)
+      if (formData.goal_weight && formData.primary_goal !== 'maintain_weight') {
+        try {
+          const target = parseFloat(formData.goal_weight);
+          const current = parseFloat(formData.current_weight);
+          await client.post('/goals', {
+            name: `Reach ${target}kg`,
+            goal_type: 'weight',
+            target: Math.abs(target - current),
+            progress: 0,
+            deadline: null
+          });
+        } catch (e) { console.warn('Could not create weight goal:', e); }
       }
 
       showToast('Welcome to PeakPath! 🎉', 'success');
-      
-      // Mark onboarding as complete
-      localStorage.setItem('onboarding_complete', 'true');
-      
-      // Redirect to dashboard
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1000);
+      // Hard navigation avoids React state race conditions at the onboarding→dashboard transition
+      setTimeout(() => { window.location.replace('/dashboard'); }, 1000);
 
     } catch (error: any) {
-      console.error('Onboarding error:', error);
-      showToast('Failed to complete onboarding', 'error');
+      console.error('Onboarding profile error:', error);
+      showToast('Failed to save profile. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -428,42 +384,34 @@ export function EnhancedOnboarding() {
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-[var(--brand-primary)] mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-[var(--text-primary)]">Profile Created</p>
-                    <p className="text-sm text-[var(--text-secondary)]">Your fitness profile is ready</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-[var(--brand-primary)] mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-[var(--text-primary)]">Initial Weight Logged</p>
-                    <p className="text-sm text-[var(--text-secondary)]">Track your progress from {formData.current_weight}kg</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-[var(--brand-primary)] mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium text-[var(--text-primary)]">Goals Set</p>
-                    <p className="text-sm text-[var(--text-secondary)]">
-                      {formData.primary_goal.replace('_', ' ').charAt(0).toUpperCase() + formData.primary_goal.slice(1).replace('_', ' ')}
-                    </p>
+                    <p className="font-medium text-[var(--text-primary)]">Profile Ready</p>
+                    <p className="text-sm text-[var(--text-secondary)]">Your fitness profile is set up</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-[var(--brand-primary)] mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-[var(--text-primary)]">Sample Workout Created</p>
-                    <p className="text-sm text-[var(--text-secondary)]">Ready to log on your dashboard</p>
+                    <p className="font-medium text-[var(--text-primary)]">Starting weight logged</p>
+                    <p className="text-sm text-[var(--text-secondary)]">Tracking from {formData.current_weight}kg</p>
                   </div>
                 </div>
+
+                {formData.goal_weight && formData.primary_goal !== 'maintain_weight' && (
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-[var(--brand-primary)] mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-[var(--text-primary)]">Weight goal created</p>
+                      <p className="text-sm text-[var(--text-secondary)]">Target: {formData.goal_weight}kg</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-[var(--brand-primary)] mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-[var(--text-primary)]">Healthy Habits Added</p>
-                    <p className="text-sm text-[var(--text-secondary)]">Water intake & sleep tracking</p>
+                    <p className="font-medium text-[var(--text-primary)]">Dashboard ready</p>
+                    <p className="text-sm text-[var(--text-secondary)]">Log your first workout to get started</p>
                   </div>
                 </div>
               </div>
@@ -517,7 +465,10 @@ export function EnhancedOnboarding() {
         {/* Skip Option */}
         <div className="text-center mt-6">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => {
+              localStorage.setItem('onboarding_complete', 'true');
+              window.location.replace('/dashboard');
+            }}
             className="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition"
           >
             Skip for now

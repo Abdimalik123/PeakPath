@@ -6,8 +6,12 @@ import { UserSearch } from '../components/UserSearch';
 import { EmojiReactions } from '../components/EmojiReactions';
 import {
   Users, Trophy, TrendingUp, UserPlus, Heart, MessageCircle, Award,
-  Flame, Dumbbell, Target, Clock, Check, X, ChevronDown, ChevronUp, Send
+  Flame, Dumbbell, Target, Clock, Check, X, ChevronDown, ChevronUp, Send,
+  MessagesSquare
 } from 'lucide-react';
+import Groups from './Groups';
+import Messages from './Messages';
+import Challenges from './Challenges';
 import { useToast } from '../contexts/ToastContext';
 import client from '../api/client';
 
@@ -65,12 +69,14 @@ interface ActivityItem {
   comments: number;
   isLiked?: boolean;
   workout: WorkoutDetail | null;
+  reactions?: Record<string, number>;
+  user_reactions?: string[];
 }
 
 export default function Social() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'feed' | 'leaderboard' | 'friends'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'compete' | 'friends' | 'groups'>('feed');
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('week');
 
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -124,9 +130,7 @@ export default function Social() {
         ));
       }
     } catch {
-      setActivities((prev) => prev.map((a) =>
-        a.id === activityId ? { ...a, likes: a.isLiked ? a.likes - 1 : a.likes + 1, isLiked: !a.isLiked } : a
-      ));
+      showToast('Failed to like activity', 'error');
     }
   };
 
@@ -241,8 +245,8 @@ export default function Social() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--bg-primary)]">
-        <Navigation currentPage="/social" />
-        <div className="lg:ml-64 min-h-screen flex items-center justify-center">
+        <Navigation currentPage="/community" />
+        <div className="lg:ml-64 min-h-screen flex items-center justify-center pt-14 lg:pt-16">
           <div className="w-12 h-12 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
@@ -251,13 +255,13 @@ export default function Social() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
-      <Navigation currentPage="/social" />
-      <div className="lg:ml-64 min-h-screen">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Navigation currentPage="/community" />
+      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-[var(--text-primary)] flex items-center gap-3">
-              <Users className="w-8 h-8 text-[var(--brand-primary)]" /> Community
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] flex items-center gap-3">
+              <Users className="w-7 h-7 sm:w-8 sm:h-8 text-[var(--brand-primary)]" /> Community
             </h1>
             <p className="text-sm text-[var(--text-muted)] mt-1">Connect, compete, and stay motivated together</p>
           </div>
@@ -265,7 +269,7 @@ export default function Social() {
           {/* Stats card */}
           <Card className="bg-gradient-brand border-none mb-6">
             <CardContent className="pt-6 text-white">
-              <div className="grid md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
                 <div><p className="text-white/70 text-sm mb-1">Your Rank</p><p className="text-3xl font-bold">#{currentUser.rank}</p></div>
                 <div><p className="text-white/70 text-sm mb-1">Total Points</p><p className="text-3xl font-bold">{currentUser.points}</p></div>
                 <div><p className="text-white/70 text-sm mb-1">Current Level</p><p className="text-3xl font-bold">{currentUser.level}</p></div>
@@ -275,13 +279,14 @@ export default function Social() {
           </Card>
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 border-b border-[var(--border-default)]">
-            {(['feed', 'leaderboard', 'friends'] as const).map((tab) => (
+          <div className="flex gap-2 mb-6 border-b border-[var(--border-default)] overflow-x-auto">
+            {(['feed', 'compete', 'friends', 'groups'] as const).map((tab) => (
               <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 font-semibold text-sm transition capitalize ${activeTab === tab ? 'text-[var(--brand-primary)] border-b-2 border-[var(--brand-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
+                className={`px-6 py-3 font-semibold text-sm transition capitalize whitespace-nowrap ${activeTab === tab ? 'text-[var(--brand-primary)] border-b-2 border-[var(--brand-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
                 {tab === 'feed' && <TrendingUp className="w-5 h-5 inline mr-2" />}
-                {tab === 'leaderboard' && <Trophy className="w-5 h-5 inline mr-2" />}
+                {tab === 'compete' && <Trophy className="w-5 h-5 inline mr-2" />}
                 {tab === 'friends' && <Users className="w-5 h-5 inline mr-2" />}
+                {tab === 'groups' && <MessagesSquare className="w-5 h-5 inline mr-2" />}
                 {tab}
                 {tab === 'friends' && friendRequests.length > 0 && (
                   <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--brand-primary)] text-white text-xs font-bold">{friendRequests.length}</span>
@@ -366,8 +371,15 @@ export default function Social() {
                           />
                         </div>
 
-                        {/* Comment button */}
+                        {/* Like + Comment buttons */}
                         <div className="flex items-center gap-6 mb-3">
+                          <button onClick={() => handleLike(activity.id)}
+                            className={`flex items-center gap-2 transition ${activity.isLiked ? 'text-[var(--brand-primary)]' : 'text-[var(--text-muted)] hover:text-[var(--brand-primary)]'}`}>
+                            <svg className="w-5 h-5" fill={activity.isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                            <span>{activity.likes || 0}</span>
+                          </button>
                           <button onClick={() => toggleComments(activity.id)}
                             className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--brand-secondary)] transition">
                             <MessageCircle className="w-5 h-5" />
@@ -459,33 +471,46 @@ export default function Social() {
             </div>
           )}
 
-          {/* ── LEADERBOARD ── */}
-          {activeTab === 'leaderboard' && (
-            <div className="space-y-4">
-              <div className="flex gap-2 mb-4">
-                {(['week', 'month', 'all'] as const).map((range) => (
-                  <button key={range} onClick={() => setTimeRange(range)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition capitalize ${timeRange === range ? 'bg-[var(--brand-primary)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
-                    {range === 'all' ? 'All Time' : `This ${range.charAt(0).toUpperCase() + range.slice(1)}`}
-                  </button>
-                ))}
-              </div>
-              {leaderboard.map((user) => (
-                <Card key={user.id} className={user.id === currentUser.id ? 'ring-2 ring-[var(--brand-primary)]' : ''}>
-                  <CardContent className="pt-4 pb-4">
-                    <div className="flex items-center gap-4">
-                      <span className="text-2xl w-10 text-center">{getRankBadge(user.rank || 0)}</span>
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-white font-bold">{user.name[0]}</div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-[var(--text-primary)]">{user.name}{user.id === currentUser.id && <span className="ml-2 text-xs text-[var(--brand-primary)]">(You)</span>}</p>
-                        <p className="text-sm text-[var(--text-muted)]">Level {user.level}</p>
-                      </div>
-                      <p className="font-bold text-[var(--brand-primary)] mr-3">{user.points} pts</p>
-                      {renderAddButton(user.id)}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+          {/* ── COMPETE (Leaderboard + Challenges) ── */}
+          {activeTab === 'compete' && (
+            <div className="space-y-8">
+              {/* Leaderboard Section */}
+              <section>
+                <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-yellow-500" /> Leaderboard
+                </h2>
+                <div className="flex gap-2 mb-4">
+                  {(['week', 'month', 'all'] as const).map((range) => (
+                    <button key={range} onClick={() => setTimeRange(range)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition capitalize ${timeRange === range ? 'bg-[var(--brand-primary)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
+                      {range === 'all' ? 'All Time' : `This ${range.charAt(0).toUpperCase() + range.slice(1)}`}
+                    </button>
+                  ))}
+                </div>
+                <div className="space-y-3">
+                  {leaderboard.map((user) => (
+                    <Card key={user.id} className={user.id === currentUser.id ? 'ring-2 ring-[var(--brand-primary)]' : ''}>
+                      <CardContent className="pt-4 pb-4">
+                        <div className="flex items-center gap-4">
+                          <span className="text-2xl w-10 text-center">{getRankBadge(user.rank || 0)}</span>
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-white font-bold">{user.name[0]}</div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-[var(--text-primary)]">{user.name}{user.id === currentUser.id && <span className="ml-2 text-xs text-[var(--brand-primary)]">(You)</span>}</p>
+                            <p className="text-sm text-[var(--text-muted)]">Level {user.level}</p>
+                          </div>
+                          <p className="font-bold text-[var(--brand-primary)] mr-3">{user.points} pts</p>
+                          {renderAddButton(user.id)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+
+              {/* Challenges Section */}
+              <section>
+                <Challenges embedded />
+              </section>
             </div>
           )}
 
@@ -570,6 +595,19 @@ export default function Social() {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ── GROUPS (Groups + Messages) ── */}
+          {activeTab === 'groups' && (
+            <div className="space-y-8">
+              <Groups embedded />
+              <section>
+                <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                  <MessagesSquare className="w-5 h-5 text-[var(--brand-primary)]" /> Messages
+                </h2>
+                <Messages embedded />
+              </section>
             </div>
           )}
 

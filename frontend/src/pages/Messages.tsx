@@ -32,7 +32,7 @@ interface Conversation {
   last_message_at: string;
 }
 
-export default function Messages() {
+export default function Messages({ embedded }: { embedded?: boolean }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -124,19 +124,24 @@ export default function Messages() {
 
   const selectedConv = conversations.find(c => c.id === selectedConversation);
 
-  return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
-      <Navigation currentPage="/messages" />
-      <div className="lg:ml-64 min-h-screen">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <PageHeader
-            title="Messages"
-            subtitle="Chat with your fitness friends"
-            actionButton={{
-              label: "+ New Message",
-              onClick: () => setShowNewConversation(true)
-            }}
-          />
+  const mainContent = (
+    <>
+      {!embedded && (
+        <PageHeader
+          title="Messages"
+          subtitle="Chat with your fitness friends"
+          actionButton={{
+            label: "+ New Message",
+            onClick: () => setShowNewConversation(true)
+          }}
+        />
+      )}
+      {embedded && (
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-bold text-[var(--text-primary)]">Messages</h3>
+          <button onClick={() => setShowNewConversation(true)} className="px-4 py-2 bg-[var(--brand-primary)] text-white font-bold rounded-lg hover:opacity-90 transition text-sm">+ New Message</button>
+        </div>
+      )}
 
           <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-lg overflow-hidden" style={{ height: 'calc(100vh - 250px)' }}>
             <div className="grid grid-cols-12 h-full">
@@ -273,9 +278,6 @@ export default function Messages() {
               </div>
             </div>
           </div>
-        </main>
-      </div>
-
       {/* New Conversation Modal */}
       {showNewConversation && (
         <StartConversationModal
@@ -286,6 +288,19 @@ export default function Messages() {
           }}
         />
       )}
+    </>
+  );
+
+  if (embedded) return mainContent;
+
+  return (
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <Navigation currentPage="/messages" />
+      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {mainContent}
+        </main>
+      </div>
     </div>
   );
 }

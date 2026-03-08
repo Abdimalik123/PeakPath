@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { WorkoutCard } from '../components/WorkoutCard';
 import { Navigation } from '../components/Navigation';
 import { PageHeader } from '../components/PageHeader';
-import { EmptyState } from '../components/EmptyState';
 import { AddWorkoutModal } from '../components/AddWorkoutModal';
 import { WorkoutDetails } from '../components/WorkoutDetails';
 import { PRCelebration } from '../components/PRCelebration';
 import { useWorkouts } from '../hooks/useWorkouts';
 import { useToast } from '../contexts/ToastContext';
-import { RepeatWorkoutButton } from '../components/RepeatWorkoutButton';
-import { EmptyStateGuide } from '../components/EmptyStateGuide';
+import { Link } from 'react-router-dom';
+import { Search, Filter } from 'lucide-react';
+import { WorkoutTemplates } from '../components/WorkoutTemplates';
 import client from '../api/client';
 
 interface AvailableExercise {
@@ -50,7 +50,18 @@ const Workouts: React.FC = () => {
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
-  
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyTypeFilter, setHistoryTypeFilter] = useState('');
+
+  const workoutTypes = Array.from(new Set(workouts.map(w => w.type))).sort();
+  const filteredWorkouts = workouts.filter(w => {
+    const matchesSearch = !historySearch ||
+      w.type.toLowerCase().includes(historySearch.toLowerCase()) ||
+      w.date?.toLowerCase().includes(historySearch.toLowerCase());
+    const matchesType = !historyTypeFilter || w.type === historyTypeFilter;
+    return matchesSearch && matchesType;
+  });
+
   // Exercise modal state
   const [availableExercises, setAvailableExercises] = useState<AvailableExercise[]>([]);
   const [filteredExercises, setFilteredExercises] = useState<AvailableExercise[]>([]);
@@ -223,19 +234,33 @@ const Workouts: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
-      <Navigation currentPage="/workouts" />
+      <Navigation currentPage="/train" />
 
       {/* Main Content */}
-      <div className="lg:ml-64 min-h-screen">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <PageHeader
             title="Workouts"
             subtitle="Track your training sessions"
             actionButton={{
-              label: "+ Log Workout",
+              label: "Create Workout",
               onClick: () => setShowAddModal(true)
             }}
           />
+
+          {/* Primary Action */}
+          <div className="mb-6">
+            <Link
+              to="/active-workout"
+              className="flex items-center justify-center gap-2 w-full py-3.5 bg-[var(--brand-primary)] text-[var(--text-inverse)] font-bold rounded-xl hover:opacity-90 transition text-sm"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Start Workout
+            </Link>
+          </div>
 
           {error && (
             <div className="mb-6 p-4 bg-[var(--error)]/10 border border-[var(--error)]/30 rounded-[var(--radius-lg)]">
@@ -246,14 +271,51 @@ const Workouts: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             {/* Workouts List */}
             <div className="lg:col-span-2 space-y-4">
-              {workouts.length === 0 ? (
-                <EmptyStateGuide type="workouts" />
+              {/* Search & Filter */}
+              {workouts.length > 0 && (
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                    <input
+                      type="text"
+                      value={historySearch}
+                      onChange={(e) => setHistorySearch(e.target.value)}
+                      placeholder="Search workouts..."
+                      className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)]"
+                    />
+                  </div>
+                  {workoutTypes.length > 1 && (
+                    <select
+                      value={historyTypeFilter}
+                      onChange={(e) => setHistoryTypeFilter(e.target.value)}
+                      className="px-3 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)]"
+                    >
+                      <option value="">All Types</option>
+                      {workoutTypes.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
+
+              {filteredWorkouts.length === 0 && workouts.length > 0 ? (
+                <div className="pp-card p-8 text-center">
+                  <Filter className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3 opacity-40" />
+                  <p className="text-[var(--text-muted)] text-sm">No workouts match your search</p>
+                  <button onClick={() => { setHistorySearch(''); setHistoryTypeFilter(''); }} className="text-[var(--brand-primary)] text-sm mt-2 font-medium">Clear filters</button>
+                </div>
+              ) : workouts.length === 0 ? (
+                <div className="pp-card p-12 text-center">
+                  <svg className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Workouts Yet</h3>
+                  <p className="text-[var(--text-muted)] text-sm">Hit 'Start Workout' above to begin your first session, or 'Create Workout' to log a previous one.</p>
+                </div>
               ) : (
                 <>
-                <div className="mb-4">
-                  <RepeatWorkoutButton onSuccess={() => window.location.reload()} />
-                </div>
-                workouts.map((workout) => {
+                {filteredWorkouts.map((workout) => {
                   const workoutData = {
                     id: workout.id.toString(),
                     type: workout.type,
@@ -269,29 +331,32 @@ const Workouts: React.FC = () => {
                       onClick={(id) => fetchWorkoutDetails(parseInt(id))}
                     />
                   );
-                })
+                })}
                 </>
               )}
             </div>
 
-          <div className="space-y-6">
-            {selectedWorkout && (
-              <WorkoutDetails 
-                workout={selectedWorkout} 
-                onDelete={handleDelete}
-                onClose={() => setSelectedWorkout(null)}
-                onAddExercise={() => {
-                  if (selectedWorkout) {
-                    setShowAddExerciseModal(true);
-                  } else {
-                    showToast('Please select a workout first', 'warning');
-                  }
-                }}
-              />
-            )}
+            <div className="lg:col-span-1 space-y-6">
+              {selectedWorkout && (
+                <WorkoutDetails
+                  workout={selectedWorkout}
+                  onDelete={handleDelete}
+                  onClose={() => setSelectedWorkout(null)}
+                  onAddExercise={() => {
+                    if (selectedWorkout) {
+                      setShowAddExerciseModal(true);
+                    } else {
+                      showToast('Please select a workout first', 'warning');
+                    }
+                  }}
+                />
+              )}
+
+              {/* Workout Templates */}
+              <WorkoutTemplates />
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
       </div>
 
       <AddWorkoutModal

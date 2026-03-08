@@ -17,7 +17,7 @@ REQUEST_COUNT = Counter('app_request_total', 'Total number of requests')
 # Load environment variables from .env file
 load_dotenv()
 
-from database import db, migrate, limiter
+from database import db, migrate, limiter, mail
 
 def create_app():
     app = Flask(__name__)
@@ -36,6 +36,16 @@ def create_app():
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-change-me')
     app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Flask-Mail configuration
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', '587'))
+    app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'true').lower() == 'true'
+    app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'false').lower() == 'true'
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', os.getenv('MAIL_USERNAME', 'noreply@peakpath.app'))
+    app.config['FRONTEND_URL'] = os.getenv('FRONTEND_URL', 'http://localhost:3000')
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'pool_size': 10,
         'pool_recycle': 3600,
@@ -44,6 +54,7 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+    mail.init_app(app)
 
     from models import (
         User, UserProfile, WeightLog, Workout, Exercise, 
@@ -60,6 +71,7 @@ def create_app():
     from models.workout_program import WorkoutProgram, ProgramWorkout, ProgramExercise, ProgramEnrollment
     from models.cardio_workout import CardioWorkout
     from models.scheduled_workout import ScheduledWorkout
+    from models.streak_freeze import StreakFreeze
     
     # Configure CORS with specific origins
     FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
@@ -102,7 +114,7 @@ def create_app():
 
     
     # Import blueprints
-    from api.auth import auth_bp
+    from api.auth import auth_bp, login_required
     from api.workouts import workouts_bp
     from api.exercises import exercises_bp
     from api.user_profile import user_bp
@@ -132,6 +144,7 @@ def create_app():
     from api.achievement_discovery import achievement_discovery_bp
     from api.body_measurements import body_measurements_bp
     from api.schedule import schedule_bp
+    from api.reengagement import reengagement_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/v1')
@@ -164,6 +177,7 @@ def create_app():
     app.register_blueprint(achievement_discovery_bp, url_prefix='/api/v1')
     app.register_blueprint(body_measurements_bp, url_prefix='/api/v1')
     app.register_blueprint(schedule_bp, url_prefix='/api/v1')
+    app.register_blueprint(reengagement_bp, url_prefix='/api/v1')
 
     # Health check endpoint
     @app.route('/health')
@@ -233,6 +247,7 @@ def create_app():
         REQUEST_COUNT.inc()
 
     @app.route('/metrics')
+    @login_required
     def metrics():
         return Response(generate_latest(), mimetype='text/plain')
     

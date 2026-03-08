@@ -70,7 +70,7 @@ def get_dashboard():
             )
             
             recent_workouts = [
-                {"id": row[0], "type": row[1], "duration": row[2], "date": row[3], "exercise_count": row[4]}
+                {"id": row[0], "type": row[1], "duration": row[2], "date": str(row[3]) if row[3] else None, "exercise_count": row[4]}
                 for row in result.fetchall()
             ]
             

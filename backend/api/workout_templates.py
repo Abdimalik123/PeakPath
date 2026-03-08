@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, g, current_app
 from database import db
-from models import WorkoutTemplate, TemplateExercise
+from models import WorkoutTemplate, TemplateExercise, Exercise
 from api.auth import login_required
 from utils.logging import log_activity
 
@@ -55,11 +55,16 @@ def get_workout_templates():
             
             exercises = []
             for te in template_exercises:
+                exercise = Exercise.query.get(te.exercise_id)
+                if not exercise:
+                    continue
                 exercises.append({
-                    'name': te.exercise_name,
+                    'exercise_id': te.exercise_id,
+                    'name': exercise.name,
                     'sets': te.sets,
                     'reps': te.reps or '',
-                    'rest': te.rest_seconds,
+                    'weight': float(te.weight) if te.weight else None,
+                    'rest': te.rest_time,
                     'notes': te.notes
                 })
             

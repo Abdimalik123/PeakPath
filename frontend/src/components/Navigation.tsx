@@ -1,22 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-  Activity, LayoutDashboard, Dumbbell, Target, Calendar, User, LogOut,
-  Menu, X, Trophy, BarChart3, Camera, Users, FileText, Bell,
-  Heart, MessageCircle, UserPlus, Check, Award, Flame, TrendingUp, CalendarDays
+  Activity, LayoutDashboard, Dumbbell, Target, User, LogOut,
+  Menu, X, Users, BarChart3, BookOpen
 } from 'lucide-react';
-import client from '../api/client';
 import { NotificationsBell } from './NotificationsBell';
-
-interface NotificationItem {
-  id: number;
-  type: string;
-  message: string;
-  is_read: boolean;
-  priority: string;
-  delivered_at: string | null;
-}
 
 interface NavigationProps {
   currentPage?: string;
@@ -24,113 +13,25 @@ interface NavigationProps {
 }
 
 const navItems = [
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/workouts', icon: Dumbbell, label: 'Workouts' },
-  { path: '/cardio', icon: TrendingUp, label: 'Cardio' },
-  { path: '/habits', icon: Calendar, label: 'Habits' },
-  { path: '/goals', icon: Target, label: 'Goals' },
-  { path: '/programs', icon: FileText, label: 'Programs' },
-  { path: '/schedule', icon: CalendarDays, label: 'Schedule' },
-  { path: '/challenges', icon: Trophy, label: 'Challenges' },
-  { path: '/achievements', icon: Award, label: 'Achievements' },
-  { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { path: '/progress-photos', icon: Camera, label: 'Progress' },
-  { path: '/social', icon: Users, label: 'Social' },
-  { path: '/groups', icon: UserPlus, label: 'Groups' },
-  { path: '/messages', icon: MessageCircle, label: 'Messages' },
-  { path: '/workout-templates', icon: Bell, label: 'Templates' },
-  { path: '/profile', icon: User, label: 'Profile' },
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Home' },
+  { path: '/train', icon: Dumbbell, label: 'Workout' },
+  { path: '/progress', icon: BarChart3, label: 'Progress' },
+  { path: '/habits', icon: Target, label: 'Routines' },
+  { path: '/community', icon: Users, label: 'Community' },
 ];
 
 export function Navigation({ currentPage, showAuthButtons = false }: NavigationProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const notifRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => { logout(); navigate('/'); };
-  const isActive = (path: string) => currentPage === path || location.pathname === path;
-
-  // Load notifications on mount and every 30s
-  useEffect(() => {
-    if (!isAuthenticated || showAuthButtons) return;
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated, showAuthButtons]);
-
-  // Close panel when clicking outside
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setShowNotifications(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const fetchUnreadCount = async () => {
-    try {
-      const res = await client.get('/notifications/unread-count');
-      setUnreadCount(res.data.unread_count || 0);
-    } catch {}
-  };
-
-  const fetchNotifications = async () => {
-    try {
-      const res = await client.get('/notifications');
-      setNotifications(res.data.notifications || []);
-    } catch {}
-  };
-
-  const handleBellClick = async () => {
-    if (!showNotifications) {
-      await fetchNotifications();
-    }
-    setShowNotifications((prev) => !prev);
-  };
-
-  const markAsRead = async (id: number) => {
-    try {
-      await client.put(`/notifications/${id}/read`);
-      setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, is_read: true } : n));
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch {}
-  };
-
-  const markAllRead = async () => {
-    try {
-      await client.put('/notifications/read-all');
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-      setUnreadCount(0);
-    } catch {}
-  };
-
-  const getNotifIcon = (type: string) => {
-    switch (type) {
-      case 'friend_request': return <UserPlus className="w-4 h-4 text-blue-400" />;
-      case 'friend_accepted': return <Check className="w-4 h-4 text-green-400" />;
-      case 'like': return <Heart className="w-4 h-4 text-red-400" />;
-      case 'comment': return <MessageCircle className="w-4 h-4 text-purple-400" />;
-      case 'achievement': return <Award className="w-4 h-4 text-yellow-400" />;
-      case 'goal': return <Target className="w-4 h-4 text-purple-400" />;
-      case 'level_up': return <TrendingUp className="w-4 h-4 text-[var(--brand-primary)]" />;
-      default: return <Bell className="w-4 h-4 text-[var(--text-muted)]" />;
-    }
-  };
-
-  const formatNotifTime = (dateStr: string | null) => {
-    if (!dateStr) return '';
-    const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
-    if (diff < 60) return 'just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
+  const isActive = (path: string) => {
+    if (currentPage === path || location.pathname === path) return true;
+    if (path === '/train' && (currentPage === '/workouts' || currentPage === '/active-workout' || location.pathname.startsWith('/train') || location.pathname === '/workouts' || location.pathname === '/active-workout')) return true;
+    if (path === '/progress' && (currentPage === '/analytics' || currentPage === '/body-tracking' || currentPage === '/goals' || location.pathname === '/analytics' || location.pathname === '/body-tracking' || location.pathname === '/goals')) return true;
+    return false;
   };
 
   if (showAuthButtons) {
@@ -160,139 +61,194 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
     );
   }
 
+  const initials = user ? `${(user.firstname?.[0] || '').toUpperCase()}${(user.lastname?.[0] || '').toUpperCase()}` : '';
+
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-lg shadow-lg"
-        aria-label="Toggle menu"
-      >
-        {isMobileOpen ? <X className="w-6 h-6 text-[var(--text-primary)]" /> : <Menu className="w-6 h-6 text-[var(--text-primary)]" />}
-      </button>
+      {/* ── MOBILE TOP BAR ── */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[var(--bg-secondary)] border-b border-[var(--border-default)] h-14 flex items-center px-4">
+        {/* Hamburger — left */}
+        <button
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          className="p-1.5 hover:bg-[var(--bg-tertiary)] rounded-lg transition text-[var(--text-secondary)] flex-shrink-0"
+          aria-label="Open menu"
+        >
+          {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
 
-      {/* Mobile Overlay */}
+        {/* Logo — centered */}
+        <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+          <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--brand-primary)] flex items-center justify-center">
+            <Activity className="w-4 h-4 text-[var(--text-inverse)]" />
+          </div>
+          <span className="text-lg font-bold text-[var(--text-primary)]">PeakPath</span>
+        </Link>
+
+        {/* Right: Notifications + Profile */}
+        <div className="flex items-center gap-1.5 ml-auto">
+          <NotificationsBell />
+          <Link
+            to="/profile"
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-emerald-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+            aria-label="Profile"
+          >
+            {initials || <User className="w-4 h-4" />}
+          </Link>
+        </div>
+      </div>
+
+      {/* ── MOBILE SLIDE-OUT MENU ── */}
       {isMobileOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
-          onClick={() => setIsMobileOpen(false)}
-        />
+        <>
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setIsMobileOpen(false)} />
+          <div className="fixed top-14 left-0 bottom-0 w-72 max-w-[85vw] bg-[var(--bg-secondary)] border-r border-[var(--border-default)] z-50 overflow-y-auto animate-in slide-in-from-left">
+            <nav className="p-4 space-y-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setIsMobileOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
+                      active
+                        ? 'bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]'
+                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+              <Link
+                to="/templates"
+                onClick={() => setIsMobileOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
+                  location.pathname === '/templates'
+                    ? 'bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                }`}
+              >
+                <BookOpen className="w-5 h-5" />
+                <span>Templates</span>
+              </Link>
+              <Link
+                to="/profile"
+                onClick={() => setIsMobileOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
+                  location.pathname === '/profile'
+                    ? 'bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                }`}
+              >
+                <User className="w-5 h-5" />
+                <span>Profile</span>
+              </Link>
+            </nav>
+            <div className="p-4 border-t border-[var(--border-default)]">
+              <button
+                onClick={() => { setIsMobileOpen(false); handleLogout(); }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--error)] hover:bg-[var(--error)]/10 transition w-full"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)] transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} overflow-y-auto`}>
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-5 border-b border-[var(--border-default)]">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--brand-primary)] flex items-center justify-center">
-                <Activity className="w-5 h-5 text-[var(--text-inverse)]" />
-              </div>
-              <span className="text-lg font-bold text-[var(--text-primary)]">PeakPath</span>
-            </Link>
-          </div>
+      {/* ── MOBILE BOTTOM TAB BAR ── */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-secondary)] border-t border-[var(--border-default)] pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-center justify-around h-16">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition ${
+                  active ? 'text-[var(--brand-primary)]' : 'text-[var(--text-muted)]'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-[11px] font-semibold">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
 
-          {/* Notifications button + panel */}
-          <div className="px-3 py-2">
-            <NotificationsBell />
-          </div>
-          <div className="px-3 py-2 relative hidden" ref={notifRef}>
-            <button
-              onClick={handleBellClick}
-              className="pp-nav-link w-full text-left"
-            >
-              <Bell className="w-5 h-5" />
-              <span>Notifications</span>
-              {unreadCount > 0 && (
-                <span className="ml-auto bg-[var(--brand-primary)] text-[var(--text-inverse)] text-xs font-bold px-2 py-0.5 rounded-full">
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
-            </button>
+      {/* ── DESKTOP SIDEBAR ── */}
+      <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)]">
+        {/* Logo — height matches top header */}
+        <div className="h-16 px-5 flex items-center border-b border-[var(--border-default)] flex-shrink-0">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--brand-primary)] flex items-center justify-center">
+              <Activity className="w-5 h-5 text-[var(--text-inverse)]" />
+            </div>
+            <span className="text-lg font-bold text-[var(--text-primary)]">PeakPath</span>
+          </Link>
+        </div>
 
-            {/* Notification dropdown panel */}
-            {showNotifications && (
-              <div className="absolute left-full top-0 ml-2 w-80 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl shadow-2xl z-50 overflow-hidden">
-                {/* Panel header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-default)]">
-                  <h3 className="font-bold text-[var(--text-primary)] text-sm">Notifications</h3>
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={markAllRead}
-                      className="text-xs text-[var(--brand-primary)] hover:underline font-medium"
-                    >
-                      Mark all read
-                    </button>
-                  )}
-                </div>
+        {/* Nav links */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`pp-nav-link ${active ? 'pp-nav-link-active' : ''}`}
+              >
+                <Icon className="w-5 h-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+          <Link
+            to="/templates"
+            className={`pp-nav-link ${location.pathname === '/templates' || currentPage === '/templates' ? 'pp-nav-link-active' : ''}`}
+          >
+            <BookOpen className="w-5 h-5" />
+            <span>Templates</span>
+          </Link>
+        </nav>
 
-                {/* Notification list */}
-                <div className="max-h-96 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="px-4 py-8 text-center">
-                      <Bell className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)] opacity-40" />
-                      <p className="text-sm text-[var(--text-muted)]">No notifications yet</p>
-                    </div>
-                  ) : (
-                    notifications.map((n) => (
-                      <button
-                        key={n.id}
-                        onClick={() => !n.is_read && markAsRead(n.id)}
-                        className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[var(--bg-tertiary)] transition border-b border-[var(--border-default)]/50 last:border-0 ${!n.is_read ? 'bg-[var(--brand-primary)]/5' : ''}`}
-                      >
-                        <div className="mt-0.5 flex-shrink-0">{getNotifIcon(n.type)}</div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm leading-snug ${n.is_read ? 'text-[var(--text-muted)]' : 'text-[var(--text-primary)] font-medium'}`}>
-                            {n.message}
-                          </p>
-                          <p className="text-xs text-[var(--text-muted)] mt-0.5">{formatNotifTime(n.delivered_at)}</p>
-                        </div>
-                        {!n.is_read && (
-                          <div className="w-2 h-2 rounded-full bg-[var(--brand-primary)] flex-shrink-0 mt-1.5" />
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Nav links */}
-          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMobileOpen(false)}
-                  className={`pp-nav-link ${active ? 'pp-nav-link-active' : ''}`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Logout */}
-          <div className="p-3 border-t border-[var(--border-default)]">
-            <button
-              onClick={handleLogout}
-              className="pp-nav-link w-full text-left text-[var(--error)] hover:bg-[var(--error)]/10"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
-          </div>
+        {/* Logout */}
+        <div className="p-3 border-t border-[var(--border-default)] flex-shrink-0">
+          <button
+            onClick={handleLogout}
+            className="pp-nav-link w-full text-left text-[var(--error)] hover:bg-[var(--error)]/10"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 
-      {isMobileOpen && (
-        <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={() => setIsMobileOpen(false)} />
-      )}
+      {/* ── DESKTOP TOP HEADER ── */}
+      <header className="hidden lg:flex fixed top-0 left-64 right-0 z-30 h-16 bg-[var(--bg-secondary)] border-b border-[var(--border-default)] items-center px-6 gap-4">
+        <div className="flex-1" />
+        <div className="flex items-center gap-2">
+          <NotificationsBell />
+          <Link
+            to="/profile"
+            className="flex items-center gap-2.5 px-2 py-1.5 rounded-[var(--radius-md)] hover:bg-[var(--bg-tertiary)] transition"
+          >
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-emerald-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+              {initials || <User className="w-4 h-4" />}
+            </div>
+            <span className="hidden xl:block text-sm font-semibold text-[var(--text-primary)]">
+              {user?.firstname ? `${user.firstname} ${user.lastname || ''}`.trim() : 'Profile'}
+            </span>
+          </Link>
+        </div>
+      </header>
     </>
   );
 }

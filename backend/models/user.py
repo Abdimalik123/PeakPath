@@ -10,6 +10,8 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     firstname = db.Column(db.Text)
     lastname = db.Column(db.Text)
+    reset_token = db.Column(db.String(64), nullable=True, index=True)
+    reset_token_expires = db.Column(db.DateTime, nullable=True)
 
     profiles = db.relationship("UserProfile", back_populates="user", cascade="all, delete-orphan")
     workouts = db.relationship("Workout", back_populates="user", cascade="all, delete-orphan")

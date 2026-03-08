@@ -18,7 +18,7 @@ interface Challenge {
   status: string;
 }
 
-export default function Challenges() {
+export default function Challenges({ embedded }: { embedded?: boolean }) {
   const [myChallenges, setMyChallenges] = useState<Challenge[]>([]);
   const [publicChallenges, setPublicChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,66 +57,62 @@ export default function Challenges() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
-        <Loader className="w-8 h-8 text-[var(--brand-primary)] animate-spin" />
+      <div className={embedded ? "py-12 text-center" : "min-h-screen bg-[var(--bg-primary)] flex items-center justify-center"}>
+        <Loader className="w-8 h-8 text-[var(--brand-primary)] animate-spin mx-auto" />
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
-      <Navigation currentPage="/challenges" />
-      <div className="lg:ml-64 min-h-screen">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <PageHeader
-            title="Challenges"
-            subtitle="Compete with friends and push your limits"
-            actionButton={{
-              label: "+ Create Challenge",
-              onClick: () => setShowCreateModal(true)
-            }}
-          />
-
-          {/* My Challenges */}
-          <section className="mb-8">
-            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">My Challenges</h2>
-            {myChallenges.length === 0 ? (
-              <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-lg p-12 text-center">
-                <Trophy className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4 opacity-50" />
-                <p className="text-[var(--text-muted)] mb-4">You haven't joined any challenges yet</p>
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="px-6 py-2 bg-[var(--brand-primary)] text-white font-bold rounded-lg hover:opacity-90 transition"
-                >
-                  Create Your First Challenge
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {myChallenges.map((challenge) => (
-                  <ChallengeCard key={challenge.id} challenge={challenge} onJoin={joinChallenge} />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Public Challenges */}
-          <section>
-            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-4">Join a Challenge</h2>
-            {publicChallenges.length === 0 ? (
-              <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-lg p-8 text-center">
-                <p className="text-[var(--text-muted)]">No public challenges available</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {publicChallenges.map((challenge) => (
-                  <ChallengeCard key={challenge.id} challenge={challenge} isPublic onJoin={joinChallenge} />
-                ))}
-              </div>
-            )}
-          </section>
-        </main>
+  const content = (
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-[var(--text-primary)]">Challenges</h2>
+          <p className="text-sm text-[var(--text-muted)]">Compete with friends and push your limits</p>
+        </div>
+        <button onClick={() => setShowCreateModal(true)} className="pp-btn-primary flex items-center gap-2 text-sm">
+          <Plus className="w-4 h-4" /> Create
+        </button>
       </div>
+
+      {/* My Challenges */}
+      <section className="mb-8">
+        <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4">My Challenges</h2>
+        {myChallenges.length === 0 ? (
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-lg p-12 text-center">
+            <Trophy className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4 opacity-50" />
+            <p className="text-[var(--text-muted)] mb-4">You haven't joined any challenges yet</p>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-6 py-2 bg-[var(--brand-primary)] text-white font-bold rounded-lg hover:opacity-90 transition"
+            >
+              Create Your First Challenge
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {myChallenges.map((challenge) => (
+              <ChallengeCard key={challenge.id} challenge={challenge} onJoin={joinChallenge} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Public Challenges */}
+      <section>
+        <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4">Join a Challenge</h2>
+        {publicChallenges.length === 0 ? (
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-lg p-8 text-center">
+            <p className="text-[var(--text-muted)]">No public challenges available</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {publicChallenges.map((challenge) => (
+              <ChallengeCard key={challenge.id} challenge={challenge} isPublic onJoin={joinChallenge} />
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Create Challenge Modal */}
       {showCreateModal && (
@@ -128,6 +124,19 @@ export default function Challenges() {
           }}
         />
       )}
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <Navigation currentPage="/community" />
+      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {content}
+        </main>
+      </div>
     </div>
   );
 }

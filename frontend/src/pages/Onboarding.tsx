@@ -230,10 +230,10 @@ export default function Onboarding() {
                   <div className="space-y-3">
                     {[
                       { value: 'sedentary', label: 'Sedentary', desc: 'Little or no exercise' },
-                      { value: 'light', label: 'Lightly Active', desc: 'Exercise 1-3 days/week' },
-                      { value: 'moderate', label: 'Moderately Active', desc: 'Exercise 3-5 days/week' },
-                      { value: 'very', label: 'Very Active', desc: 'Exercise 6-7 days/week' },
-                      { value: 'extra', label: 'Extra Active', desc: 'Physical job + exercise' },
+                      { value: 'lightly_active', label: 'Lightly Active', desc: 'Exercise 1-3 days/week' },
+                      { value: 'moderately_active', label: 'Moderately Active', desc: 'Exercise 3-5 days/week' },
+                      { value: 'very_active', label: 'Very Active', desc: 'Exercise 6-7 days/week' },
+                      { value: 'extra_active', label: 'Extra Active', desc: 'Physical job + exercise' },
                     ].map((level) => (
                       <button
                         key={level.value}

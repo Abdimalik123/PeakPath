@@ -143,6 +143,8 @@ def get_last_workout():
 
         for we in last_workout.exercises:
             exercise = Exercise.query.get(we.exercise_id)
+            if not exercise:
+                continue
             workout_dict['exercises'].append({
                 'exercise_id': exercise.id,
                 'exercise_name': exercise.name,
@@ -255,14 +257,17 @@ def get_workout(workout_id):
         
         for we in workout.exercises:
             exercise = Exercise.query.get(we.exercise_id)
+            if not exercise:
+                continue
             workout_dict['exercises'].append({
-                'id': exercise.id,
+                'exercise_id': exercise.id,
                 'name': exercise.name,
                 'category': exercise.category,
                 'muscle_group': exercise.muscle_group,
                 'sets': we.sets,
                 'reps': we.reps,
                 'weight': float(we.weight) if we.weight else None,
+                'duration': we.duration,
                 'notes': we.notes
             })
         
@@ -403,7 +408,7 @@ def add_exercise_to_workout(workout_id):
             "success": True,
             "message": "Exercise added to workout successfully",
             "exercise": {
-                'id': exercise.id,
+                'exercise_id': exercise.id,
                 'name': exercise.name,
                 'sets': workout_exercise.sets,
                 'reps': workout_exercise.reps,

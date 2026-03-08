@@ -61,7 +61,7 @@ function Register() {
       
       const token = response.data.token;
       if (token) {
-        login(token);
+        login(token, response.data.user);
         localStorage.removeItem('onboarding_complete');
         showToast('Account created successfully!');
         setSuccessMessage('Profile created! Let\'s set up your metrics...');
@@ -92,7 +92,7 @@ function Register() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">First name</label>
                     <div className="relative">
@@ -108,16 +108,13 @@ function Register() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">Last name</label>
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" />
-                      <input 
-                        type="text" 
-                        placeholder="Doe" 
-                        value={lastname} 
-                        onChange={(e) => setLastname(e.target.value)} 
-                        className="pp-input pl-12" 
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      placeholder="Doe"
+                      value={lastname}
+                      onChange={(e) => setLastname(e.target.value)}
+                      className="pp-input"
+                    />
                   </div>
                 </div>
 

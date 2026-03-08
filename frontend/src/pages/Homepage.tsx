@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { Card, CardContent } from '../components/Card';
 import { useAuth } from '../contexts/AuthContext';
-import { Zap, CheckCircle, TrendingUp, BarChart3 } from 'lucide-react';
+import { Activity, Zap, CheckCircle, TrendingUp, BarChart3 } from 'lucide-react';
 
 const HomePage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -40,7 +40,7 @@ const HomePage: React.FC = () => {
       <Navigation showAuthButtons={true} />
 
       {/* Hero Section */}
-      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <section className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-[var(--text-primary)] mb-6">
             Track. <span className="text-gradient-brand">Analyze.</span> Conquer.
@@ -60,7 +60,7 @@ const HomePage: React.FC = () => {
                   Start Tracking
                 </Link>
                 <Link to="/login" className="pp-btn-secondary text-base px-8 py-4">
-                  View Demo
+                  Sign in
                 </Link>
               </>
             )}
@@ -103,14 +103,12 @@ const HomePage: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--brand-primary)] flex items-center justify-center">
-                <Zap className="w-4 h-4 text-[var(--text-inverse)]" />
+                <Activity className="w-4 h-4 text-[var(--text-inverse)]" />
               </div>
               <span className="text-lg font-bold text-[var(--text-primary)]">PeakPath</span>
             </div>
             <div className="flex gap-6 text-sm text-[var(--text-muted)]">
-              <a href="#" className="hover:text-[var(--text-primary)] transition">Privacy</a>
-              <a href="#" className="hover:text-[var(--text-primary)] transition">Terms</a>
-              <a href="#" className="hover:text-[var(--text-primary)] transition">Support</a>
+              <a href="mailto:support@peakpath.app" className="hover:text-[var(--text-primary)] transition">Support</a>
             </div>
             <p className="text-sm text-[var(--text-muted)]">
               © 2026 PeakPath. All rights reserved.

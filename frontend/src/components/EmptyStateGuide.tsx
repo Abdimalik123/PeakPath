@@ -8,8 +8,7 @@ import {
   Users, 
   TrendingUp,
   Zap,
-  Play,
-  BookOpen
+  Play
 } from 'lucide-react';
 
 interface EmptyStateGuideProps {
@@ -29,7 +28,7 @@ export function EmptyStateGuide({ type = 'dashboard' }: EmptyStateGuideProps) {
           title: "Log Your First Workout",
           description: "Track your exercises, sets, reps, and weight",
           action: "Log Workout",
-          path: "/workouts",
+          path: "/train",
           color: "green"
         },
         {
@@ -45,7 +44,7 @@ export function EmptyStateGuide({ type = 'dashboard' }: EmptyStateGuideProps) {
           title: "Set Your Goals",
           description: "Define what you want to achieve and track progress",
           action: "Set Goals",
-          path: "/goals",
+          path: "/habits",
           color: "purple"
         },
         {
@@ -53,7 +52,7 @@ export function EmptyStateGuide({ type = 'dashboard' }: EmptyStateGuideProps) {
           title: "Connect with Friends",
           description: "Join the community, find workout partners, and compete",
           action: "Explore Social",
-          path: "/social",
+          path: "/community",
           color: "orange"
         }
       ]
@@ -67,23 +66,15 @@ export function EmptyStateGuide({ type = 'dashboard' }: EmptyStateGuideProps) {
           title: "Quick Start",
           description: "Log a simple workout to get started",
           action: "Log First Workout",
-          path: "/workouts",
+          path: "/train",
           color: "green"
         },
         {
-          icon: BookOpen,
-          title: "Browse Templates",
-          description: "Use pre-built workouts to save time",
-          action: "View Templates",
-          path: "/workout-templates",
-          color: "blue"
-        },
-        {
           icon: TrendingUp,
-          title: "Join a Program",
-          description: "Follow structured programs for better results",
-          action: "Browse Programs",
-          path: "/programs",
+          title: "Track Your Progress",
+          description: "See your strength gains and workout trends over time",
+          action: "View Progress",
+          path: "/progress",
           color: "purple"
         }
       ]
@@ -111,7 +102,7 @@ export function EmptyStateGuide({ type = 'dashboard' }: EmptyStateGuideProps) {
           title: "Define Your Goal",
           description: "Be specific: weight loss, strength gain, or endurance",
           action: "Create Goal",
-          path: "/goals",
+          path: "/progress",
           color: "purple"
         }
       ]
@@ -202,16 +193,16 @@ export function EmptyStateGuide({ type = 'dashboard' }: EmptyStateGuideProps) {
             </p>
             <div className="flex gap-3 justify-center flex-wrap">
               <Button
-                onClick={() => navigate('/workouts')}
+                onClick={() => navigate('/train')}
                 className="pp-btn-primary"
               >
                 Start Tracking Now
               </Button>
               <Button
-                onClick={() => navigate('/programs')}
+                onClick={() => navigate('/community')}
                 className="pp-btn-secondary"
               >
-                Browse Programs
+                Join Community
               </Button>
             </div>
           </CardContent>

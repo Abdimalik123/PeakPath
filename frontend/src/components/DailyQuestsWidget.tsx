@@ -81,7 +81,7 @@ export function DailyQuestsWidget() {
           </p>
         </div>
         {completedCount === quests.length && quests.length > 0 && (
-          <div className="text-2xl animate-bounce">🎉</div>
+          <div className="text-2xl">🎉</div>
         )}
       </div>
 
@@ -119,7 +119,7 @@ export function DailyQuestsWidget() {
                           <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                         )}
                       </div>
-                      <p className="text-xs text-[var(--text-muted)] mb-2">
+                      <p className="text-sm text-[var(--text-secondary)] mb-2">
                         {quest.quest.description}
                       </p>
                       
@@ -135,7 +135,7 @@ export function DailyQuestsWidget() {
                             style={{ width: `${quest.progress_percentage}%` }}
                           />
                         </div>
-                        <span className="text-xs font-bold text-[var(--text-muted)] whitespace-nowrap">
+                        <span className="text-sm font-bold text-[var(--text-primary)] whitespace-nowrap">
                           {quest.current_progress}/{quest.quest.target_value}
                         </span>
                       </div>

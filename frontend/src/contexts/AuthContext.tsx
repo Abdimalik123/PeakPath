@@ -29,10 +29,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Validate token on mount
+    // Validate token on mount using /me (lightweight, no heavy queries)
     if (token) {
-      client.get('/dashboard')
-        .then(() => setLoading(false))
+      client.get('/me')
+        .then((res) => {
+          // Sync user info from server in case it changed
+          if (res.data?.user) {
+            setUser(res.data.user);
+            localStorage.setItem('user', JSON.stringify(res.data.user));
+          }
+          setLoading(false);
+        })
         .catch((err) => {
           if (err?.response?.status === 401) {
             // Token is invalid/expired — clear auth state

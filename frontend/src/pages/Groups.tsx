@@ -17,7 +17,7 @@ interface Group {
   created_at: string;
 }
 
-export default function Groups() {
+export default function Groups({ embedded }: { embedded?: boolean }) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [myGroups, setMyGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,19 +66,24 @@ export default function Groups() {
     group.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
-      <Navigation currentPage="/groups" />
-      <div className="lg:ml-64 min-h-screen">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <PageHeader
-            title="Groups & Communities"
-            subtitle="Connect with like-minded fitness enthusiasts"
-            actionButton={{
-              label: "+ Create Group",
-              onClick: () => setShowCreateModal(true)
-            }}
-          />
+  const mainContent = (
+    <>
+      {!embedded && (
+        <PageHeader
+          title="Groups & Communities"
+          subtitle="Connect with like-minded fitness enthusiasts"
+          actionButton={{
+            label: "+ Create Group",
+            onClick: () => setShowCreateModal(true)
+          }}
+        />
+      )}
+      {embedded && (
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-bold text-[var(--text-primary)]">Groups</h3>
+          <button onClick={() => setShowCreateModal(true)} className="px-4 py-2 bg-[var(--brand-primary)] text-white font-bold rounded-lg hover:opacity-90 transition text-sm">+ Create Group</button>
+        </div>
+      )}
 
           {/* Filters and Search */}
           <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -149,8 +154,6 @@ export default function Groups() {
               ))}
             </div>
           )}
-        </main>
-      </div>
 
       {/* Create Group Modal */}
       {showCreateModal && (
@@ -162,6 +165,19 @@ export default function Groups() {
           }}
         />
       )}
+    </>
+  );
+
+  if (embedded) return mainContent;
+
+  return (
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <Navigation currentPage="/groups" />
+      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {mainContent}
+        </main>
+      </div>
     </div>
   );
 }

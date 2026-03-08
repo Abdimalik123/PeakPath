@@ -23,6 +23,20 @@ def add_profile():
         return jsonify({"success": False, "message": "Missing required fields"}), 400
 
     try:
+        existing = UserProfile.query.filter_by(user_id=user_id).first()
+        if existing:
+            profile_data = {
+                "user_id": user_id,
+                "age": existing.age,
+                "gender": existing.gender,
+                "height_cm": existing.height_cm,
+                "current_weight_kg": existing.current_weight_kg,
+                "goal_weight_kg": existing.goal_weight_kg,
+                "activity_level": existing.activity_level,
+                "created_at": existing.created_at.isoformat() if existing.created_at else None
+            }
+            return jsonify({"success": True, "message": "Profile already exists", "profile": profile_data}), 200
+
         profile = UserProfile(
             user_id=user_id,
             age=age,
@@ -44,7 +58,7 @@ def add_profile():
             "current_weight_kg": profile.current_weight_kg,
             "goal_weight_kg": profile.goal_weight_kg,
             "activity_level": profile.activity_level,
-            "created_at": profile.created_at
+            "created_at": profile.created_at.isoformat() if profile.created_at else None
         }
 
         return jsonify({"success": True, "message": "Profile created successfully", "profile": profile_data}), 201
@@ -74,8 +88,8 @@ def get_profile():
             "goal_weight_kg": profile.goal_weight_kg,
             "activity_level": profile.activity_level
         }
-        
-        return jsonify(profile_data), 200
+
+        return jsonify({"success": True, **profile_data}), 200
         
     except Exception as e:
         current_app.logger.error(f"Error fetching profile: {e}")
@@ -90,9 +104,10 @@ def update_profile():
 
     try:
         profile = UserProfile.query.filter_by(user_id=user_id).first()
-        
+
         if not profile:
-            return jsonify({"success": False, "message": "Profile not found"}), 404
+            profile = UserProfile(user_id=user_id)
+            db.session.add(profile)
 
         # Update fields if provided
         if data.get("age") is not None:

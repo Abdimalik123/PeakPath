@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, g, current_app
+from flask import Blueprint, request, jsonify, g, current_app
 from database import db
 from models import Workout, HabitLog, Goal, UserPoint, PointTransaction
 from api.auth import login_required
@@ -92,28 +92,24 @@ def _calculate_workout_streak(user_id):
         today = datetime.now().date()
         streak = 0
         current_date = today
-        
+
         # Check backwards from today
         while True:
             workout_exists = Workout.query.filter(
                 Workout.user_id == user_id,
                 Workout.date == current_date
             ).first()
-            
+
             if workout_exists:
                 streak += 1
                 current_date -= timedelta(days=1)
             else:
-                # Allow one rest day if we're not on the first day
-                if streak > 0 and current_date == today - timedelta(days=1):
-                    current_date -= timedelta(days=1)
-                    continue
                 break
-            
+
             # Limit to prevent infinite loops
             if streak > 365:
                 break
-                
+
         return streak
     except Exception:
         return 0
@@ -174,9 +170,11 @@ def get_last_workout_by_type(workout_type):
         from models import WorkoutExercise, Exercise
         
         # Find the most recent workout of this type
+        # Escape SQL LIKE wildcards to prevent wildcard injection
+        safe_type = workout_type.replace('%', r'\%').replace('_', r'\_')
         last_workout = Workout.query.filter(
             Workout.user_id == user_id,
-            Workout.type.ilike(f"%{workout_type}%")
+            Workout.type.ilike(f"%{safe_type}%")
         ).order_by(Workout.date.desc()).first()
         
         if not last_workout:
@@ -218,6 +216,167 @@ def get_last_workout_by_type(workout_type):
     except Exception as e:
         current_app.logger.error(f"Error fetching last workout: {e}")
         return jsonify({'success': False, 'message': 'Failed to fetch last workout'}), 500
+
+
+@analytics_bp.route('/analytics/enhanced', methods=['GET'])
+@login_required
+def get_enhanced_analytics():
+    """Get comprehensive analytics with real data for charts."""
+    try:
+        user_id = g.user['id']
+        today = datetime.now().date()
+        from models import WorkoutExercise, Exercise
+        from models.cardio_workout import CardioWorkout
+
+        # Time range from query param
+        time_range = request.args.get('range', 'month')
+        if time_range == 'week':
+            start_date = today - timedelta(days=7)
+        elif time_range == 'year':
+            start_date = today - timedelta(days=365)
+        else:
+            start_date = today - timedelta(days=30)
+
+        # --- Aggregate Stats ---
+        workouts = Workout.query.filter(
+            Workout.user_id == user_id,
+            Workout.date >= start_date,
+            Workout.date <= today
+        ).all()
+
+        cardio_workouts = CardioWorkout.query.filter(
+            CardioWorkout.user_id == user_id,
+            func.date(CardioWorkout.date) >= start_date,
+            func.date(CardioWorkout.date) <= today
+        ).all()
+
+        total_workouts = len(workouts) + len(cardio_workouts)
+        total_duration = sum(w.duration or 0 for w in workouts) + sum(c.duration or 0 for c in cardio_workouts)
+        avg_duration = total_duration / total_workouts if total_workouts > 0 else 0
+
+        # Habits
+        habits_completed = HabitLog.query.join(HabitLog.habit).filter(
+            HabitLog.habit.has(user_id=user_id),
+            HabitLog.completed == True,
+            HabitLog.timestamp >= start_date
+        ).count()
+
+        total_habits = HabitLog.query.join(HabitLog.habit).filter(
+            HabitLog.habit.has(user_id=user_id),
+            HabitLog.timestamp >= start_date
+        ).count()
+
+        habit_rate = round((habits_completed / total_habits) * 100) if total_habits > 0 else 0
+
+        # Goals
+        active_goals = Goal.query.filter(Goal.user_id == user_id, Goal.progress < Goal.target).count()
+        completed_goals = Goal.query.filter(
+            Goal.user_id == user_id,
+            Goal.progress >= Goal.target,
+            Goal.updated_at >= start_date
+        ).count()
+
+        # Points & Level
+        user_points = UserPoint.query.filter_by(user_id=user_id).first()
+        streak = _calculate_workout_streak(user_id)
+
+        # --- Daily Activity Chart Data ---
+        daily_data = []
+        date_cursor = start_date
+        while date_cursor <= today:
+            day_workouts = sum(1 for w in workouts if w.date == date_cursor)
+            day_cardio = sum(1 for c in cardio_workouts
+                           if (c.date.date() if hasattr(c.date, 'date') else c.date) == date_cursor)
+            day_habits = HabitLog.query.join(HabitLog.habit).filter(
+                HabitLog.habit.has(user_id=user_id),
+                HabitLog.completed == True,
+                func.date(HabitLog.timestamp) == date_cursor
+            ).count()
+
+            daily_data.append({
+                'date': date_cursor.isoformat(),
+                'label': date_cursor.strftime('%a') if time_range == 'week' else date_cursor.strftime('%d %b'),
+                'workouts': day_workouts + day_cardio,
+                'habits': day_habits,
+            })
+            date_cursor += timedelta(days=1)
+
+        # --- Workout Type Distribution ---
+        type_counts = {}
+        for w in workouts:
+            t = w.type or 'Other'
+            type_counts[t] = type_counts.get(t, 0) + 1
+        for c in cardio_workouts:
+            t = c.cardio_type.capitalize() if c.cardio_type else 'Cardio'
+            type_counts[t] = type_counts.get(t, 0) + 1
+
+        colors = ['#22c55e', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899']
+        workout_types = [
+            {'name': name, 'value': count, 'color': colors[i % len(colors)]}
+            for i, (name, count) in enumerate(sorted(type_counts.items(), key=lambda x: x[1], reverse=True))
+        ]
+
+        # --- Volume Over Time (weekly buckets) ---
+        volume_data = []
+        week_start = start_date
+        while week_start <= today:
+            week_end = min(week_start + timedelta(days=6), today)
+            week_workouts = [w for w in workouts if week_start <= w.date <= week_end]
+
+            week_volume = 0
+            for w in week_workouts:
+                exercises = WorkoutExercise.query.filter_by(workout_id=w.id).all()
+                for ex in exercises:
+                    if ex.weight and ex.reps and ex.sets:
+                        week_volume += float(ex.weight) * ex.reps * ex.sets
+
+            volume_data.append({
+                'label': week_start.strftime('%d %b'),
+                'volume': round(week_volume),
+            })
+            week_start += timedelta(days=7)
+
+        # --- Most Active Day ---
+        day_counts = {}
+        for w in workouts:
+            day_name = w.date.strftime('%A')
+            day_counts[day_name] = day_counts.get(day_name, 0) + 1
+        best_day = max(day_counts, key=day_counts.get) if day_counts else 'N/A'
+
+        # --- Most Frequent Workout Type ---
+        most_frequent = max(type_counts, key=type_counts.get) if type_counts else 'N/A'
+
+        # --- Longest Streak ---
+        longest_streak = streak  # Simplified; could track historically
+
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_workouts': total_workouts,
+                'total_duration': total_duration,
+                'avg_duration': round(avg_duration),
+                'habits_completed': habits_completed,
+                'habit_completion_rate': habit_rate,
+                'active_goals': active_goals,
+                'completed_goals': completed_goals,
+                'total_points': user_points.total_points if user_points else 0,
+                'level': user_points.level if user_points else 1,
+                'points_to_next_level': user_points.points_to_next_level if user_points else 100,
+                'current_streak': streak,
+                'longest_streak': longest_streak,
+                'best_day': best_day,
+                'most_frequent_workout': most_frequent,
+            },
+            'daily_activity': daily_data,
+            'workout_types': workout_types,
+            'volume_trend': volume_data,
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching enhanced analytics: {e}")
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'success': False, 'message': 'Failed to fetch analytics'}), 500
 
 
 @analytics_bp.route('/analytics/exercise-progression/<int:exercise_id>', methods=['GET'])

@@ -22,6 +22,7 @@ from .friendship import Friendship
 from .social_activity import SocialActivity, ActivityLike, ActivityComment
 from .progress_photo import ProgressPhoto
 from .body_measurement import BodyMeasurement
+from .streak_freeze import StreakFreeze
 
 __all__ = [
     'User',
@@ -47,5 +48,6 @@ __all__ = [
     'ActivityLike',
     'ActivityComment',
     'ProgressPhoto',
-    'BodyMeasurement'
+    'BodyMeasurement',
+    'StreakFreeze'
 ]

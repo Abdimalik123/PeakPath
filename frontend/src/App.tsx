@@ -9,19 +9,13 @@ import Profile from './pages/Profile';
 import Dashboard from './pages/DashBoard';
 import Workouts from './pages/Workouts';
 import Habits from './pages/Habits';
-import Goals from './pages/Goals';
-import Achievements from './pages/Achievements';
-import Analytics from './pages/Analytics';
-import ProgressPhotos from './pages/ProgressPhotos';
+import Progress from './pages/Progress';
 import Social from './pages/Social';
-import WorkoutTemplates from './pages/WorkoutTemplates';
-import Challenges from './pages/Challenges';
-import Groups from './pages/Groups';
 import GroupDetail from './pages/GroupDetail';
-import Messages from './pages/Messages';
-import Programs from './pages/Programs';
-import CardioLogger from './pages/CardioLogger';
-import Schedule from './pages/Schedule';
+import ActiveWorkout from './pages/ActiveWorkout';
+import Templates from './pages/Templates';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function App() {
   return (
@@ -30,28 +24,38 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/onboarding" element={<EnhancedOnboarding />} />
-      <Route path="/onboarding-basic" element={<Onboarding />} />
-      
-      {/* Protected routes (after login) */}
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/onboarding" element={<PrivateRoute><EnhancedOnboarding /></PrivateRoute>} />
+      <Route path="/onboarding-basic" element={<PrivateRoute><Onboarding /></PrivateRoute>} />
+
+      {/* Core protected routes (5 nav items + profile + active workout) */}
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-      <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-      <Route path="/workouts" element={<PrivateRoute><Workouts /></PrivateRoute>} />
+      <Route path="/train" element={<PrivateRoute><Workouts /></PrivateRoute>} />
+      <Route path="/active-workout" element={<PrivateRoute><ActiveWorkout /></PrivateRoute>} />
+      <Route path="/templates" element={<PrivateRoute><Templates /></PrivateRoute>} />
+      <Route path="/progress" element={<PrivateRoute><Progress /></PrivateRoute>} />
       <Route path="/habits" element={<PrivateRoute><Habits /></PrivateRoute>} />
-      <Route path="/goals" element={<PrivateRoute><Goals /></PrivateRoute>} />
-      <Route path="/achievements" element={<PrivateRoute><Achievements /></PrivateRoute>} />
-      <Route path="/analytics" element={<PrivateRoute><Analytics /></PrivateRoute>} />
-      <Route path="/progress-photos" element={<PrivateRoute><ProgressPhotos /></PrivateRoute>} />
-      <Route path="/social" element={<PrivateRoute><Social /></PrivateRoute>} />
-      <Route path="/workout-templates" element={<PrivateRoute><WorkoutTemplates /></PrivateRoute>} />
-      <Route path="/challenges" element={<PrivateRoute><Challenges /></PrivateRoute>} />
-      <Route path="/groups" element={<PrivateRoute><Groups /></PrivateRoute>} />
+      <Route path="/community" element={<PrivateRoute><Social /></PrivateRoute>} />
+      <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
       <Route path="/groups/:groupId" element={<PrivateRoute><GroupDetail /></PrivateRoute>} />
-      <Route path="/messages" element={<PrivateRoute><Messages /></PrivateRoute>} />
-      <Route path="/programs" element={<PrivateRoute><Programs /></PrivateRoute>} />
-      <Route path="/cardio" element={<PrivateRoute><CardioLogger /></PrivateRoute>} />
-      <Route path="/schedule" element={<PrivateRoute><Schedule /></PrivateRoute>} />
-      
+
+      {/* Redirects: old routes → new structure */}
+      <Route path="/workouts" element={<Navigate to="/train" replace />} />
+      <Route path="/analytics" element={<Navigate to="/progress" replace />} />
+      <Route path="/body-tracking" element={<Navigate to="/progress" replace />} />
+      <Route path="/goals" element={<Navigate to="/habits" replace />} />
+      <Route path="/social" element={<Navigate to="/community" replace />} />
+      <Route path="/messages" element={<Navigate to="/community" replace />} />
+      <Route path="/groups" element={<Navigate to="/community" replace />} />
+      <Route path="/progress-photos" element={<Navigate to="/progress" replace />} />
+      <Route path="/achievements" element={<Navigate to="/profile" replace />} />
+      <Route path="/schedule" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/cardio" element={<Navigate to="/active-workout" replace />} />
+      <Route path="/programs" element={<Navigate to="/train" replace />} />
+      <Route path="/workout-templates" element={<Navigate to="/train" replace />} />
+      <Route path="/challenges" element={<Navigate to="/community" replace />} />
+
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

@@ -19,7 +19,7 @@
   /* Text Colors */
   --text-primary: #ffffff;
   --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
+  --text-muted: #878f9c;
   --text-inverse: #0f1115;
   
   /* Semantic Colors */
@@ -140,7 +140,7 @@ body {
   }
   
   .pp-btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-3 bg-[var(--brand-primary)] text-[var(--text-inverse)] font-semibold text-sm rounded-[var(--radius-md)] transition-all duration-200;
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[var(--brand-primary)] text-[var(--text-inverse)] font-semibold text-sm rounded-[var(--radius-md)] transition-all duration-200;
   }
   
   .pp-btn-primary:hover {
