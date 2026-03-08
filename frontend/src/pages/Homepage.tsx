@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Navigation } from '../components/Navigation';
 import { Card, CardContent } from '../components/Card';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,6 +7,8 @@ import { Activity, Zap, CheckCircle, TrendingUp, BarChart3 } from 'lucide-react'
 
 const HomePage: React.FC = () => {
   const { isAuthenticated } = useAuth();
+
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   const features = [
     {

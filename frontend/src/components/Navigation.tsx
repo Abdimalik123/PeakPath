@@ -77,7 +77,7 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
         </button>
 
         {/* Logo — centered */}
-        <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+        <Link to="/dashboard" className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
           <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--brand-primary)] flex items-center justify-center">
             <Activity className="w-4 h-4 text-[var(--text-inverse)]" />
           </div>
@@ -186,7 +186,7 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
       <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)]">
         {/* Logo — height matches top header */}
         <div className="h-16 px-5 flex items-center border-b border-[var(--border-default)] flex-shrink-0">
-          <Link to="/" className="flex items-center gap-3">
+          <Link to="/dashboard" className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--brand-primary)] flex items-center justify-center">
               <Activity className="w-5 h-5 text-[var(--text-inverse)]" />
             </div>
