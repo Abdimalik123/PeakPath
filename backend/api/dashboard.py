@@ -155,12 +155,29 @@ def get_dashboard():
                         temp = 1
                 longest_streak = max(longest_streak, temp)
 
+            # Pending habits — not yet logged today
+            result = conn.execute(
+                db.text("""
+                    SELECT h.id, h.name FROM habits h
+                    WHERE h.user_id = :user_id
+                    AND h.id NOT IN (
+                        SELECT hl.habit_id FROM habit_logs hl
+                        WHERE DATE(hl.timestamp) = :today
+                    )
+                    ORDER BY h.name ASC
+                    LIMIT 3
+                """),
+                {"user_id": user_id, "today": today}
+            )
+            pending_habits = [{"id": row[0], "name": row[1]} for row in result.fetchall()]
+
             dashboard = {
                 "user": user_info,
                 "today": today_stats,
                 "recent_workouts": recent_workouts,
                 "active_goals": active_goals,
                 "weekly_activity": weekly_activity,
+                "pending_habits": pending_habits,
                 "streaks": {
                     "current_workout_streak": current_streak,
                     "longest_workout_streak": longest_streak

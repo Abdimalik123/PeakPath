@@ -111,12 +111,16 @@ export function NotificationsBell() {
   };
 
   const timeAgo = (dateString: string) => {
-    const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
+    // Backend may return "2024-01-15 10:30:00" (space) instead of ISO "T" separator
+    const normalized = dateString?.replace(' ', 'T');
+    const date = new Date(normalized);
+    if (!normalized || isNaN(date.getTime())) return 'Recently';
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
     if (seconds < 60) return 'Just now';
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
     if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-    return new Date(dateString).toLocaleDateString();
+    return date.toLocaleDateString();
   };
 
   const unreadCount = notifications.filter(n => !n.is_read).length;

@@ -15,7 +15,7 @@ interface NavigationProps {
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Home' },
   { path: '/train', icon: Dumbbell, label: 'Workout' },
-  { path: '/progress', icon: BarChart3, label: 'Progress' },
+  { path: '/progress', icon: BarChart3, label: 'Stats' },
   { path: '/habits', icon: Target, label: 'Routines' },
   { path: '/community', icon: Users, label: 'Community' },
 ];
@@ -161,7 +161,7 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
       )}
 
       {/* ── MOBILE BOTTOM TAB BAR ── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-secondary)] border-t border-[var(--border-default)] pb-[env(safe-area-inset-bottom)]">
+      <nav id="tour-nav-mobile" className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-secondary)] border-t border-[var(--border-default)] pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-center justify-around h-16">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -183,7 +183,7 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
       </nav>
 
       {/* ── DESKTOP SIDEBAR ── */}
-      <aside className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)]">
+      <aside id="tour-nav-desktop" className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)]">
         {/* Logo — height matches top header */}
         <div className="h-16 px-5 flex items-center border-b border-[var(--border-default)] flex-shrink-0">
           <Link to="/dashboard" className="flex items-center gap-3">

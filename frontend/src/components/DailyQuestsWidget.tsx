@@ -19,7 +19,11 @@ interface Quest {
   progress_percentage: number;
 }
 
-export function DailyQuestsWidget() {
+interface DailyQuestsWidgetProps {
+  compact?: boolean;
+}
+
+export function DailyQuestsWidget({ compact = false }: DailyQuestsWidgetProps) {
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
@@ -67,6 +71,55 @@ export function DailyQuestsWidget() {
     );
   }
 
+  // ── Compact mode (for dashboard) ──────────────────────────────────────────
+  if (compact) {
+    return (
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-yellow-500" />
+            <span className="text-sm font-bold text-[var(--text-primary)]">Daily Quests</span>
+          </div>
+          <span className="text-xs text-[var(--text-muted)]">
+            {completedCount}/{quests.length} done · {totalPoints} pts
+          </span>
+        </div>
+        {quests.length === 0 ? (
+          <p className="text-xs text-[var(--text-muted)] text-center py-2">No quests today</p>
+        ) : (
+          <div className="space-y-2">
+            {quests.map((q) => (
+              <div key={q.id} className="flex items-center gap-2">
+                <span className="text-base flex-shrink-0">{q.quest.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-0.5">
+                    <span className={`text-xs font-medium truncate ${q.is_completed ? 'text-[var(--text-muted)] line-through' : 'text-[var(--text-primary)]'}`}>
+                      {q.quest.title}
+                    </span>
+                    <span className="text-xs text-[var(--text-muted)] flex-shrink-0">
+                      {q.current_progress}/{q.quest.target_value}
+                    </span>
+                  </div>
+                  <div className="h-1 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${q.is_completed ? 'bg-green-500' : 'bg-[var(--brand-primary)]'}`}
+                      style={{ width: `${q.progress_percentage}%` }}
+                    />
+                  </div>
+                </div>
+                {q.is_completed && <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />}
+              </div>
+            ))}
+          </div>
+        )}
+        {completedCount === quests.length && quests.length > 0 && (
+          <p className="text-xs text-green-500 font-semibold text-center mt-3">🎉 All done for today!</p>
+        )}
+      </div>
+    );
+  }
+
+  // ── Full mode ──────────────────────────────────────────────────────────────
   return (
     <div className="bg-gradient-to-br from-[var(--bg-secondary)] to-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-lg p-6">
       {/* Header */}

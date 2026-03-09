@@ -29,6 +29,7 @@ export interface DashboardData {
     workouts: number;
     habits: number;
   }>;
+  pending_habits: Array<{ id: number; name: string }>;
   streaks: {
     current_workout_streak: number;
     longest_workout_streak: number;

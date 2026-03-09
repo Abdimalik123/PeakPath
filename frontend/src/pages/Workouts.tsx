@@ -9,7 +9,6 @@ import { useWorkouts } from '../hooks/useWorkouts';
 import { useToast } from '../contexts/ToastContext';
 import { Link } from 'react-router-dom';
 import { Search, Filter } from 'lucide-react';
-import { WorkoutTemplates } from '../components/WorkoutTemplates';
 import client from '../api/client';
 
 interface AvailableExercise {
@@ -352,8 +351,14 @@ const Workouts: React.FC = () => {
                 />
               )}
 
-              {/* Workout Templates */}
-              <WorkoutTemplates />
+              {/* Templates */}
+              <Link
+                to="/templates"
+                className="flex items-center justify-between px-4 py-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] transition text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              >
+                <span>Browse workout templates</span>
+                <span className="text-[var(--brand-primary)]">→</span>
+              </Link>
             </div>
           </div>
         </main>

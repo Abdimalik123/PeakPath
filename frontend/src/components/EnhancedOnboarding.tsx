@@ -462,18 +462,6 @@ export function EnhancedOnboarding() {
           </div>
         </div>
 
-        {/* Skip Option */}
-        <div className="text-center mt-6">
-          <button
-            onClick={() => {
-              localStorage.setItem('onboarding_complete', 'true');
-              window.location.replace('/dashboard');
-            }}
-            className="text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition"
-          >
-            Skip for now
-          </button>
-        </div>
       </div>
     </div>
   );

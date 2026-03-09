@@ -232,8 +232,12 @@ def get_enhanced_analytics():
         time_range = request.args.get('range', 'month')
         if time_range == 'week':
             start_date = today - timedelta(days=7)
+        elif time_range == 'quarter':
+            start_date = today - timedelta(days=90)
         elif time_range == 'year':
             start_date = today - timedelta(days=365)
+        elif time_range == 'all':
+            start_date = today - timedelta(days=3650)  # 10 years back
         else:
             start_date = today - timedelta(days=30)
 
@@ -293,9 +297,16 @@ def get_enhanced_analytics():
                 func.date(HabitLog.timestamp) == date_cursor
             ).count()
 
+            if time_range == 'week':
+                label = date_cursor.strftime('%a')
+            elif time_range in ('quarter', 'year', 'all'):
+                label = date_cursor.strftime('%b %Y') if date_cursor.day == 1 else ''
+            else:
+                label = date_cursor.strftime('%d %b')
+
             daily_data.append({
                 'date': date_cursor.isoformat(),
-                'label': date_cursor.strftime('%a') if time_range == 'week' else date_cursor.strftime('%d %b'),
+                'label': label,
                 'workouts': day_workouts + day_cardio,
                 'habits': day_habits,
             })
