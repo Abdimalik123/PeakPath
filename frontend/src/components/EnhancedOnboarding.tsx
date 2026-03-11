@@ -129,10 +129,10 @@ export function EnhancedOnboarding() {
   const progressPercent = (step / totalSteps) * 100;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full">
+    <div className="min-h-screen bg-[var(--bg-primary)] flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="max-w-2xl w-full py-4 sm:py-0">
         {/* Progress Bar */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-[var(--text-secondary)]">
               Step {step} of {totalSteps}
@@ -150,15 +150,15 @@ export function EnhancedOnboarding() {
         </div>
 
         {/* Content Card */}
-        <div className="bg-[var(--bg-secondary)] rounded-xl p-8 shadow-xl border border-[var(--border-default)]">
+        <div className="bg-[var(--bg-secondary)] rounded-xl p-4 sm:p-8 shadow-xl border border-[var(--border-default)]">
           {/* Step 1: Basic Info */}
           {step === 1 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-[var(--brand-primary)]/15 flex items-center justify-center mx-auto mb-4">
-                  <User className="w-8 h-8 text-[var(--brand-primary)]" />
+            <div className="space-y-4 sm:space-y-6">
+              <div className="text-center mb-3 sm:mb-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[var(--brand-primary)]/15 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <User className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--brand-primary)]" />
                 </div>
-                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1 sm:mb-2">
                   Tell us about yourself
                 </h2>
                 <p className="text-[var(--text-secondary)]">
@@ -205,12 +205,12 @@ export function EnhancedOnboarding() {
 
           {/* Step 2: Body Stats */}
           {step === 2 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-[var(--brand-secondary)]/15 flex items-center justify-center mx-auto mb-4">
-                  <Scale className="w-8 h-8 text-[var(--brand-secondary)]" />
+            <div className="space-y-4 sm:space-y-6">
+              <div className="text-center mb-3 sm:mb-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[var(--brand-secondary)]/15 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Scale className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--brand-secondary)]" />
                 </div>
-                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1 sm:mb-2">
                   Your measurements
                 </h2>
                 <p className="text-[var(--text-secondary)]">
@@ -249,12 +249,12 @@ export function EnhancedOnboarding() {
 
           {/* Step 3: Goals */}
           {step === 3 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-purple-500/15 flex items-center justify-center mx-auto mb-4">
-                  <Target className="w-8 h-8 text-purple-400" />
+            <div className="space-y-3 sm:space-y-6">
+              <div className="text-center mb-3 sm:mb-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-purple-500/15 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Target className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1 sm:mb-2">
                   What's your main goal?
                 </h2>
                 <p className="text-[var(--text-secondary)]">
@@ -262,7 +262,7 @@ export function EnhancedOnboarding() {
                 </p>
               </div>
 
-              <div className="grid gap-3">
+              <div className="grid gap-2 sm:gap-3">
                 {[
                   { value: 'lose_weight', label: 'Lose Weight', emoji: '📉' },
                   { value: 'gain_muscle', label: 'Build Muscle', emoji: '💪' },
@@ -274,13 +274,13 @@ export function EnhancedOnboarding() {
                     key={goal.value}
                     type="button"
                     onClick={() => setFormData({ ...formData, primary_goal: goal.value })}
-                    className={`px-4 py-4 rounded-lg font-medium transition text-left flex items-center gap-3 ${
+                    className={`px-3 py-3 sm:px-4 sm:py-4 rounded-lg font-medium transition text-left flex items-center gap-3 ${
                       formData.primary_goal === goal.value
                         ? 'bg-[var(--brand-primary)] text-white'
                         : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
                     }`}
                   >
-                    <span className="text-2xl">{goal.emoji}</span>
+                    <span className="text-xl sm:text-2xl">{goal.emoji}</span>
                     <span>{goal.label}</span>
                   </button>
                 ))}
@@ -306,12 +306,12 @@ export function EnhancedOnboarding() {
 
           {/* Step 4: Experience */}
           {step === 4 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-orange-500/15 flex items-center justify-center mx-auto mb-4">
-                  <Dumbbell className="w-8 h-8 text-orange-400" />
+            <div className="space-y-4 sm:space-y-6">
+              <div className="text-center mb-3 sm:mb-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-orange-500/15 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Dumbbell className="w-6 h-6 sm:w-8 sm:h-8 text-orange-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1 sm:mb-2">
                   Your fitness background
                 </h2>
                 <p className="text-[var(--text-secondary)]">
@@ -323,19 +323,24 @@ export function EnhancedOnboarding() {
                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Fitness Level
                 </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {['beginner', 'intermediate', 'advanced'].map((level) => (
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  {[
+                    { value: 'beginner', label: 'Beginner' },
+                    { value: 'intermediate', label: 'Inter...' },
+                    { value: 'advanced', label: 'Advanced' }
+                  ].map((level) => (
                     <button
-                      key={level}
+                      key={level.value}
                       type="button"
-                      onClick={() => setFormData({ ...formData, fitness_level: level })}
-                      className={`px-4 py-3 rounded-lg font-medium transition ${
-                        formData.fitness_level === level
+                      onClick={() => setFormData({ ...formData, fitness_level: level.value })}
+                      className={`px-2 py-3 rounded-lg font-medium transition text-sm sm:text-base sm:px-4 ${
+                        formData.fitness_level === level.value
                           ? 'bg-[var(--brand-primary)] text-white'
                           : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
                       }`}
                     >
-                      {level.charAt(0).toUpperCase() + level.slice(1)}
+                      <span className="hidden sm:inline">{level.value.charAt(0).toUpperCase() + level.value.slice(1)}</span>
+                      <span className="sm:hidden">{level.value === 'intermediate' ? 'Inter.' : level.value.charAt(0).toUpperCase() + level.value.slice(1)}</span>
                     </button>
                   ))}
                 </div>
@@ -345,13 +350,13 @@ export function EnhancedOnboarding() {
                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   How many days per week can you workout?
                 </label>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-5 gap-2 sm:gap-3">
                   {[2, 3, 4, 5, 6].map((days) => (
                     <button
                       key={days}
                       type="button"
                       onClick={() => setFormData({ ...formData, workouts_per_week: days.toString() })}
-                      className={`px-4 py-3 rounded-lg font-medium transition ${
+                      className={`px-2 py-3 rounded-lg font-medium transition text-sm sm:text-base sm:px-4 ${
                         formData.workouts_per_week === days.toString()
                           ? 'bg-[var(--brand-primary)] text-white'
                           : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)]'
@@ -367,12 +372,12 @@ export function EnhancedOnboarding() {
 
           {/* Step 5: Ready to Start */}
           {step === 5 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-[var(--brand-primary)]/15 flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-[var(--brand-primary)]" />
+            <div className="space-y-4 sm:space-y-6">
+              <div className="text-center mb-3 sm:mb-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[var(--brand-primary)]/15 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-[var(--brand-primary)]" />
                 </div>
-                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-1 sm:mb-2">
                   You're all set!
                 </h2>
                 <p className="text-[var(--text-secondary)]">
@@ -426,7 +431,7 @@ export function EnhancedOnboarding() {
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex gap-3 mt-8">
+          <div className="flex gap-3 mt-4 sm:mt-8">
             {step > 1 && (
               <button
                 onClick={handleBack}

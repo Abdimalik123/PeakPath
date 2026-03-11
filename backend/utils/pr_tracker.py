@@ -36,21 +36,38 @@ def check_and_update_prs(user_id, workout_id, workout_exercises):
                 exercise_id=exercise_id
             ).first()
             
+            is_first_time = False
             if not pr:
                 pr = PersonalRecord(
                     user_id=user_id,
                     exercise_id=exercise_id
                 )
                 db.session.add(pr)
-            
+                is_first_time = True
+
             # Calculate metrics for this set
             current_weight = float(we.weight) if we.weight else 0
             current_reps = we.reps if we.reps else 0
             current_volume = current_weight * current_reps * (we.sets if we.sets else 1)
             current_1rm = calculate_one_rep_max(current_weight, current_reps)
-            
+
             pr_types = []
-            
+
+            # First time doing this exercise — set the baseline silently, no PR celebration
+            if is_first_time:
+                if current_weight > 0:
+                    pr.max_weight = current_weight
+                if current_reps > 0:
+                    pr.max_reps = current_reps
+                if current_volume > 0:
+                    pr.max_volume = current_volume
+                if current_1rm:
+                    pr.best_one_rep_max = current_1rm
+                pr.workout_id = workout_id
+                pr.workout_exercise_id = we.id
+                pr.achieved_at = datetime.utcnow()
+                continue
+
             # Check for max weight PR
             if current_weight > 0 and (not pr.max_weight or current_weight > pr.max_weight):
                 pr.max_weight = current_weight

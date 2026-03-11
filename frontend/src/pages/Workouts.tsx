@@ -7,9 +7,16 @@ import { WorkoutDetails } from '../components/WorkoutDetails';
 import { PRCelebration } from '../components/PRCelebration';
 import { useWorkouts } from '../hooks/useWorkouts';
 import { useToast } from '../contexts/ToastContext';
-import { Link } from 'react-router-dom';
-import { Search, Filter } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Filter, Dumbbell, Play, Trash2, Timer, ChevronDown, ChevronUp } from 'lucide-react';
 import client from '../api/client';
+
+interface SavedTemplate {
+  id: number;
+  name: string;
+  description: string;
+  exercises: { exercise_id: number; name: string; sets: number; reps: string | number; weight: number | null }[];
+}
 
 interface AvailableExercise {
   id: number;
@@ -28,6 +35,23 @@ interface AvailableExercise {
 
 const Workouts: React.FC = () => {
   const { showToast } = useToast();
+  const navigate = useNavigate();
+  const [savedTemplates, setSavedTemplates] = useState<SavedTemplate[]>([]);
+  const [activeWorkoutName, setActiveWorkoutName] = useState<string | null>(null);
+  const [showAllTemplates, setShowAllTemplates] = useState(false);
+  const TEMPLATES_LIMIT = 4;
+
+  useEffect(() => {
+    const saved = localStorage.getItem('peakpath_active_workout');
+    if (saved) {
+      try {
+        const { workoutType } = JSON.parse(saved);
+        setActiveWorkoutName(workoutType || 'Workout');
+      } catch {
+        localStorage.removeItem('peakpath_active_workout');
+      }
+    }
+  }, []);
   const {
     workouts,
     selectedWorkout,
@@ -83,6 +107,7 @@ const Workouts: React.FC = () => {
     category: '',
     description: ''
   });
+  const [newExerciseErrors, setNewExerciseErrors] = useState({ name: false, category: false });
   
   const MAX_CARDS_DISPLAY = 10;
   const isFiltering = searchQuery || selectedCategory || selectedMuscleGroup;
@@ -102,6 +127,7 @@ const Workouts: React.FC = () => {
     setCurrentExerciseForm({ exercise_id: '', sets: '', reps: '', weight: '', duration: '', notes: '' });
     setIsCreatingNewExercise(false);
     setNewExerciseForm({ name: '', category: '', description: '' });
+    setNewExerciseErrors({ name: false, category: false });
     setSearchQuery('');
     setSelectedCategory('');
     setSelectedMuscleGroup('');
@@ -118,9 +144,9 @@ const Workouts: React.FC = () => {
   };
   
   const handleCreateNewExercise = async () => {
-    if (!newExerciseForm.name || !newExerciseForm.category) {
-      return;
-    }
+    const errors = { name: !newExerciseForm.name.trim(), category: !newExerciseForm.category.trim() };
+    setNewExerciseErrors(errors);
+    if (errors.name || errors.category) return;
     try {
       const response = await client.post('/exercises/create', {
         name: newExerciseForm.name,
@@ -136,6 +162,7 @@ const Workouts: React.FC = () => {
         setCurrentExerciseForm({ ...currentExerciseForm, exercise_id: response.data.exercise_id.toString() });
         setIsCreatingNewExercise(false);
         setNewExerciseForm({ name: '', category: '', description: '' });
+        setNewExerciseErrors({ name: false, category: false });
         showToast('Exercise created!');
       }
     } catch (err) {
@@ -208,7 +235,7 @@ const Workouts: React.FC = () => {
     setFilteredExercises(filtered);
   }, [searchQuery, selectedCategory, selectedMuscleGroup, availableExercises]);
   
-  // Load available exercises from API on mount
+  // Load available exercises and saved templates on mount
   useEffect(() => {
     const fetchExercises = async () => {
       try {
@@ -220,8 +247,26 @@ const Workouts: React.FC = () => {
         console.error('Failed to load exercises:', err);
       }
     };
+    const fetchTemplates = async () => {
+      try {
+        const res = await client.get('/workout-templates');
+        if (res.data.success) setSavedTemplates(res.data.templates || []);
+      } catch {}
+    };
+
     fetchExercises();
+    fetchTemplates();
   }, []);
+
+  const deleteTemplate = async (id: number) => {
+    try {
+      await client.delete(`/workout-templates/${id}`);
+      setSavedTemplates(prev => prev.filter(t => Number(t.id) !== Number(id)));
+      showToast('Template deleted');
+    } catch {
+      showToast('Failed to delete template', 'error');
+    }
+  };
 
   if (loading) {
     return (
@@ -236,7 +281,7 @@ const Workouts: React.FC = () => {
       <Navigation currentPage="/train" />
 
       {/* Main Content */}
-      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-6">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <PageHeader
             title="Workouts"
@@ -246,6 +291,22 @@ const Workouts: React.FC = () => {
               onClick: () => setShowAddModal(true)
             }}
           />
+
+          {/* Resume in-progress workout */}
+          {activeWorkoutName && (
+            <button
+              onClick={() => navigate('/active-workout')}
+              className="w-full mb-4 flex items-center gap-3 p-4 rounded-xl bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary)]/15 transition text-left"
+            >
+              <div className="w-9 h-9 rounded-full bg-[var(--brand-primary)] flex items-center justify-center flex-shrink-0 animate-pulse">
+                <Timer className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-[var(--brand-primary)]">Workout in progress</p>
+                <p className="text-xs text-[var(--text-muted)] truncate">{activeWorkoutName} — tap to resume</p>
+              </div>
+            </button>
+          )}
 
           {/* Primary Action */}
           <div className="mb-6">
@@ -260,6 +321,69 @@ const Workouts: React.FC = () => {
               Start Workout
             </Link>
           </div>
+
+          {/* Saved Templates */}
+          {savedTemplates.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">
+                  My Templates <span className="ml-1 text-[var(--text-muted)]">({savedTemplates.length})</span>
+                </h2>
+                {savedTemplates.length > TEMPLATES_LIMIT && (
+                  <button
+                    onClick={() => setShowAllTemplates(v => !v)}
+                    className="flex items-center gap-1 text-xs text-[var(--brand-primary)] hover:opacity-80 transition"
+                  >
+                    {showAllTemplates ? (
+                      <><ChevronUp className="w-3.5 h-3.5" /> Show less</>
+                    ) : (
+                      <><ChevronDown className="w-3.5 h-3.5" /> Show all {savedTemplates.length}</>
+                    )}
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(showAllTemplates ? savedTemplates : savedTemplates.slice(0, TEMPLATES_LIMIT)).map(template => (
+                  <div key={template.id} className="pp-card p-4 flex items-center gap-3 group">
+                    <div className="w-10 h-10 rounded-lg bg-[var(--brand-primary)]/15 flex items-center justify-center flex-shrink-0">
+                      <Dumbbell className="w-5 h-5 text-[var(--brand-primary)]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[var(--text-primary)] text-sm truncate">{template.name}</p>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {template.exercises.length} exercise{template.exercises.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate('/active-workout', {
+                        state: {
+                          exercises: template.exercises.map(ex => ({
+                            exercise_id: ex.exercise_id,
+                            exercise_name: ex.name,
+                            sets: ex.sets || 3,
+                            reps: parseInt(String(ex.reps)) || 10,
+                            weight: ex.weight || 0,
+                          })),
+                          workoutType: template.name,
+                        }
+                      })}
+                      className="p-2 rounded-lg hover:bg-[var(--brand-primary)]/15 text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition flex-shrink-0"
+                      title="Start workout"
+                    >
+                      <Play className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteTemplate(Number(template.id))}
+                      className="p-2 rounded-lg hover:bg-[var(--error)]/10 text-[var(--text-muted)] hover:text-[var(--error)] transition flex-shrink-0"
+                      title="Delete template"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="mb-6 p-4 bg-[var(--error)]/10 border border-[var(--error)]/30 rounded-[var(--radius-lg)]">
@@ -412,27 +536,39 @@ const Workouts: React.FC = () => {
             {isCreatingNewExercise ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Exercise Name</label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+                    Exercise Name <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={newExerciseForm.name}
-                    onChange={(e) => setNewExerciseForm({ ...newExerciseForm, name: e.target.value })}
-                    className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] transition"
+                    onChange={(e) => {
+                      setNewExerciseForm({ ...newExerciseForm, name: e.target.value });
+                      if (e.target.value.trim()) setNewExerciseErrors(prev => ({ ...prev, name: false }));
+                    }}
+                    className={`w-full bg-[var(--bg-tertiary)] border rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none transition ${newExerciseErrors.name ? 'border-red-500 focus:border-red-500' : 'border-[var(--border-default)] focus:border-[var(--brand-primary)]'}`}
                     placeholder="e.g., Bench Press"
                   />
+                  {newExerciseErrors.name && <p className="text-red-500 text-xs mt-1">Exercise name is required</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Category</label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+                    Category <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={newExerciseForm.category}
-                    onChange={(e) => setNewExerciseForm({ ...newExerciseForm, category: e.target.value })}
-                    className="w-full bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)] transition"
-                    placeholder="e.g., Chest, Cardio, Legs"
+                    onChange={(e) => {
+                      setNewExerciseForm({ ...newExerciseForm, category: e.target.value });
+                      if (e.target.value.trim()) setNewExerciseErrors(prev => ({ ...prev, category: false }));
+                    }}
+                    className={`w-full bg-[var(--bg-tertiary)] border rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none transition ${newExerciseErrors.category ? 'border-red-500 focus:border-red-500' : 'border-[var(--border-default)] focus:border-[var(--brand-primary)]'}`}
+                    placeholder="e.g., Strength, Cardio, Bodyweight"
                   />
+                  {newExerciseErrors.category && <p className="text-red-500 text-xs mt-1">Category is required</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Description (Optional)</label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Description <span className="text-[var(--text-muted)] normal-case font-normal">(optional)</span></label>
                   <textarea
                     value={newExerciseForm.description}
                     onChange={(e) => setNewExerciseForm({ ...newExerciseForm, description: e.target.value })}

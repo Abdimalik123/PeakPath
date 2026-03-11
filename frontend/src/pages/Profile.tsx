@@ -163,17 +163,17 @@ export default function Profile() {
     <div className="min-h-screen bg-[var(--bg-primary)]">
       <Navigation currentPage="/profile" />
 
-      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-6">
         <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
           {/* Profile Header */}
-          <div className="pp-card p-6 mb-6">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-emerald-600 flex items-center justify-center text-white text-2xl font-bold">
+          <div className="pp-card p-4 sm:p-6 mb-6">
+            <div className="flex items-center gap-3 sm:gap-4 mb-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-emerald-600 flex items-center justify-center text-white text-xl sm:text-2xl font-bold flex-shrink-0">
                 {(userInfo.firstname?.[0] || '').toUpperCase()}{(userInfo.lastname?.[0] || '').toUpperCase()}
               </div>
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-[var(--text-primary)]">
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
                   {userInfo.firstname} {userInfo.lastname}
                 </h1>
                 <p className="text-sm text-[var(--text-muted)]">{userInfo.email}</p>

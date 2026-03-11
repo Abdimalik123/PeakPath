@@ -303,7 +303,7 @@ export default function Templates() {
               template_id: templateId,
               exercise_id: exerciseId,
               sets: ex.sets,
-              reps: String(ex.reps),
+              reps: parseInt(String(ex.reps)) || 10,
               order_index: idx + 1,
             }).catch(() => null); // non-fatal
           }
@@ -340,7 +340,7 @@ export default function Templates() {
     <div className="min-h-screen bg-[var(--bg-primary)]">
       <Navigation currentPage="/templates" />
 
-      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-6">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <PageHeader
             title="Workout Templates"

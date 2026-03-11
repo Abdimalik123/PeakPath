@@ -15,4 +15,4 @@ factory-boy==3.3.0
 faker==20.1.0
 prometheus_client==0.21.0
 Flask-Mail==0.10.0
-dnspython==2.7.0flask-mail==0.10.0
+dnspython==2.7.0

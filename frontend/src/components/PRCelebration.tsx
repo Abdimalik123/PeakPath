@@ -43,7 +43,7 @@ export function PRCelebration({ prs, onClose }: PRCelebrationProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="relative max-w-lg w-full bg-gradient-to-br from-yellow-500/20 to-orange-600/20 border-2 border-yellow-500/50 rounded-2xl p-8 shadow-2xl animate-scaleIn">
+      <div className="relative max-w-lg w-full bg-gradient-to-br from-yellow-500/20 to-orange-600/20 border-2 border-yellow-500/50 rounded-2xl p-4 sm:p-8 shadow-2xl animate-scaleIn">
         {/* Celebration confetti effect */}
         <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
           {[...Array(20)].map((_, i) => (
@@ -61,11 +61,11 @@ export function PRCelebration({ prs, onClose }: PRCelebrationProps) {
 
         {/* Content */}
         <div className="relative z-10 text-center">
-          <div className="mb-6">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-4 animate-bounce">
-              <Trophy className="w-10 h-10 text-white" />
+          <div className="mb-4 sm:mb-6">
+            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-3 sm:mb-4 animate-bounce">
+              <Trophy className="w-7 h-7 sm:w-10 sm:h-10 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-2">
+            <h2 className="text-xl sm:text-3xl font-bold text-white mb-2">
               🎉 New Personal Record{prs.length > 1 ? 's' : ''}! 🎉
             </h2>
             <p className="text-yellow-200">You crushed it!</p>

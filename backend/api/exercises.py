@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, g, current_app
 from database import db
 from models import Exercise, Workout, WorkoutExercise
+from sqlalchemy import func
 from utils.logging import log_activity
 from api.auth import login_required
 
@@ -19,24 +20,31 @@ def create_exercise():
         return jsonify({"success": False, "message": "Missing required fields"}), 400
     
     try:
+        # Check if exercise already exists (names are globally unique, case-insensitive)
+        existing = Exercise.query.filter(
+            func.lower(Exercise.name) == name.strip().lower()
+        ).first()
+        if existing:
+            return jsonify({"success": True, "exercise_id": existing.id}), 200
+
         exercise = Exercise(
             user_id=g.user['id'],
-            name=name,
+            name=name.strip(),
             category=category,
             description=description,
             created_by=g.user['id']
         )
-        
+
         db.session.add(exercise)
         db.session.commit()
-        
+
         log_activity(g.user['id'], "exercise_created", "exercise", exercise.id)
-        
+
         return jsonify({
-            "success": True, 
+            "success": True,
             "exercise_id": exercise.id
         }), 201
-        
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error creating exercise: {e}")
@@ -55,13 +63,8 @@ def get_exercises():
     muscle_group = request.args.get('muscle_group', '').strip()
     
     try:
-        # Start with base query
-        query = Exercise.query.filter(
-            db.or_(
-                Exercise.is_global == True,
-                Exercise.created_by == g.user['id']
-            )
-        )
+        # Names are globally unique — return all exercises
+        query = Exercise.query
         
         # Apply search filter
         if search:

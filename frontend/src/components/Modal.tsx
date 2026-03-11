@@ -21,9 +21,9 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'md' }: Mod
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className={`bg-[#1c1f2e] border border-white/5 rounded-[2rem] p-8 ${maxWidthClasses[maxWidth]} w-full max-h-[90vh] overflow-y-auto`}>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-bold text-white">{title}</h3>
+      <div className={`bg-[#1c1f2e] border border-white/5 rounded-2xl sm:rounded-[2rem] p-4 sm:p-8 ${maxWidthClasses[maxWidth]} w-full max-h-[90vh] overflow-y-auto`}>
+        <div className="flex justify-between items-center mb-4 sm:mb-6">
+          <h3 className="text-lg sm:text-2xl font-bold text-white">{title}</h3>
           <button
             onClick={onClose}
             className="p-2 hover:bg-white/5 rounded-lg transition"

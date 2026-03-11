@@ -14,6 +14,7 @@ import Social from './pages/Social';
 import GroupDetail from './pages/GroupDetail';
 import ActiveWorkout from './pages/ActiveWorkout';
 import Templates from './pages/Templates';
+import ExerciseBank from './pages/ExerciseBank';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
@@ -34,6 +35,7 @@ function App() {
       <Route path="/train" element={<PrivateRoute><Workouts /></PrivateRoute>} />
       <Route path="/active-workout" element={<PrivateRoute><ActiveWorkout /></PrivateRoute>} />
       <Route path="/templates" element={<PrivateRoute><Templates /></PrivateRoute>} />
+      <Route path="/exercises" element={<PrivateRoute><ExerciseBank /></PrivateRoute>} />
       <Route path="/progress" element={<PrivateRoute><Progress /></PrivateRoute>} />
       <Route path="/habits" element={<PrivateRoute><Habits /></PrivateRoute>} />
       <Route path="/community" element={<PrivateRoute><Social /></PrivateRoute>} />

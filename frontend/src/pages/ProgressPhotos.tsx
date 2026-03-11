@@ -154,8 +154,8 @@ export default function ProgressPhotos({ embedded }: { embedded?: boolean }) {
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         {!embedded && (
           <div>
-            <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2 flex items-center gap-3">
-              <Camera className="w-10 h-10 text-[var(--brand-primary)]" />
+            <h1 className="text-2xl sm:text-4xl font-bold text-[var(--text-primary)] mb-2 flex items-center gap-3">
+              <Camera className="w-7 h-7 sm:w-10 sm:h-10 text-[var(--brand-primary)]" />
               Progress Photos
             </h1>
             <p className="text-[var(--text-muted)]">Track your transformation visually</p>
@@ -512,7 +512,7 @@ export default function ProgressPhotos({ embedded }: { embedded?: boolean }) {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
       <Navigation currentPage="/progress-photos" />
-      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-6">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {mainContent}
         </main>

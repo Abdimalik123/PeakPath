@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Activity, LayoutDashboard, Dumbbell, Target, User, LogOut,
-  Menu, X, Users, BarChart3, BookOpen
+  Menu, X, Users, BarChart3, BookOpen, Library
 } from 'lucide-react';
 import { NotificationsBell } from './NotificationsBell';
 
@@ -135,6 +135,18 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
                 <span>Templates</span>
               </Link>
               <Link
+                to="/exercises"
+                onClick={() => setIsMobileOpen(false)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
+                  location.pathname === '/exercises'
+                    ? 'bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]'
+                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
+                }`}
+              >
+                <Library className="w-5 h-5" />
+                <span>Exercise Bank</span>
+              </Link>
+              <Link
                 to="/profile"
                 onClick={() => setIsMobileOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
@@ -159,28 +171,6 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
           </div>
         </>
       )}
-
-      {/* ── MOBILE BOTTOM TAB BAR ── */}
-      <nav id="tour-nav-mobile" className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-secondary)] border-t border-[var(--border-default)] pb-[env(safe-area-inset-bottom)]">
-        <div className="flex items-center justify-around h-16">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.path);
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition ${
-                  active ? 'text-[var(--brand-primary)]' : 'text-[var(--text-muted)]'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-[11px] font-semibold">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
 
       {/* ── DESKTOP SIDEBAR ── */}
       <aside id="tour-nav-desktop" className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-default)]">
@@ -216,6 +206,13 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
           >
             <BookOpen className="w-5 h-5" />
             <span>Templates</span>
+          </Link>
+          <Link
+            to="/exercises"
+            className={`pp-nav-link ${location.pathname === '/exercises' || currentPage === '/exercises' ? 'pp-nav-link-active' : ''}`}
+          >
+            <Library className="w-5 h-5" />
+            <span>Exercise Bank</span>
           </Link>
         </nav>
 

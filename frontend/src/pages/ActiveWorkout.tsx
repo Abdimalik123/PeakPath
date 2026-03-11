@@ -4,7 +4,7 @@ import { Navigation } from '../components/Navigation';
 import { PageHeader } from '../components/PageHeader';
 import { useToast } from '../contexts/ToastContext';
 import { PRCelebration } from '../components/PRCelebration';
-import { Play, Pause, Square, Plus, Check, Clock, RotateCcw, ChevronDown, ChevronUp, Dumbbell, Flame, BookOpen, X } from 'lucide-react';
+import { Play, Pause, Plus, Check, Clock, RotateCcw, ChevronDown, ChevronUp, Dumbbell, Flame, BookOpen, X } from 'lucide-react';
 import client from '../api/client';
 
 interface QuickTemplate {
@@ -78,6 +78,43 @@ export default function ActiveWorkout() {
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [rpe, setRpe] = useState('');
   const [notes, setNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const STORAGE_KEY = 'peakpath_active_workout';
+
+  // Persist active workout to localStorage whenever state changes
+  useEffect(() => {
+    if (!isActive) return;
+    // Save current wall-clock timestamp so time away is counted on restore
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      workoutType,
+      exercises,
+      elapsedSeconds,
+      restDuration,
+      savedAt: isPaused ? null : Date.now(),
+    }));
+  }, [isActive, workoutType, exercises, elapsedSeconds, restDuration, isPaused]);
+
+  // On mount: restore saved workout if no route state was passed
+  useEffect(() => {
+    if (location.state) return; // fresh start from template/route takes priority
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    try {
+      const { workoutType: wt, exercises: ex, elapsedSeconds: el, restDuration: rd, savedAt } = JSON.parse(saved);
+      // Add time elapsed while away (only if workout wasn't paused when navigated away)
+      const awaySeconds = savedAt ? Math.floor((Date.now() - savedAt) / 1000) : 0;
+      setWorkoutType(wt || '');
+      setExercises(ex || []);
+      setElapsedSeconds((el || 0) + awaySeconds);
+      setRestDuration(rd || 90);
+      setIsActive(true);
+    } catch {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const clearSavedWorkout = () => localStorage.removeItem(STORAGE_KEY);
 
   // Elapsed timer
   useEffect(() => {
@@ -247,6 +284,9 @@ export default function ActiveWorkout() {
   );
 
   const finishWorkout = async () => {
+    setIsSaving(true);
+    setShowFinishModal(false);
+    clearSavedWorkout();
     try {
       const response = await client.post('/workouts', {
         type: workoutType,
@@ -292,6 +332,10 @@ export default function ActiveWorkout() {
       }
     } catch (err: any) {
       showToast(err.response?.data?.message || 'Failed to save workout', 'error');
+      clearSavedWorkout();
+      setShowFinishModal(true);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -330,7 +374,7 @@ export default function ActiveWorkout() {
     return (
       <div className="min-h-screen bg-[var(--bg-primary)]">
         <Navigation currentPage="/train" />
-        <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+        <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-6">
           <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
             <PageHeader title="Start Workout" subtitle="Set up your session" />
 
@@ -440,7 +484,7 @@ export default function ActiveWorkout() {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
       <Navigation currentPage="/train" />
-      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-6">
         <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-32">
 
           {/* Live Header */}
@@ -467,10 +511,9 @@ export default function ActiveWorkout() {
                     </button>
                     <button
                       onClick={() => setShowFinishModal(true)}
-                      className="w-11 h-11 flex items-center justify-center rounded-lg bg-[var(--brand-primary)] hover:opacity-90 transition"
-                      title="Finish Workout"
+                      className="h-11 px-4 flex items-center justify-center rounded-lg bg-[var(--brand-primary)] hover:opacity-90 transition text-[var(--text-inverse)] text-sm font-bold"
                     >
-                      <Square className="w-5 h-5 text-[var(--text-inverse)]" />
+                      Finish
                     </button>
                   </div>
                 </div>
@@ -538,16 +581,16 @@ export default function ActiveWorkout() {
                 {/* Sets */}
                 {exercise.isExpanded && (
                   <div className="px-4 pb-4">
-                    <div className="grid grid-cols-[40px_1fr_1fr_60px] gap-2 mb-2 text-xs font-bold text-[var(--text-muted)] uppercase">
-                      <span>Set</span>
-                      <span>Weight (kg)</span>
+                    <div className="grid grid-cols-[32px_1fr_1fr_56px] gap-2 mb-2 text-xs font-bold text-[var(--text-muted)] uppercase">
+                      <span>#</span>
+                      <span>kg</span>
                       <span>Reps</span>
                       <span></span>
                     </div>
                     {exercise.completedSets.map((set, setIdx) => (
                       <div
                         key={setIdx}
-                        className={`grid grid-cols-[40px_1fr_1fr_60px] gap-2 items-center py-2 ${
+                        className={`grid grid-cols-[32px_1fr_1fr_56px] gap-2 items-center py-1.5 ${
                           set.completed ? 'opacity-60' : ''
                         }`}
                       >
@@ -559,15 +602,17 @@ export default function ActiveWorkout() {
                           value={set.weight || ''}
                           onChange={e => updateSetValue(exIdx, setIdx, 'weight', parseFloat(e.target.value) || 0)}
                           disabled={set.completed}
-                          className="bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] disabled:opacity-50"
+                          className="bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-lg px-2 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] disabled:opacity-50 w-full min-w-0"
                           step="0.5"
+                          inputMode="decimal"
                         />
                         <input
                           type="number"
                           value={set.reps || ''}
                           onChange={e => updateSetValue(exIdx, setIdx, 'reps', parseInt(e.target.value) || 0)}
                           disabled={set.completed}
-                          className="bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] disabled:opacity-50"
+                          className="bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-lg px-2 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] disabled:opacity-50 w-full min-w-0"
+                          inputMode="numeric"
                         />
                         {set.completed ? (
                           <div className="flex justify-center">
@@ -576,7 +621,8 @@ export default function ActiveWorkout() {
                         ) : (
                           <button
                             onClick={() => completeSet(exIdx, setIdx)}
-                            className="px-3 py-2 bg-[var(--brand-primary)] text-[var(--text-inverse)] rounded-lg text-xs font-bold hover:opacity-90 transition"
+                            disabled={!set.reps || set.reps < 1}
+                            className="w-full py-2 bg-[var(--brand-primary)] text-[var(--text-inverse)] rounded-lg text-xs font-bold hover:opacity-90 transition disabled:opacity-30 disabled:cursor-not-allowed"
                           >
                             Done
                           </button>
@@ -770,22 +816,14 @@ export default function ActiveWorkout() {
                 </button>
                 <button
                   onClick={finishWorkout}
-                  className="flex-1 py-3 bg-[var(--brand-primary)] text-[var(--text-inverse)] font-bold rounded-lg hover:opacity-90 transition"
+                  disabled={isSaving || totalCompletedSets === 0}
+                  title={totalCompletedSets === 0 ? 'Complete at least one set first' : undefined}
+                  className="flex-1 py-3 bg-[var(--brand-primary)] text-[var(--text-inverse)] font-bold rounded-lg hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Save Workout
+                  {isSaving ? 'Saving...' : totalCompletedSets === 0 ? 'No sets completed' : 'Save Workout'}
                 </button>
               </div>
 
-              <button
-                onClick={() => {
-                  if (confirm('Discard this workout? All progress will be lost.')) {
-                    navigate('/train');
-                  }
-                }}
-                className="w-full mt-3 text-center text-sm text-[var(--error)] hover:underline"
-              >
-                Discard Workout
-              </button>
             </div>
           </div>
         )}

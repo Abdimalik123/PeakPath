@@ -240,7 +240,7 @@ function TourCard({ step, total, progress, title, description, isFirst, isLast, 
         />
       </div>
 
-      <div className="p-5">
+      <div className="p-3 sm:p-5">
         {/* Header row */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">

@@ -1,5 +1,5 @@
 from sqlalchemy.exc import SQLAlchemyError
-from flask import Flask, Blueprint, jsonify
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
@@ -72,7 +72,6 @@ def create_app():
     from models.cardio_workout import CardioWorkout
     from models.scheduled_workout import ScheduledWorkout
     from models.streak_freeze import StreakFreeze
-    
     # Configure CORS with specific origins
     FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
     DOMAIN_URL = os.getenv('DOMAIN_URL', '')
@@ -145,6 +144,7 @@ def create_app():
     from api.body_measurements import body_measurements_bp
     from api.schedule import schedule_bp
     from api.reengagement import reengagement_bp
+    from api.exercise_bank import exercise_bank_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/v1')
@@ -178,6 +178,7 @@ def create_app():
     app.register_blueprint(body_measurements_bp, url_prefix='/api/v1')
     app.register_blueprint(schedule_bp, url_prefix='/api/v1')
     app.register_blueprint(reengagement_bp, url_prefix='/api/v1')
+    app.register_blueprint(exercise_bank_bp, url_prefix='/api/v1')
 
     # Health check endpoint
     @app.route('/health')

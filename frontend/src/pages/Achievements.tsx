@@ -182,8 +182,8 @@ export default function Achievements({ embedded }: { embedded?: boolean }) {
     <>
       {!embedded && (
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2 flex items-center gap-3">
-            <Trophy className="w-10 h-10 text-yellow-400" />
+          <h1 className="text-2xl sm:text-4xl font-bold text-[var(--text-primary)] mb-2 flex items-center gap-3">
+            <Trophy className="w-7 h-7 sm:w-10 sm:h-10 text-yellow-400" />
             Achievements
           </h1>
           <p className="text-[var(--text-muted)]">Track your progress and unlock rewards</p>
@@ -191,23 +191,23 @@ export default function Achievements({ embedded }: { embedded?: boolean }) {
       )}
 
           {/* Stats Card */}
-          <div className="pp-card p-6 mb-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-4">
+          <div className="pp-card p-4 sm:p-6 mb-6 sm:mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-3 sm:mb-4">
               <div>
                 <p className="text-[var(--text-muted)] text-sm mb-1">Unlocked</p>
-                <p className="text-3xl font-bold text-[var(--text-primary)]">{unlockedCount} / {totalCount}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)]">{unlockedCount} / {totalCount}</p>
               </div>
               <div>
                 <p className="text-[var(--text-muted)] text-sm mb-1">Completion</p>
-                <p className="text-3xl font-bold text-[var(--brand-primary)]">{completionPercentage}%</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[var(--brand-primary)]">{completionPercentage}%</p>
               </div>
               <div>
                 <p className="text-[var(--text-muted)] text-sm mb-1">Points Earned</p>
-                <p className="text-3xl font-bold text-yellow-400">{totalPoints}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-yellow-400">{totalPoints}</p>
               </div>
               <div>
                 <p className="text-[var(--text-muted)] text-sm mb-1">Next Up</p>
-                <p className="text-lg font-bold text-blue-400">{nextAchievement?.name || 'All done!'}</p>
+                <p className="text-base sm:text-lg font-bold text-blue-400">{nextAchievement?.name || 'All done!'}</p>
                 {nextAchievement && (
                   <p className="text-xs text-[var(--text-muted)]">{nextAchievement.progress}/{nextAchievement.target}</p>
                 )}
@@ -333,7 +333,7 @@ export default function Achievements({ embedded }: { embedded?: boolean }) {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
       <Navigation currentPage="/achievements" />
-      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-20 lg:pb-0">
+      <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-6">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {mainContent}
         </main>

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, g, current_app
 from database import db
 from models import Workout, WorkoutExercise, Exercise
+from sqlalchemy import func
 from api.auth import login_required
 from utils.logging import log_activity
 from utils.validators import validate_request, WorkoutSchema
@@ -38,18 +39,14 @@ def create_workout():
             
             # If no exercise_id but exercise_name provided, look up or create
             if not exercise_id and ex_data.get('exercise_name'):
-                exercise = Exercise.query.filter_by(
-                    name=ex_data['exercise_name'],
-                    user_id=g.user['id']
+                name_lower = ex_data['exercise_name'].strip().lower()
+                # Case-insensitive lookup to match the DB unique constraint
+                exercise = Exercise.query.filter(
+                    func.lower(Exercise.name) == name_lower
                 ).first()
                 if not exercise:
-                    # Also check for global/shared exercises (user_id=None or any user)
-                    exercise = Exercise.query.filter_by(
-                        name=ex_data['exercise_name']
-                    ).first()
-                if not exercise:
                     exercise = Exercise(
-                        name=ex_data['exercise_name'],
+                        name=ex_data['exercise_name'].strip(),
                         user_id=g.user['id']
                     )
                     db.session.add(exercise)
