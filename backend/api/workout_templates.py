@@ -39,51 +39,64 @@ def add_workout_template():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
-# Get all templates for user (custom templates only)
+def _serialize_template(t):
+    """Serialize a WorkoutTemplate with its exercises."""
+    template_exercises = TemplateExercise.query.filter_by(
+        template_id=t.id
+    ).order_by(TemplateExercise.order_index).all()
+
+    exercises = []
+    for te in template_exercises:
+        exercise = Exercise.query.get(te.exercise_id)
+        if not exercise:
+            continue
+        exercises.append({
+            'exercise_id': te.exercise_id,
+            'name': exercise.name,
+            'sets': te.sets,
+            'reps': te.reps or '',
+            'order_index': te.order_index,
+            'weight': float(te.weight) if te.weight else None,
+            'rest': te.rest_time,
+            'notes': te.notes
+        })
+
+    return {
+        "id": str(t.id),
+        "name": t.name,
+        "description": t.description or '',
+        "is_system": t.is_system,
+        "category": t.category or ('custom' if not t.is_system else ''),
+        "difficulty": t.difficulty or 'intermediate',
+        "duration_minutes": t.duration_minutes or 0,
+        # Keep legacy "duration" field for backward compat with Workouts.tsx
+        "duration": t.duration_minutes or 0,
+        "exercises": exercises,
+        "created_at": t.created_at.isoformat() if t.created_at else None
+    }
+
+
+# Get all templates — system templates + user's own templates
 @workout_templates_bp.route('/workout-templates', methods=['GET'])
 @login_required
 def get_workout_templates():
     user_id = g.user['id']
-    
+
     try:
-        templates = WorkoutTemplate.query.filter_by(user_id=user_id).all()
-        
-        result = []
-        for t in templates:
-            # Get exercises for this template
-            template_exercises = TemplateExercise.query.filter_by(template_id=t.id).all()
-            
-            exercises = []
-            for te in template_exercises:
-                exercise = Exercise.query.get(te.exercise_id)
-                if not exercise:
-                    continue
-                exercises.append({
-                    'exercise_id': te.exercise_id,
-                    'name': exercise.name,
-                    'sets': te.sets,
-                    'reps': te.reps or '',
-                    'weight': float(te.weight) if te.weight else None,
-                    'rest': te.rest_time,
-                    'notes': te.notes
-                })
-            
-            result.append({
-                "id": str(t.id),
-                "name": t.name, 
-                "description": t.description or '',
-                "category": "custom",
-                "duration": 0,
-                "difficulty": "intermediate",
-                "exercises": exercises,
-                "equipment": [],
-                "isCustom": True,
-                "isFavorite": False,
-                "created_at": t.created_at.isoformat() if t.created_at else None
-            })
-        
-        return jsonify({"success": True, "templates": result}), 200
-        
+        system = WorkoutTemplate.query.filter_by(is_system=True).order_by(WorkoutTemplate.name).all()
+        user_templates = WorkoutTemplate.query.filter_by(user_id=user_id, is_system=False).all()
+
+        system_list = [_serialize_template(t) for t in system]
+        user_list = [_serialize_template(t) for t in user_templates]
+
+        # Keep legacy "templates" key pointing to user templates for backward compat
+        return jsonify({
+            "success": True,
+            "system_templates": system_list,
+            "user_templates": user_list,
+            "templates": user_list
+        }), 200
+
     except Exception as e:
         current_app.logger.error(f"Error fetching workout templates: {e}")
         return jsonify({"success": False, "message": str(e)}), 500

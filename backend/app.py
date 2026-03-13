@@ -145,6 +145,7 @@ def create_app():
     from api.schedule import schedule_bp
     from api.reengagement import reengagement_bp
     from api.exercise_bank import exercise_bank_bp
+    from api.admin_templates import admin_templates_bp
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/v1')
@@ -179,6 +180,7 @@ def create_app():
     app.register_blueprint(schedule_bp, url_prefix='/api/v1')
     app.register_blueprint(reengagement_bp, url_prefix='/api/v1')
     app.register_blueprint(exercise_bank_bp, url_prefix='/api/v1')
+    app.register_blueprint(admin_templates_bp, url_prefix='/api/v1')
 
     # Health check endpoint
     @app.route('/health')

@@ -250,7 +250,10 @@ const Workouts: React.FC = () => {
     const fetchTemplates = async () => {
       try {
         const res = await client.get('/workout-templates');
-        if (res.data.success) setSavedTemplates(res.data.templates || []);
+        if (res.data.success) {
+          // Support both new (user_templates) and legacy (templates) response keys
+          setSavedTemplates(res.data.user_templates || res.data.templates || []);
+        }
       } catch {}
     };
 

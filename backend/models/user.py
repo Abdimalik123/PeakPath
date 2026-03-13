@@ -12,6 +12,7 @@ class User(db.Model):
     lastname = db.Column(db.Text)
     reset_token = db.Column(db.String(64), nullable=True, index=True)
     reset_token_expires = db.Column(db.DateTime, nullable=True)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
 
     profiles = db.relationship("UserProfile", back_populates="user", cascade="all, delete-orphan")
     workouts = db.relationship("Workout", back_populates="user", cascade="all, delete-orphan")

@@ -15,7 +15,7 @@ def get_exercise_bank():
     equipment = request.args.get('equipment', '').strip().lower()
 
     try:
-        query = Exercise.query
+        query = Exercise.query.filter(Exercise.is_global == True)
 
         if search:
             query = query.filter(Exercise.name.ilike(f'%{search}%'))
@@ -28,20 +28,10 @@ def get_exercise_bank():
 
         result = []
         for ex in exercises:
-            # Try to enrich from static library if name matches
             lib_data = EXERCISE_LIBRARY.get(ex.name.lower().strip(), {})
 
-            # muscle_group may be comma-separated — split into list
             raw_muscle = ex.muscle_group or ''
             muscle_groups = [m.strip() for m in raw_muscle.split(',') if m.strip()]
-
-            # Use library instructions if available, else fall back to description
-            if lib_data.get('instructions'):
-                instructions = lib_data['instructions']
-            elif ex.description:
-                instructions = [ex.description]
-            else:
-                instructions = []
 
             result.append({
                 'id': str(ex.id),
@@ -50,9 +40,10 @@ def get_exercise_bank():
                 'muscle_groups': muscle_groups,
                 'equipment': ex.equipment or '',
                 'difficulty': lib_data.get('difficulty', ''),
-                'instructions': instructions,
-                'form_tips': lib_data.get('form_tips', []),
-                'common_mistakes': lib_data.get('common_mistakes', []),
+                'setup': lib_data.get('setup', []),
+                'lifting': lib_data.get('lifting', []),
+                'lowering': lib_data.get('lowering', []),
+                'completion': lib_data.get('completion', []),
             })
 
         return jsonify({'success': True, 'exercises': result}), 200

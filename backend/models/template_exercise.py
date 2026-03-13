@@ -7,7 +7,7 @@ class TemplateExercise(db.Model):
     template_id = db.Column(db.Integer, db.ForeignKey("workout_templates.id", ondelete="CASCADE"), nullable=False)
     exercise_id = db.Column(db.Integer, db.ForeignKey("exercises.id", ondelete="CASCADE"), nullable=False)
     sets = db.Column(db.Integer)
-    reps = db.Column(db.Integer)
+    reps = db.Column(db.String(50))
     weight = db.Column(db.Numeric)
     duration = db.Column(db.Integer)
     rest_time = db.Column(db.Integer)

@@ -37,21 +37,14 @@ def create_workout():
         for ex_data in exercises_data:
             exercise_id = ex_data.get('exercise_id')
             
-            # If no exercise_id but exercise_name provided, look up or create
+            # If no exercise_id but exercise_name provided, look up by name only (no auto-create)
             if not exercise_id and ex_data.get('exercise_name'):
                 name_lower = ex_data['exercise_name'].strip().lower()
-                # Case-insensitive lookup to match the DB unique constraint
                 exercise = Exercise.query.filter(
                     func.lower(Exercise.name) == name_lower
                 ).first()
-                if not exercise:
-                    exercise = Exercise(
-                        name=ex_data['exercise_name'].strip(),
-                        user_id=g.user['id']
-                    )
-                    db.session.add(exercise)
-                    db.session.flush()
-                exercise_id = exercise.id
+                if exercise:
+                    exercise_id = exercise.id
             
             if not exercise_id:
                 continue  # Skip exercises with no valid ID or name

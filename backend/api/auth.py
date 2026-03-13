@@ -55,6 +55,32 @@ def login_required(view):
             return jsonify({"success": False, "message": "Token expired"}), 401
         except jwt.InvalidTokenError:
             return jsonify({"success": False, "message": "Invalid token"}), 401
+        # Fetch is_admin from DB so it reflects current state, not just token state
+        user_record = User.query.get(payload.get('id'))
+        payload['is_admin'] = user_record.is_admin if user_record else False
+        g.user = payload
+        return view(*args, **kwargs)
+    return wrapped_view
+
+
+#------------------------- ADMIN-REQUIRED --------------------------------------------------#
+def admin_required(view):
+    @functools.wraps(view)
+    def wrapped_view(*args, **kwargs):
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return jsonify({"success": False, "error": "Missing or invalid token"}), 401
+        token = auth_header.split(" ")[1]
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return jsonify({"success": False, "message": "Token expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"success": False, "message": "Invalid token"}), 401
+        user_record = User.query.get(payload.get('id'))
+        if not user_record or not user_record.is_admin:
+            return jsonify({"success": False, "message": "Admin access required"}), 403
+        payload['is_admin'] = True
         g.user = payload
         return view(*args, **kwargs)
     return wrapped_view

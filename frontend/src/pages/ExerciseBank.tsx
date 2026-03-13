@@ -11,9 +11,10 @@ interface Exercise {
   muscle_groups: string[];
   equipment: string;
   difficulty: string;
-  instructions: string[];
-  form_tips: string[];
-  common_mistakes: string[];
+  setup: string[];
+  lifting: string[];
+  lowering: string[];
+  completion: string[];
 }
 
 const DIFFICULTY_COLORS: Record<string, string> = {
@@ -205,45 +206,28 @@ export default function ExerciseBank() {
               </span>
             </div>
 
-            <div className="mb-4">
-              <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">How to perform</h3>
-              <ol className="space-y-1.5">
-                {selectedExercise.instructions.map((step, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-[var(--text-secondary)]">
-                    <span className="text-[var(--brand-primary)] font-bold flex-shrink-0">{i + 1}.</span>
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            {selectedExercise.form_tips.length > 0 && (
-              <div className="mb-4">
-                <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Form tips</h3>
-                <ul className="space-y-1">
-                  {selectedExercise.form_tips.map((tip, i) => (
-                    <li key={i} className="text-sm text-[var(--text-secondary)] flex gap-2">
-                      <span className="text-[var(--brand-primary)] flex-shrink-0">•</span>
-                      {tip}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {selectedExercise.common_mistakes.length > 0 && (
-              <div>
-                <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Common mistakes</h3>
-                <ul className="space-y-1">
-                  {selectedExercise.common_mistakes.map((m, i) => (
-                    <li key={i} className="text-sm text-[var(--text-secondary)] flex gap-2">
-                      <span className="text-red-400 flex-shrink-0">•</span>
-                      {m}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {[
+              { key: 'setup', label: 'Setup' },
+              { key: 'lifting', label: 'Lifting' },
+              { key: 'lowering', label: 'Lowering' },
+              { key: 'completion', label: 'Completion' },
+            ].map(({ key, label }) => {
+              const steps = selectedExercise[key as keyof Exercise] as string[];
+              if (!steps || steps.length === 0) return null;
+              return (
+                <div key={key} className="mb-4">
+                  <h3 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">{label}</h3>
+                  <ul className="space-y-1.5">
+                    {steps.map((step, i) => (
+                      <li key={i} className="flex gap-2 text-sm text-[var(--text-secondary)]">
+                        <span className="text-[var(--brand-primary)] font-bold flex-shrink-0 w-4">{i + 1}.</span>
+                        {step}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
