@@ -16,8 +16,8 @@ interface StatCardProps {
 
 const iconColorClasses = {
   green: 'bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]',
-  blue: 'bg-[var(--brand-secondary)]/15 text-[var(--brand-secondary)]',
-  purple: 'bg-[var(--brand-secondary)]/15 text-[var(--brand-secondary)]',
+  blue: 'bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]',
+  purple: 'bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]',
   orange: 'bg-[var(--warning)]/15 text-[var(--warning)]',
   red: 'bg-[var(--error)]/15 text-[var(--error)]',
 };

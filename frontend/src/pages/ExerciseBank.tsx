@@ -4,6 +4,7 @@ import { PageHeader } from '../components/PageHeader';
 import { useToast } from '../contexts/ToastContext';
 import { Search, X, ChevronDown, Dumbbell } from 'lucide-react';
 import client from '../api/client';
+import { DIFFICULTY_COLORS } from '../utils/difficultyColors';
 
 interface Exercise {
   id: string;
@@ -16,12 +17,6 @@ interface Exercise {
   lowering: string[];
   completion: string[];
 }
-
-const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: 'bg-green-500/20 text-green-400',
-  intermediate: 'bg-yellow-500/20 text-yellow-400',
-  advanced: 'bg-red-500/20 text-red-400',
-};
 
 export default function ExerciseBank() {
   const { showToast } = useToast();

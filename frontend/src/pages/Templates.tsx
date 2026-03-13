@@ -8,6 +8,7 @@ import {
   Dumbbell, Play, Bookmark, BookmarkCheck, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import client from '../api/client';
+import { DIFFICULTY_COLORS } from '../utils/difficultyColors';
 
 interface TemplateExercise {
   exercise_id: number;
@@ -27,12 +28,6 @@ interface Template {
   exercises: TemplateExercise[];
   is_system: boolean;
 }
-
-const DIFFICULTY_COLORS: Record<string, string> = {
-  beginner: 'text-green-400 bg-green-500/15',
-  intermediate: 'text-yellow-400 bg-yellow-500/15',
-  advanced: 'text-red-400 bg-red-500/15',
-};
 
 export default function Templates() {
   const navigate = useNavigate();
@@ -191,7 +186,7 @@ export default function Templates() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => startWorkout(template)}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[var(--brand-primary)] text-white font-semibold text-sm rounded-lg hover:opacity-90 transition"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[var(--brand-primary)] text-[var(--text-inverse)] font-semibold text-sm rounded-[var(--radius-md)] hover:opacity-90 transition"
             >
               <Play className="w-4 h-4" /> Start
             </button>
@@ -199,7 +194,7 @@ export default function Templates() {
               <button
                 onClick={() => isSaved ? null : saveTemplate(template)}
                 disabled={!!savingId || isSaved}
-                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
+                className={`flex items-center gap-1.5 px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition ${
                   isSaved
                     ? 'bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]'
                     : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10'
@@ -218,7 +213,7 @@ export default function Templates() {
             )}
             <button
               onClick={() => setExpandedId(isExpanded ? null : template.id)}
-              className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition text-sm font-medium"
+              className="flex items-center gap-1.5 px-3 py-2.5 rounded-[var(--radius-md)] bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition text-sm font-medium"
             >
               {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               <span>{isExpanded ? 'Less' : 'More'}</span>
@@ -245,9 +240,9 @@ export default function Templates() {
             <div className="flex gap-2 flex-wrap">
               <button
                 onClick={() => setFilterCategory('')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                className={`px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium transition ${
                   !filterCategory
-                    ? 'bg-[var(--brand-primary)] text-white'
+                    ? 'bg-[var(--brand-primary)] text-[var(--text-inverse)]'
                     : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`}
               >
@@ -257,9 +252,9 @@ export default function Templates() {
                 <button
                   key={cat}
                   onClick={() => setFilterCategory(filterCategory === cat ? '' : cat)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  className={`px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium transition ${
                     filterCategory === cat
-                      ? 'bg-[var(--brand-primary)] text-white'
+                      ? 'bg-[var(--brand-primary)] text-[var(--text-inverse)]'
                       : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                   }`}
                 >

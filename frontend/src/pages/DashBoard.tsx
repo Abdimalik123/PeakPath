@@ -31,7 +31,7 @@ function getMotivationalMessage(data: DashboardData): { text: string; emoji: str
 }
 
 const TONE_STYLES = {
-  fire:    'bg-orange-500/10 border-orange-500/20 text-orange-300',
+  fire:    'bg-[var(--brand-secondary)]/10 border-[var(--brand-secondary)]/20 text-[var(--brand-secondary)]',
   done:    'bg-[var(--brand-primary)]/10 border-[var(--brand-primary)]/20 text-[var(--brand-primary)]',
   neutral: 'bg-[var(--bg-secondary)] border-[var(--border-default)] text-[var(--text-secondary)]',
 };
@@ -173,7 +173,7 @@ const Dashboard: React.FC = () => {
                         <p className="text-[var(--text-muted)] text-sm">No sessions logged yet.</p>
                         <Link
                           to="/active-workout"
-                          className="px-4 py-2 rounded-lg text-sm font-medium bg-[var(--brand-primary)] text-white hover:opacity-90 transition"
+                          className="px-4 py-2 rounded-[var(--radius-md)] text-sm font-medium bg-[var(--brand-primary)] text-[var(--text-inverse)] hover:opacity-90 transition"
                         >
                           Start your first workout
                         </Link>

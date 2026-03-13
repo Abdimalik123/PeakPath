@@ -89,7 +89,7 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
           <NotificationsBell />
           <Link
             to="/profile"
-            className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-emerald-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] flex items-center justify-center text-[var(--text-inverse)] text-xs font-bold flex-shrink-0"
             aria-label="Profile"
           >
             {initials || <User className="w-4 h-4" />}
@@ -146,18 +146,7 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
                 <Library className="w-5 h-5" />
                 <span>Exercise Bank</span>
               </Link>
-              <Link
-                to="/profile"
-                onClick={() => setIsMobileOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
-                  location.pathname === '/profile'
-                    ? 'bg-[var(--brand-primary)]/15 text-[var(--brand-primary)]'
-                    : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]'
-                }`}
-              >
-                <User className="w-5 h-5" />
-                <span>Profile</span>
-              </Link>
+
             </nav>
             <div className="p-4 border-t border-[var(--border-default)]">
               <button
@@ -235,14 +224,11 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
           <NotificationsBell />
           <Link
             to="/profile"
-            className="flex items-center gap-2.5 px-2 py-1.5 rounded-[var(--radius-md)] hover:bg-[var(--bg-tertiary)] transition"
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] flex items-center justify-center text-[var(--text-inverse)] text-sm font-bold hover:opacity-90 transition"
+            aria-label="Profile"
+            title="Profile"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-emerald-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-              {initials || <User className="w-4 h-4" />}
-            </div>
-            <span className="hidden xl:block text-sm font-semibold text-[var(--text-primary)]">
-              {user?.firstname ? `${user.firstname} ${user.lastname || ''}`.trim() : 'Profile'}
-            </span>
+            {initials || <User className="w-4 h-4" />}
           </Link>
         </div>
       </header>

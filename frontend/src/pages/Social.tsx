@@ -220,8 +220,8 @@ export default function Social() {
 
   const getActivityColor = (type: string) => {
     switch (type) {
-      case 'workout': return 'text-[var(--brand-primary)]'; case 'goal': return 'text-purple-400';
-      case 'achievement': return 'text-yellow-400'; case 'habit': return 'text-orange-400';
+      case 'workout': return 'text-[var(--brand-primary)]'; case 'goal': return 'text-[var(--brand-primary)]';
+      case 'achievement': return 'text-[var(--brand-secondary)]'; case 'habit': return 'text-[var(--brand-secondary)]';
       default: return 'text-[var(--text-muted)]';
     }
   };
@@ -236,7 +236,7 @@ export default function Social() {
     if (friendIds.has(userId)) return <span className="text-xs text-[var(--brand-primary)] font-medium px-3 py-1.5 rounded-lg bg-[var(--brand-primary)]/10">Friends</span>;
     if (pendingSent.has(userId)) return <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] px-3 py-1.5 rounded-lg bg-[var(--bg-tertiary)]"><Clock className="w-3 h-3" /> Pending</span>;
     return (
-      <button onClick={() => handleAddFriend(userId)} className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg bg-[var(--brand-primary)] text-white hover:opacity-90 transition">
+      <button onClick={() => handleAddFriend(userId)} className="flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg bg-[var(--brand-primary)] text-[var(--text-inverse)] hover:opacity-90 transition">
         <UserPlus className="w-3 h-3" /> Add
       </button>
     );
@@ -268,12 +268,12 @@ export default function Social() {
 
           {/* Stats card */}
           <Card className="bg-gradient-brand border-none mb-6">
-            <CardContent className="pt-6 text-white">
+            <CardContent className="pt-6 text-[var(--text-inverse)]">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                <div><p className="text-white/70 text-sm mb-1">Your Rank</p><p className="text-3xl font-bold">#{currentUser.rank}</p></div>
-                <div><p className="text-white/70 text-sm mb-1">Total Points</p><p className="text-3xl font-bold">{currentUser.points}</p></div>
-                <div><p className="text-white/70 text-sm mb-1">Current Level</p><p className="text-3xl font-bold">{currentUser.level}</p></div>
-                <div><p className="text-white/70 text-sm mb-1">Current Streak</p><p className="text-3xl font-bold">{currentUser.streak ?? 0} 🔥</p></div>
+                <div><p className="text-[var(--text-inverse)]/70 text-sm mb-1">Your Rank</p><p className="text-3xl font-bold">#{currentUser.rank}</p></div>
+                <div><p className="text-[var(--text-inverse)]/70 text-sm mb-1">Total Points</p><p className="text-3xl font-bold">{currentUser.points}</p></div>
+                <div><p className="text-[var(--text-inverse)]/70 text-sm mb-1">Current Level</p><p className="text-3xl font-bold">{currentUser.level}</p></div>
+                <div><p className="text-[var(--text-inverse)]/70 text-sm mb-1">Current Streak</p><p className="text-3xl font-bold">{currentUser.streak ?? 0} 🔥</p></div>
               </div>
             </CardContent>
           </Card>
@@ -289,7 +289,7 @@ export default function Social() {
                 {tab === 'groups' && <MessagesSquare className="w-5 h-5 inline mr-2" />}
                 {tab}
                 {tab === 'friends' && friendRequests.length > 0 && (
-                  <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--brand-primary)] text-white text-xs font-bold">{friendRequests.length}</span>
+                  <span className="ml-2 inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--brand-primary)] text-[var(--text-inverse)] text-xs font-bold">{friendRequests.length}</span>
                 )}
               </button>
             ))}
@@ -316,7 +316,7 @@ export default function Social() {
                       <CardContent className="pt-6">
                         {/* User row */}
                         <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-white font-bold text-lg">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-[var(--text-inverse)] font-bold text-lg">
                             {activity.user.name[0]}
                           </div>
                           <div className="flex-1">
@@ -395,7 +395,7 @@ export default function Social() {
                               <p className="text-sm text-[var(--text-muted)]">No comments yet. Be the first!</p>
                             ) : comments.map((c) => (
                               <div key={c.id} className="flex gap-2">
-                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-[var(--text-inverse)] text-xs font-bold flex-shrink-0">
                                   {c.name[0]}
                                 </div>
                                 <div className="flex-1 bg-[var(--bg-tertiary)] rounded-lg px-3 py-2">
@@ -418,7 +418,7 @@ export default function Social() {
                               <button
                                 onClick={() => submitComment(activity.id)}
                                 disabled={submittingComment === activity.id || !(commentInputs[activity.id] || '').trim()}
-                                className="p-2 bg-[var(--brand-primary)] text-white rounded-lg hover:opacity-90 disabled:opacity-40 transition"
+                                className="p-2 bg-[var(--brand-primary)] text-[var(--text-inverse)] rounded-lg hover:opacity-90 disabled:opacity-40 transition"
                               >
                                 {submittingComment === activity.id
                                   ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -444,7 +444,7 @@ export default function Social() {
                       <div className="space-y-3">
                         {suggestions.map((user) => (
                           <div key={user.id} className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--brand-secondary)] to-purple-600 flex items-center justify-center text-white font-bold">{user.name[0]}</div>
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--brand-primary-hover)] flex items-center justify-center text-[var(--text-inverse)] font-bold">{user.name[0]}</div>
                             <div className="flex-1"><p className="text-[var(--text-primary)] font-medium text-sm">{user.name}</p><p className="text-xs text-[var(--text-muted)]">Level {user.level}</p></div>
                             {renderAddButton(user.id)}
                           </div>
@@ -482,7 +482,7 @@ export default function Social() {
                 <div className="flex gap-2 mb-4">
                   {(['week', 'month', 'all'] as const).map((range) => (
                     <button key={range} onClick={() => setTimeRange(range)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition capitalize ${timeRange === range ? 'bg-[var(--brand-primary)] text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition capitalize ${timeRange === range ? 'bg-[var(--brand-primary)] text-[var(--text-inverse)]' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>
                       {range === 'all' ? 'All Time' : `This ${range.charAt(0).toUpperCase() + range.slice(1)}`}
                     </button>
                   ))}
@@ -493,7 +493,7 @@ export default function Social() {
                       <CardContent className="pt-4 pb-4">
                         <div className="flex items-center gap-4">
                           <span className="text-2xl w-10 text-center">{getRankBadge(user.rank || 0)}</span>
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-white font-bold">{user.name[0]}</div>
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-[var(--text-inverse)] font-bold">{user.name[0]}</div>
                           <div className="flex-1">
                             <p className="font-semibold text-[var(--text-primary)]">{user.name}{user.id === currentUser.id && <span className="ml-2 text-xs text-[var(--brand-primary)]">(You)</span>}</p>
                             <p className="text-sm text-[var(--text-muted)]">Level {user.level}</p>
@@ -537,11 +537,11 @@ export default function Social() {
                     {friendRequests.map((req) => (
                       <Card key={req.friendship_id}>
                         <CardContent className="pt-6 text-center">
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-white font-bold text-2xl mx-auto mb-3">{req.name[0]}</div>
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-[var(--text-inverse)] font-bold text-2xl mx-auto mb-3">{req.name[0]}</div>
                           <h3 className="font-bold text-[var(--text-primary)] mb-1">{req.name}</h3>
                           <p className="text-sm text-[var(--text-muted)] mb-4">Level {req.level} • {req.points} pts</p>
                           <div className="flex gap-2">
-                            <button onClick={() => handleAcceptRequest(req.friendship_id)} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-[var(--brand-primary)] hover:opacity-90 text-white rounded-lg text-sm font-medium transition"><Check className="w-4 h-4" />Accept</button>
+                            <button onClick={() => handleAcceptRequest(req.friendship_id)} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-[var(--brand-primary)] hover:opacity-90 text-[var(--text-inverse)] rounded-lg text-sm font-medium transition"><Check className="w-4 h-4" />Accept</button>
                             <button onClick={() => handleDeclineRequest(req.friendship_id)} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)] rounded-lg text-sm font-medium transition"><X className="w-4 h-4" />Decline</button>
                           </div>
                         </CardContent>
@@ -564,7 +564,7 @@ export default function Social() {
                     {friends.map((friend) => (
                       <Card key={friend.id} className="text-center">
                         <CardContent className="pt-6">
-                          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-white font-bold text-3xl mx-auto mb-4">{friend.name[0]}</div>
+                          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)] flex items-center justify-center text-[var(--text-inverse)] font-bold text-3xl mx-auto mb-4">{friend.name[0]}</div>
                           <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">{friend.name}</h3>
                           <div className="flex justify-center gap-6 mb-4">
                             <div><p className="text-2xl font-bold text-[var(--brand-primary)]">{friend.level}</p><p className="text-xs text-[var(--text-muted)]">Level</p></div>
@@ -585,7 +585,7 @@ export default function Social() {
                     {suggestions.map((user) => (
                       <Card key={user.id}>
                         <CardContent className="pt-6 text-center">
-                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--brand-secondary)] to-purple-600 flex items-center justify-center text-white font-bold text-2xl mx-auto mb-3">{user.name[0]}</div>
+                          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--brand-primary-hover)] flex items-center justify-center text-[var(--text-inverse)] font-bold text-2xl mx-auto mb-3">{user.name[0]}</div>
                           <h3 className="font-bold text-[var(--text-primary)] mb-1">{user.name}</h3>
                           <p className="text-sm text-[var(--text-muted)] mb-4">Level {user.level} • {user.points} pts</p>
                           <div className="flex justify-center">{renderAddButton(user.id)}</div>

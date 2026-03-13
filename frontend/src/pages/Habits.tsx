@@ -42,7 +42,7 @@ const SUGGESTED_HABITS = [
   { name: 'Meal Prep', description: 'Prepare healthy meals for the week', frequency: 'weekly' },
 ];
 
-const Habits: React.FC = () => {
+const Habits: React.FC<{ initialTab?: 'habits' | 'goals' }> = ({ initialTab }) => {
   const { showToast } = useToast();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
@@ -51,7 +51,7 @@ const Habits: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'habits' | 'goals'>('habits');
+  const [activeTab, setActiveTab] = useState<'habits' | 'goals'>(initialTab ?? 'habits');
   const [calendarWeekOffset, setCalendarWeekOffset] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
@@ -289,8 +289,8 @@ const Habits: React.FC = () => {
       <div className="lg:ml-64 min-h-screen pt-14 lg:pt-16 pb-6">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <PageHeader
-            title="Habits & Goals"
-            subtitle="Build consistency, track progress"
+            title="Routines"
+            subtitle="Build habits, set goals, track progress"
             actionButton={{
               label: activeTab === 'habits' ? "Add Habit" : "New Goal",
               onClick: () => activeTab === 'habits' ? setShowAddModal(true) : setShowAddGoalModal(true),
@@ -333,12 +333,12 @@ const Habits: React.FC = () => {
                     <p className="text-xs text-[var(--text-muted)]">Done Today</p>
                   </div>
                   <div className="pp-card p-4 text-center">
-                    <TrendingUp className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+                    <TrendingUp className="w-6 h-6 text-[var(--brand-primary)] mx-auto mb-2" />
                     <p className="text-2xl font-bold text-[var(--text-primary)]">{todayStats.percentage}%</p>
                     <p className="text-xs text-[var(--text-muted)]">Completion</p>
                   </div>
                   <div className="pp-card p-4 text-center">
-                    <Flame className="w-6 h-6 text-orange-400 mx-auto mb-2" />
+                    <Flame className="w-6 h-6 text-[var(--brand-secondary)] mx-auto mb-2" />
                     <p className="text-2xl font-bold text-[var(--text-primary)]">{totalStreak}</p>
                     <p className="text-xs text-[var(--text-muted)]">Best Streak</p>
                   </div>
@@ -349,7 +349,7 @@ const Habits: React.FC = () => {
               {habits.length > 0 && (
                 <div className="pp-card p-4 mb-6">
                   <div className="flex items-center justify-between mb-3">
-                    <button onClick={() => setCalendarWeekOffset(prev => prev - 1)} className="p-1.5 hover:bg-[var(--bg-tertiary)] rounded-lg transition">
+                    <button onClick={() => setCalendarWeekOffset(prev => prev - 1)} className="p-1.5 hover:bg-[var(--bg-tertiary)] rounded-[var(--radius-md)] transition">
                       <ChevronLeft className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
                     <h3 className="text-sm font-bold text-[var(--text-primary)]">
@@ -358,7 +358,7 @@ const Habits: React.FC = () => {
                     <button
                       onClick={() => setCalendarWeekOffset(prev => Math.min(prev + 1, 0))}
                       disabled={calendarWeekOffset >= 0}
-                      className="p-1.5 hover:bg-[var(--bg-tertiary)] rounded-lg transition disabled:opacity-30"
+                      className="p-1.5 hover:bg-[var(--bg-tertiary)] rounded-[var(--radius-md)] transition disabled:opacity-30"
                     >
                       <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
                     </button>
@@ -389,7 +389,7 @@ const Habits: React.FC = () => {
                               return (
                                 <td key={i} className="text-center py-2 px-1">
                                   <div className={`w-6 h-6 rounded-full mx-auto flex items-center justify-center ${
-                                    done ? 'bg-[var(--brand-primary)] text-white' : 'bg-[var(--bg-tertiary)]'
+                                    done ? 'bg-[var(--brand-primary)] text-[var(--text-inverse)]' : 'bg-[var(--bg-tertiary)]'
                                   }`}>
                                     {done && <CheckCircle2 className="w-3.5 h-3.5" />}
                                   </div>
@@ -432,7 +432,7 @@ const Habits: React.FC = () => {
                             <button
                               key={i}
                               onClick={() => handleQuickAdd(s)}
-                              className="flex items-center gap-3 p-3 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--bg-elevated)] transition text-left"
+                              className="flex items-center gap-3 p-3 rounded-[var(--radius-md)] bg-[var(--bg-tertiary)] hover:bg-[var(--bg-elevated)] transition text-left"
                             >
                               <Plus className="w-4 h-4 text-[var(--brand-primary)] flex-shrink-0" />
                               <div className="min-w-0">
@@ -483,7 +483,7 @@ const Habits: React.FC = () => {
                           <div className="flex gap-2">
                             <button
                               onClick={() => setSelectedHabit(null)}
-                              className="p-2 hover:bg-[var(--bg-tertiary)] rounded-lg transition text-[var(--text-muted)]"
+                              className="p-2 hover:bg-[var(--bg-tertiary)] rounded-[var(--radius-md)] transition text-[var(--text-muted)]"
                               title="Close"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -492,7 +492,7 @@ const Habits: React.FC = () => {
                             </button>
                             <button
                               onClick={() => handleDelete(selectedHabit.id)}
-                              className="p-2 hover:bg-[var(--error)]/10 rounded-lg transition text-[var(--error)]"
+                              className="p-2 hover:bg-[var(--error)]/10 rounded-[var(--radius-md)] transition text-[var(--error)]"
                               title="Delete"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -601,10 +601,10 @@ const Habits: React.FC = () => {
                         <div key={goal.id} onClick={() => setSelectedGoal(goal)}>
                           <GoalProgress goal={goalData} />
                           {goal.pace_info && (goal.pace_info.status === 'behind' || goal.pace_info.status === 'overdue') && (
-                            <div className={`mt-2 px-3 py-2 rounded-lg text-xs font-medium ${
+                            <div className={`mt-2 px-3 py-2 rounded-[var(--radius-md)] text-xs font-medium ${
                               goal.pace_info.status === 'overdue'
                                 ? 'bg-[var(--error)]/10 text-[var(--error)]'
-                                : 'bg-orange-500/10 text-orange-500'
+                                : 'bg-[var(--brand-secondary)]/10 text-[var(--brand-secondary)]'
                             }`}>
                               {goal.pace_info.status === 'overdue'
                                 ? `Overdue — ${goal.pace_info.remaining_progress} remaining`

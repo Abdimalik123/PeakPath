@@ -1,7 +1,10 @@
-import { User, Activity, TrendingUp, Save, AlertCircle, LogOut, Dumbbell, Flame, Award, Target, Trophy, Clock } from 'lucide-react';
+import { User, Activity, TrendingUp, Save, AlertCircle, LogOut, Dumbbell, Flame, Award, Target, Trophy, Clock, Moon, Sun, Scale } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { WeightTracker } from '../components/WeightTracker';
+import ProgressPhotos from './ProgressPhotos';
 import { useToast } from '../contexts/ToastContext';
 import { Navigation } from '../components/Navigation';
 import { getProfile, updateProfile } from '../api/profile';
@@ -19,10 +22,11 @@ interface GamificationStats {
 export default function Profile() {
   const { user: authUser, logout } = useAuth();
   const { showToast } = useToast();
+  const { theme, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'achievements' | 'edit'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'body' | 'achievements' | 'edit'>('overview');
 
   const [userInfo, setUserInfo] = useState({
     firstname: '',
@@ -123,17 +127,27 @@ export default function Profile() {
   };
 
   const handleSave = async () => {
+    if (!userInfo.firstname.trim()) {
+      setError('First name is required');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      await updateProfile({
-        age: parseInt(profileData.age),
-        gender: profileData.gender,
-        height: parseFloat(profileData.height),
-        current_weight: parseFloat(profileData.current_weight),
-        goal_weight: parseFloat(profileData.goal_weight),
-        activity_level: profileData.activity_level,
-      });
+      await Promise.all([
+        client.put('/me', {
+          firstname: userInfo.firstname.trim(),
+          lastname: userInfo.lastname.trim(),
+        }),
+        updateProfile({
+          age: profileData.age ? parseInt(profileData.age) : undefined,
+          gender: profileData.gender || undefined,
+          height: profileData.height ? parseFloat(profileData.height) : undefined,
+          current_weight: profileData.current_weight ? parseFloat(profileData.current_weight) : undefined,
+          goal_weight: profileData.goal_weight ? parseFloat(profileData.goal_weight) : undefined,
+          activity_level: profileData.activity_level || undefined,
+        }),
+      ]);
       showToast('Profile updated!', 'success');
       setActiveTab('overview');
     } catch (error: any) {
@@ -169,7 +183,7 @@ export default function Profile() {
           {/* Profile Header */}
           <div className="pp-card p-4 sm:p-6 mb-6">
             <div className="flex items-center gap-3 sm:gap-4 mb-4">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-emerald-600 flex items-center justify-center text-white text-xl sm:text-2xl font-bold flex-shrink-0">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] flex items-center justify-center text-[var(--text-inverse)] text-xl sm:text-2xl font-bold flex-shrink-0">
                 {(userInfo.firstname?.[0] || '').toUpperCase()}{(userInfo.lastname?.[0] || '').toUpperCase()}
               </div>
               <div className="flex-1">
@@ -203,17 +217,17 @@ export default function Profile() {
                 <p className="text-xs text-[var(--text-muted)]">Workouts</p>
               </div>
               <div className="text-center p-3 bg-[var(--bg-tertiary)] rounded-xl">
-                <Flame className="w-4 h-4 text-orange-400 mx-auto mb-1" />
+                <Flame className="w-4 h-4 text-[var(--brand-secondary)] mx-auto mb-1" />
                 <p className="text-lg font-bold text-[var(--text-primary)]">{streak}</p>
                 <p className="text-xs text-[var(--text-muted)]">Streak</p>
               </div>
               <div className="text-center p-3 bg-[var(--bg-tertiary)] rounded-xl">
-                <Award className="w-4 h-4 text-yellow-400 mx-auto mb-1" />
+                <Award className="w-4 h-4 text-[var(--warning)] mx-auto mb-1" />
                 <p className="text-lg font-bold text-[var(--text-primary)]">{stats?.achievements_earned || 0}</p>
                 <p className="text-xs text-[var(--text-muted)]">Badges</p>
               </div>
               <div className="text-center p-3 bg-[var(--bg-tertiary)] rounded-xl">
-                <TrendingUp className="w-4 h-4 text-purple-400 mx-auto mb-1" />
+                <TrendingUp className="w-4 h-4 text-[var(--brand-primary)] mx-auto mb-1" />
                 <p className="text-lg font-bold text-[var(--text-primary)]">{stats?.level || 1}</p>
                 <p className="text-xs text-[var(--text-muted)]">Level</p>
               </div>
@@ -237,21 +251,24 @@ export default function Profile() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-6">
-            {(['overview', 'achievements', 'edit'] as const).map((tab) => (
+          <div className="flex gap-2 mb-6 flex-wrap">
+            {([
+              { key: 'overview',      label: 'Overview',     icon: User     },
+              { key: 'body',          label: 'Body',         icon: Scale    },
+              { key: 'achievements',  label: 'Achievements', icon: Trophy   },
+              { key: 'edit',          label: 'Edit Profile', icon: Save     },
+            ] as const).map(({ key, label, icon: Icon }) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+                key={key}
+                onClick={() => setActiveTab(key)}
                 className={`px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 ${
-                  activeTab === tab
+                  activeTab === key
                     ? 'bg-[var(--brand-primary)] text-[var(--text-inverse)]'
                     : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)]'
                 }`}
               >
-                {tab === 'overview' && <User className="w-4 h-4" />}
-                {tab === 'achievements' && <Trophy className="w-4 h-4" />}
-                {tab === 'edit' && <Save className="w-4 h-4" />}
-                {tab === 'overview' ? 'Overview' : tab === 'achievements' ? 'Achievements' : 'Edit Profile'}
+                <Icon className="w-4 h-4" />
+                {label}
               </button>
             ))}
           </div>
@@ -263,7 +280,12 @@ export default function Profile() {
             </div>
           )}
 
-          {activeTab === 'achievements' ? (
+          {activeTab === 'body' ? (
+            <div className="space-y-6">
+              <WeightTracker />
+              <ProgressPhotos embedded />
+            </div>
+          ) : activeTab === 'achievements' ? (
             <Achievements embedded />
           ) : activeTab === 'overview' ? (
             <div className="space-y-4">
@@ -305,7 +327,7 @@ export default function Profile() {
                     </div>
                     <div className="w-full bg-[var(--bg-tertiary)] rounded-full h-2">
                       <div
-                        className="bg-emerald-500 h-2 rounded-full transition-all"
+                        className="bg-[var(--success)] h-2 rounded-full transition-all"
                         style={(() => {
                           const cw = parseFloat(profileData.current_weight);
                           const gw = parseFloat(profileData.goal_weight);
@@ -356,21 +378,62 @@ export default function Profile() {
                 )}
               </div>
 
+              {/* Appearance */}
+              <div className="pp-card p-6">
+                <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4">Appearance</h2>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {theme === 'dark' ? (
+                      <Moon className="w-5 h-5 text-[var(--brand-primary)]" />
+                    ) : (
+                      <Sun className="w-5 h-5 text-[var(--brand-primary)]" />
+                    )}
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">
+                        {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                      </p>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={toggleTheme}
+                    className={`relative w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] ${
+                      theme === 'dark' ? 'bg-[var(--brand-primary)]' : 'bg-[var(--bg-tertiary)] border border-[var(--border-default)]'
+                    }`}
+                    aria-label="Toggle dark mode"
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 flex items-center justify-center ${
+                        theme === 'dark' ? 'translate-x-6' : 'translate-x-0'
+                      }`}
+                    >
+                      {theme === 'dark' ? (
+                        <Moon className="w-3 h-3 text-[var(--brand-primary)]" />
+                      ) : (
+                        <Sun className="w-3 h-3 text-yellow-500" />
+                      )}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
               {/* Quick Links */}
               <div className="pp-card p-6">
                 <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4">Quick Links</h2>
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => setActiveTab('achievements')} className="flex items-center gap-3 p-3 bg-[var(--bg-tertiary)] rounded-xl hover:bg-[var(--bg-tertiary)]/80 transition text-sm font-medium text-[var(--text-primary)]">
-                    <Award className="w-4 h-4 text-yellow-400" /> Achievements
+                    <Award className="w-4 h-4 text-[var(--warning)]" /> Achievements
                   </button>
                   <Link to="/progress" className="flex items-center gap-3 p-3 bg-[var(--bg-tertiary)] rounded-xl hover:bg-[var(--bg-tertiary)]/80 transition text-sm font-medium text-[var(--text-primary)]">
-                    <TrendingUp className="w-4 h-4 text-purple-400" /> Progress
+                    <TrendingUp className="w-4 h-4 text-[var(--brand-primary)]" /> Progress
                   </Link>
                   <Link to="/train" className="flex items-center gap-3 p-3 bg-[var(--bg-tertiary)] rounded-xl hover:bg-[var(--bg-tertiary)]/80 transition text-sm font-medium text-[var(--text-primary)]">
                     <Dumbbell className="w-4 h-4 text-[var(--brand-primary)]" /> Train
                   </Link>
                   <Link to="/community" className="flex items-center gap-3 p-3 bg-[var(--bg-tertiary)] rounded-xl hover:bg-[var(--bg-tertiary)]/80 transition text-sm font-medium text-[var(--text-primary)]">
-                    <User className="w-4 h-4 text-cyan-400" /> Community
+                    <User className="w-4 h-4 text-[var(--brand-primary)]" /> Community
                   </Link>
                 </div>
               </div>
@@ -386,16 +449,28 @@ export default function Profile() {
                 </h2>
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
-                    <input type="text" value={userInfo.firstname} disabled
-                      className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-xl text-[var(--text-muted)] cursor-not-allowed text-sm"
-                      placeholder="First Name" />
-                    <input type="text" value={userInfo.lastname} disabled
-                      className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-xl text-[var(--text-muted)] cursor-not-allowed text-sm"
-                      placeholder="Last Name" />
+                    <div>
+                      <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1">First Name</label>
+                      <input type="text" value={userInfo.firstname}
+                        onChange={e => setUserInfo({ ...userInfo, firstname: e.target.value })}
+                        className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--brand-primary)]"
+                        placeholder="First Name" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1">Last Name</label>
+                      <input type="text" value={userInfo.lastname}
+                        onChange={e => setUserInfo({ ...userInfo, lastname: e.target.value })}
+                        className="w-full px-4 py-3 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--brand-primary)]"
+                        placeholder="Last Name" />
+                    </div>
                   </div>
-                  <input type="email" value={userInfo.email} disabled
-                    className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-xl text-[var(--text-muted)] cursor-not-allowed text-sm"
-                    placeholder="Email" />
+                  <div>
+                    <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1">Email</label>
+                    <input type="email" value={userInfo.email} disabled
+                      className="w-full px-4 py-3 bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-xl text-[var(--text-muted)] cursor-not-allowed text-sm"
+                      placeholder="Email" />
+                    <p className="text-xs text-[var(--text-muted)] mt-1">Email cannot be changed</p>
+                  </div>
                 </div>
               </div>
 

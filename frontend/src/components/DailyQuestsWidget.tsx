@@ -63,7 +63,7 @@ export function DailyQuestsWidget({ compact = false }: DailyQuestsWidgetProps) {
 
   if (loading) {
     return (
-      <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-lg p-6">
+      <div className="pp-card p-6">
         <div className="flex items-center justify-center py-8">
           <Loader className="w-6 h-6 text-[var(--brand-primary)] animate-spin" />
         </div>
@@ -74,10 +74,10 @@ export function DailyQuestsWidget({ compact = false }: DailyQuestsWidgetProps) {
   // ── Compact mode (for dashboard) ──────────────────────────────────────────
   if (compact) {
     return (
-      <div className="bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl p-4">
+      <div className="pp-card p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-yellow-500" />
+            <Trophy className="w-4 h-4 text-[var(--brand-secondary)]" />
             <span className="text-sm font-bold text-[var(--text-primary)]">Daily Quests</span>
           </div>
           <span className="text-xs text-[var(--text-muted)]">
@@ -102,18 +102,18 @@ export function DailyQuestsWidget({ compact = false }: DailyQuestsWidgetProps) {
                   </div>
                   <div className="h-1 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
                     <div
-                      className={`h-full transition-all ${q.is_completed ? 'bg-green-500' : 'bg-[var(--brand-primary)]'}`}
+                      className={`h-full transition-all ${q.is_completed ? 'bg-[var(--success)]' : 'bg-[var(--brand-primary)]'}`}
                       style={{ width: `${q.progress_percentage}%` }}
                     />
                   </div>
                 </div>
-                {q.is_completed && <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />}
+                {q.is_completed && <CheckCircle className="w-3.5 h-3.5 text-[var(--success)] flex-shrink-0" />}
               </div>
             ))}
           </div>
         )}
         {completedCount === quests.length && quests.length > 0 && (
-          <p className="text-xs text-green-500 font-semibold text-center mt-3">🎉 All done for today!</p>
+          <p className="text-xs text-[var(--success)] font-semibold text-center mt-3">🎉 All done for today!</p>
         )}
       </div>
     );
@@ -121,12 +121,12 @@ export function DailyQuestsWidget({ compact = false }: DailyQuestsWidgetProps) {
 
   // ── Full mode ──────────────────────────────────────────────────────────────
   return (
-    <div className="bg-gradient-to-br from-[var(--bg-secondary)] to-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-lg p-6">
+    <div className="pp-card p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Trophy className="w-5 h-5 text-yellow-500" />
+            <Trophy className="w-5 h-5 text-[var(--brand-secondary)]" />
             <h3 className="text-lg font-bold text-[var(--text-primary)]">Daily Quests</h3>
           </div>
           <p className="text-sm text-[var(--text-muted)]">
@@ -146,9 +146,9 @@ export function DailyQuestsWidget({ compact = false }: DailyQuestsWidgetProps) {
           quests.map((quest) => (
             <div
               key={quest.id}
-              className={`relative overflow-hidden rounded-lg border transition-all ${
+              className={`relative overflow-hidden rounded-[var(--radius-md)] border transition-all ${
                 quest.is_completed
-                  ? 'bg-green-500/10 border-green-500/30'
+                  ? 'bg-[var(--success)]/10 border-[var(--success)]/30'
                   : 'bg-[var(--bg-secondary)] border-[var(--border-default)] hover:border-[var(--brand-primary)]/30'
               }`}
             >
@@ -169,7 +169,7 @@ export function DailyQuestsWidget({ compact = false }: DailyQuestsWidgetProps) {
                           {quest.quest.title}
                         </h4>
                         {quest.is_completed && (
-                          <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <CheckCircle className="w-4 h-4 text-[var(--success)] flex-shrink-0" />
                         )}
                       </div>
                       <p className="text-sm text-[var(--text-secondary)] mb-2">
@@ -182,8 +182,8 @@ export function DailyQuestsWidget({ compact = false }: DailyQuestsWidgetProps) {
                           <div
                             className={`h-full transition-all ${
                               quest.is_completed
-                                ? 'bg-green-500'
-                                : 'bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-secondary)]'
+                                ? 'bg-[var(--success)]'
+                                : 'bg-[var(--brand-primary)]'
                             }`}
                             style={{ width: `${quest.progress_percentage}%` }}
                           />
@@ -198,8 +198,8 @@ export function DailyQuestsWidget({ compact = false }: DailyQuestsWidgetProps) {
                   {/* Points Badge */}
                   <div className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${
                     quest.is_completed
-                      ? 'bg-green-500/20 text-green-500'
-                      : 'bg-yellow-500/20 text-yellow-500'
+                      ? 'bg-[var(--success)]/15 text-[var(--success)]'
+                      : 'bg-[var(--warning)]/15 text-[var(--warning)]'
                   }`}>
                     +{quest.quest.points_reward} pts
                   </div>
@@ -209,7 +209,7 @@ export function DailyQuestsWidget({ compact = false }: DailyQuestsWidgetProps) {
                 {!quest.is_completed && quest.current_progress >= quest.quest.target_value && (
                   <button
                     onClick={() => completeQuest(quest.id)}
-                    className="mt-3 w-full px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/90 text-white text-xs font-bold rounded-lg transition"
+                    className="mt-3 w-full px-4 py-2 bg-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/90 text-[var(--text-inverse)] text-xs font-bold rounded-[var(--radius-md)] transition"
                   >
                     Claim Reward
                   </button>
@@ -222,8 +222,8 @@ export function DailyQuestsWidget({ compact = false }: DailyQuestsWidgetProps) {
 
       {/* Completion Celebration */}
       {completedCount === quests.length && quests.length > 0 && (
-        <div className="mt-6 p-4 bg-gradient-to-r from-green-500/20 to-blue-500/20 border border-green-500/30 rounded-lg text-center">
-          <p className="text-sm font-bold text-green-500 mb-1">🎊 All Quests Complete! 🎊</p>
+        <div className="mt-6 p-4 bg-[var(--success)]/10 border border-[var(--success)]/20 rounded-[var(--radius-md)] text-center">
+          <p className="text-sm font-bold text-[var(--success)] mb-1">🎊 All Quests Complete! 🎊</p>
           <p className="text-xs text-[var(--text-muted)]">Come back tomorrow for new quests</p>
         </div>
       )}

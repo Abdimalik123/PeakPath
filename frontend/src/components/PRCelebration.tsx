@@ -42,8 +42,8 @@ export function PRCelebration({ prs, onClose }: PRCelebrationProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="relative max-w-lg w-full bg-gradient-to-br from-yellow-500/20 to-orange-600/20 border-2 border-yellow-500/50 rounded-2xl p-4 sm:p-8 shadow-2xl animate-scaleIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className="relative max-w-lg w-full bg-gradient-to-br from-yellow-500/20 to-orange-600/20 border-2 border-yellow-500/50 rounded-[var(--radius-xl)] p-4 sm:p-8 shadow-2xl animate-scale-in">
         {/* Celebration confetti effect */}
         <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
           {[...Array(20)].map((_, i) => (
@@ -65,19 +65,19 @@ export function PRCelebration({ prs, onClose }: PRCelebrationProps) {
             <div className="inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-3 sm:mb-4 animate-bounce">
               <Trophy className="w-7 h-7 sm:w-10 sm:h-10 text-white" />
             </div>
-            <h2 className="text-xl sm:text-3xl font-bold text-white mb-2">
+            <h2 className="text-xl sm:text-3xl font-bold text-[var(--text-inverse)] mb-2">
               🎉 New Personal Record{prs.length > 1 ? 's' : ''}! 🎉
             </h2>
-            <p className="text-yellow-200">You crushed it!</p>
+            <p className="text-yellow-100">You crushed it!</p>
           </div>
 
           <div className="space-y-4 mb-6">
             {prs.map((pr, idx) => (
               <div
                 key={idx}
-                className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4"
+                className="bg-[var(--text-inverse)]/10 backdrop-blur-sm border border-[var(--text-inverse)]/20 rounded-[var(--radius-md)] p-4"
               >
-                <h3 className="text-xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+                <h3 className="text-xl font-bold text-[var(--text-inverse)] mb-2 flex items-center justify-center gap-2">
                   <Award className="w-5 h-5 text-yellow-400" />
                   {pr.exercise_name}
                 </h3>
@@ -85,13 +85,13 @@ export function PRCelebration({ prs, onClose }: PRCelebrationProps) {
                   {pr.pr_types.map((type, i) => (
                     <span
                       key={i}
-                      className="px-3 py-1 bg-yellow-500/20 border border-yellow-500/50 rounded-full text-yellow-200 text-sm font-bold"
+                      className="px-3 py-1 bg-[var(--brand-secondary)]/15 border border-[var(--brand-secondary)]/30 rounded-full text-[var(--brand-secondary)] text-sm font-bold"
                     >
                       {getPRTypeLabel(type)}
                     </span>
                   ))}
                 </div>
-                <div className="mt-3 flex justify-center gap-4 text-sm text-white/80">
+                <div className="mt-3 flex justify-center gap-4 text-sm text-[var(--text-inverse)]/80">
                   {pr.weight > 0 && (
                     <span className="flex items-center gap-1">
                       <TrendingUp className="w-4 h-4" />
@@ -111,36 +111,13 @@ export function PRCelebration({ prs, onClose }: PRCelebrationProps) {
 
           <button
             onClick={handleClose}
-            className="w-full px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold rounded-lg transition-all transform hover:scale-105"
+            className="w-full px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-[var(--text-inverse)] font-bold rounded-[var(--radius-md)] transition-all transform hover:scale-105"
           >
             Awesome!
           </button>
         </div>
       </div>
 
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes scaleIn {
-          from { transform: scale(0.9); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        @keyframes confetti {
-          0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-        .animate-scaleIn {
-          animation: scaleIn 0.4s ease-out;
-        }
-        .animate-confetti {
-          animation: confetti linear infinite;
-        }
-      `}</style>
     </div>
   );
 }

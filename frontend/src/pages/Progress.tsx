@@ -46,8 +46,8 @@ const TIME_RANGES: { value: TimeRange; label: string; apiParam: string }[] = [
   { value: 'all', label: 'All Time',     apiParam: 'all'     },
 ];
 
-export default function Progress() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'strength' | 'body'>('overview');
+export default function Progress({ initialTab }: { initialTab?: 'overview' | 'strength' | 'body' } = {}) {
+  const [activeTab, setActiveTab] = useState<'overview' | 'strength' | 'body'>(initialTab ?? 'overview');
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
@@ -91,7 +91,7 @@ export default function Progress() {
   if (loading || !analyticsData) {
     return (
       <div className="min-h-screen bg-[var(--bg-primary)]">
-        <Navigation currentPage="/progress" />
+        <Navigation currentPage={initialTab === 'body' ? '/body-tracking' : '/progress'} />
         <div className="lg:ml-64 min-h-screen flex items-center justify-center pt-14 lg:pt-16">
           <div className="w-12 h-12 border-4 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
@@ -127,7 +127,7 @@ export default function Progress() {
                     onClick={() => setTimeRange(value)}
                     className={`px-3 py-1.5 rounded-md font-medium text-sm transition whitespace-nowrap ${
                       timeRange === value
-                        ? 'bg-[var(--brand-primary)] text-white'
+                        ? 'bg-[var(--brand-primary)] text-[var(--text-inverse)]'
                         : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                     }`}
                   >
@@ -187,12 +187,12 @@ export default function Progress() {
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
-                    <Award className="w-6 h-6 text-purple-400 mb-3" />
+                    <Award className="w-6 h-6 text-[var(--brand-primary)]00 mb-3" />
                     <p className="text-2xl font-bold text-[var(--text-primary)]">Level {stats.level}</p>
                     <p className="text-sm text-[var(--text-muted)] mb-3">{stats.total_points} total points</p>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-[var(--bg-tertiary)] rounded-full h-2">
-                        <div className="bg-purple-500 h-2 rounded-full"
+                        <div className="bg-[var(--brand-primary)] h-2 rounded-full"
                           style={{ width: `${Math.max(5, 100 - (stats.points_to_next_level / (stats.level * 100)) * 100)}%` }} />
                       </div>
                       <span className="text-xs text-[var(--text-muted)]">{stats.points_to_next_level} to next</span>
@@ -213,7 +213,7 @@ export default function Progress() {
                   <CardContent>
                     <ResponsiveContainer width="100%" height={250}>
                       <AreaChart data={analyticsData.daily_activity}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.08)" />
                         <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fontSize: 11 }}
                           interval={timeRange === '7d' ? 0 : timeRange === '30d' ? 4 : 'preserveStartEnd'} />
                         <YAxis stroke="var(--text-muted)" />
@@ -265,7 +265,7 @@ export default function Progress() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-purple-400" />
+                      <TrendingUp className="w-5 h-5 text-[var(--brand-primary)]00" />
                       <CardTitle>Volume Trend (kg)</CardTitle>
                     </div>
                   </CardHeader>
@@ -273,7 +273,7 @@ export default function Progress() {
                     {analyticsData.volume_trend.length > 0 && analyticsData.volume_trend.some(v => v.volume > 0) ? (
                       <ResponsiveContainer width="100%" height={280}>
                         <BarChart data={analyticsData.volume_trend}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.08)" />
                           <XAxis dataKey="label" stroke="var(--text-muted)" tick={{ fontSize: 11 }} />
                           <YAxis stroke="var(--text-muted)" />
                           <Tooltip contentStyle={tooltipStyle}

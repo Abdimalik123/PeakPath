@@ -39,6 +39,22 @@ def get_achievements():
         # Get progress toward all achievements
         progress_data = get_achievement_progress(user_id)
 
+        # Auto-grant any achievements where progress has reached the target
+        # but the achievement was never recorded (catches historical gaps)
+        from utils.gamification_helper import _grant_achievement
+        newly_granted = False
+        for key in ACHIEVEMENT_DEFINITIONS:
+            if key not in earned_keys:
+                target = get_achievement_target(key)
+                if progress_data.get(key, 0) >= target:
+                    achievement = _grant_achievement(user_id, key)
+                    if achievement:
+                        earned_keys.add(key)
+                        earned_map[key] = achievement
+                        newly_granted = True
+        if newly_granted:
+            db.session.commit()
+
         all_achievements = []
         for key, definition in ACHIEVEMENT_DEFINITIONS.items():
             is_earned = key in earned_keys
@@ -55,7 +71,7 @@ def get_achievements():
                 "target": target,
                 "progress_percentage": int((current_progress / target) * 100) if target > 0 else 0
             }
-            if key in earned_map:
+            if key in earned_map and hasattr(earned_map[key], 'earned_at') and earned_map[key].earned_at:
                 entry["earned_at"] = earned_map[key].earned_at.isoformat()
             all_achievements.append(entry)
 

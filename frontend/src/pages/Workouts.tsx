@@ -299,10 +299,10 @@ const Workouts: React.FC = () => {
           {activeWorkoutName && (
             <button
               onClick={() => navigate('/active-workout')}
-              className="w-full mb-4 flex items-center gap-3 p-4 rounded-xl bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary)]/15 transition text-left"
+              className="w-full mb-4 flex items-center gap-3 p-4 rounded-[var(--radius-lg)] bg-[var(--brand-primary)]/10 border border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary)]/15 transition text-left"
             >
               <div className="w-9 h-9 rounded-full bg-[var(--brand-primary)] flex items-center justify-center flex-shrink-0 animate-pulse">
-                <Timer className="w-4 h-4 text-white" />
+                <Timer className="w-4 h-4 text-[var(--text-inverse)]" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-[var(--brand-primary)]">Workout in progress</p>
@@ -315,7 +315,7 @@ const Workouts: React.FC = () => {
           <div className="mb-6">
             <Link
               to="/active-workout"
-              className="flex items-center justify-center gap-2 w-full py-3.5 bg-[var(--brand-primary)] text-[var(--text-inverse)] font-bold rounded-xl hover:opacity-90 transition text-sm"
+              className="flex items-center justify-center gap-2 w-full py-3.5 bg-[var(--brand-primary)] text-[var(--text-inverse)] font-bold rounded-[var(--radius-lg)] hover:opacity-90 transition text-sm"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -348,7 +348,7 @@ const Workouts: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(showAllTemplates ? savedTemplates : savedTemplates.slice(0, TEMPLATES_LIMIT)).map(template => (
                   <div key={template.id} className="pp-card p-4 flex items-center gap-3 group">
-                    <div className="w-10 h-10 rounded-lg bg-[var(--brand-primary)]/15 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--brand-primary)]/15 flex items-center justify-center flex-shrink-0">
                       <Dumbbell className="w-5 h-5 text-[var(--brand-primary)]" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -370,14 +370,14 @@ const Workouts: React.FC = () => {
                           workoutType: template.name,
                         }
                       })}
-                      className="p-2 rounded-lg hover:bg-[var(--brand-primary)]/15 text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition flex-shrink-0"
+                      className="p-2 rounded-[var(--radius-md)] hover:bg-[var(--brand-primary)]/15 text-[var(--text-muted)] hover:text-[var(--brand-primary)] transition flex-shrink-0"
                       title="Start workout"
                     >
                       <Play className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => deleteTemplate(Number(template.id))}
-                      className="p-2 rounded-lg hover:bg-[var(--error)]/10 text-[var(--text-muted)] hover:text-[var(--error)] transition flex-shrink-0"
+                      className="p-2 rounded-[var(--radius-md)] hover:bg-[var(--error)]/10 text-[var(--text-muted)] hover:text-[var(--error)] transition flex-shrink-0"
                       title="Delete template"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -407,14 +407,14 @@ const Workouts: React.FC = () => {
                       value={historySearch}
                       onChange={(e) => setHistorySearch(e.target.value)}
                       placeholder="Search workouts..."
-                      className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)]"
+                      className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-[var(--radius-lg)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)]"
                     />
                   </div>
                   {workoutTypes.length > 1 && (
                     <select
                       value={historyTypeFilter}
                       onChange={(e) => setHistoryTypeFilter(e.target.value)}
-                      className="px-3 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)]"
+                      className="px-3 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-[var(--radius-lg)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)]"
                     >
                       <option value="">All Types</option>
                       {workoutTypes.map((t) => (
@@ -481,7 +481,7 @@ const Workouts: React.FC = () => {
               {/* Templates */}
               <Link
                 to="/templates"
-                className="flex items-center justify-between px-4 py-3 rounded-lg border border-[var(--border-default)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] transition text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                className="flex items-center justify-between px-4 py-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] transition text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
               >
                 <span>Browse workout templates</span>
                 <span className="text-[var(--brand-primary)]">→</span>
@@ -508,7 +508,7 @@ const Workouts: React.FC = () => {
           <div className="pp-card p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-bold text-[var(--text-primary)]">Add Exercise</h3>
-              <button onClick={resetExerciseModal} className="p-2 hover:bg-[var(--bg-tertiary)] rounded-lg transition">
+              <button onClick={resetExerciseModal} className="p-2 hover:bg-[var(--bg-tertiary)] rounded-[var(--radius-md)] transition">
                 <svg className="w-6 h-6 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -519,7 +519,7 @@ const Workouts: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreatingNewExercise(false)}
-                className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold uppercase tracking-wider transition ${
+                className={`flex-1 py-2 px-4 rounded-[var(--radius-md)] text-sm font-bold uppercase tracking-wider transition ${
                   !isCreatingNewExercise ? 'pp-btn-primary' : 'pp-btn-ghost'
                 }`}
               >
@@ -528,7 +528,7 @@ const Workouts: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreatingNewExercise(true)}
-                className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold uppercase tracking-wider transition ${
+                className={`flex-1 py-2 px-4 rounded-[var(--radius-md)] text-sm font-bold uppercase tracking-wider transition ${
                   isCreatingNewExercise ? 'pp-btn-primary' : 'pp-btn-ghost'
                 }`}
               >
@@ -540,7 +540,7 @@ const Workouts: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-                    Exercise Name <span className="text-red-500">*</span>
+                    Exercise Name <span className="text-[var(--error)]">*</span>
                   </label>
                   <input
                     type="text"
@@ -549,14 +549,14 @@ const Workouts: React.FC = () => {
                       setNewExerciseForm({ ...newExerciseForm, name: e.target.value });
                       if (e.target.value.trim()) setNewExerciseErrors(prev => ({ ...prev, name: false }));
                     }}
-                    className={`w-full bg-[var(--bg-tertiary)] border rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none transition ${newExerciseErrors.name ? 'border-red-500 focus:border-red-500' : 'border-[var(--border-default)] focus:border-[var(--brand-primary)]'}`}
+                    className={`w-full bg-[var(--bg-tertiary)] border rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none transition ${newExerciseErrors.name ? 'border-[var(--error)] focus:border-[var(--error)]' : 'border-[var(--border-default)] focus:border-[var(--brand-primary)]'}`}
                     placeholder="e.g., Bench Press"
                   />
-                  {newExerciseErrors.name && <p className="text-red-500 text-xs mt-1">Exercise name is required</p>}
+                  {newExerciseErrors.name && <p className="text-[var(--error)] text-xs mt-1">Exercise name is required</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
-                    Category <span className="text-red-500">*</span>
+                    Category <span className="text-[var(--error)]">*</span>
                   </label>
                   <input
                     type="text"
@@ -565,10 +565,10 @@ const Workouts: React.FC = () => {
                       setNewExerciseForm({ ...newExerciseForm, category: e.target.value });
                       if (e.target.value.trim()) setNewExerciseErrors(prev => ({ ...prev, category: false }));
                     }}
-                    className={`w-full bg-[var(--bg-tertiary)] border rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none transition ${newExerciseErrors.category ? 'border-red-500 focus:border-red-500' : 'border-[var(--border-default)] focus:border-[var(--brand-primary)]'}`}
+                    className={`w-full bg-[var(--bg-tertiary)] border rounded-[var(--radius-md)] px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none transition ${newExerciseErrors.category ? 'border-[var(--error)] focus:border-[var(--error)]' : 'border-[var(--border-default)] focus:border-[var(--brand-primary)]'}`}
                     placeholder="e.g., Strength, Cardio, Bodyweight"
                   />
-                  {newExerciseErrors.category && <p className="text-red-500 text-xs mt-1">Category is required</p>}
+                  {newExerciseErrors.category && <p className="text-[var(--error)] text-xs mt-1">Category is required</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Description <span className="text-[var(--text-muted)] normal-case font-normal">(optional)</span></label>

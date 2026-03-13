@@ -316,3 +316,39 @@ def get_current_user():
     except Exception as e:
         current_app.logger.error(f"Get current user error: {e}")
         return jsonify({"success": False, "message": "Failed to retrieve user"}), 500
+
+
+#------------------------- UPDATE NAME --------------------------------------------------#
+@auth_bp.route('/me', methods=['PUT'])
+@login_required
+def update_current_user():
+    try:
+        user_id = g.user['id']
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+
+        data = request.get_json()
+        firstname = data.get('firstname', '').strip()
+        lastname = data.get('lastname', '').strip()
+
+        if not firstname:
+            return jsonify({"success": False, "message": "First name is required"}), 400
+
+        user.firstname = firstname
+        user.lastname = lastname
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "user": {
+                "id": user.id,
+                "firstname": user.firstname,
+                "lastname": user.lastname,
+                "email": user.email
+            }
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Update current user error: {e}")
+        return jsonify({"success": False, "message": "Failed to update user"}), 500

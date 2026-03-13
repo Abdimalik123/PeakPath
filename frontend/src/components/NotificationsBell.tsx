@@ -136,7 +136,7 @@ export function NotificationsBell() {
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-[var(--error)] text-[var(--text-inverse)] text-xs font-bold rounded-full flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -207,7 +207,7 @@ export function NotificationsBell() {
                           className="p-1 hover:bg-[var(--bg-elevated)] rounded transition"
                           title="Mark as read"
                         >
-                          <Check className="w-3.5 h-3.5 text-green-500" />
+                          <Check className="w-3.5 h-3.5 text-[var(--success)]" />
                         </button>
                       )}
                       <button

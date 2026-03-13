@@ -45,7 +45,7 @@ function App() {
       {/* Redirects: old routes → new structure */}
       <Route path="/workouts" element={<Navigate to="/train" replace />} />
       <Route path="/analytics" element={<Navigate to="/progress" replace />} />
-      <Route path="/body-tracking" element={<Navigate to="/progress" replace />} />
+      <Route path="/body-tracking" element={<Navigate to="/profile" replace />} />
       <Route path="/goals" element={<Navigate to="/habits" replace />} />
       <Route path="/social" element={<Navigate to="/community" replace />} />
       <Route path="/messages" element={<Navigate to="/community" replace />} />

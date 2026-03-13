@@ -57,14 +57,14 @@ export function StreakProtection() {
   if (!status.streak_at_risk) return null;
 
   return (
-    <div className="bg-gradient-to-r from-orange-900/30 to-red-900/30 border border-orange-500/30 rounded-xl p-4">
+    <div className="bg-gradient-to-r from-[var(--brand-secondary)]/10 to-[var(--brand-secondary)]/5 border border-[var(--brand-secondary)]/30 rounded-[var(--radius-lg)] p-4">
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-          <AlertTriangle className="w-5 h-5 text-orange-400" />
+        <div className="w-10 h-10 rounded-full bg-[var(--brand-secondary)]/15 flex items-center justify-center flex-shrink-0">
+          <AlertTriangle className="w-5 h-5 text-[var(--brand-secondary)]" />
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
-            <Flame className="w-4 h-4 text-orange-400" />
+            <Flame className="w-4 h-4 text-[var(--brand-secondary)]" />
             <h4 className="font-bold text-[var(--text-primary)] text-sm">
               {status.streak}-day streak at risk!
             </h4>
@@ -76,7 +76,7 @@ export function StreakProtection() {
             <button
               onClick={useFreeze}
               disabled={freezing}
-              className="flex items-center gap-2 px-3 py-2 bg-orange-500/20 border border-orange-500/30 rounded-lg text-orange-300 text-xs font-bold hover:bg-orange-500/30 transition disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-2 bg-[var(--brand-secondary)]/15 border border-[var(--brand-secondary)]/30 rounded-[var(--radius-md)] text-[var(--brand-secondary)] text-xs font-bold hover:bg-[var(--brand-secondary)]/25 transition disabled:opacity-50"
             >
               <Shield className="w-3.5 h-3.5" />
               {freezing ? 'Activating...' : `Freeze Streak (${status.freeze_cost} pts)`}

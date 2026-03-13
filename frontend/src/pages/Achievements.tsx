@@ -131,8 +131,8 @@ export default function Achievements({ embedded }: { embedded?: boolean }) {
 
   const getRarityText = (rarity: string) => {
     const map: Record<string, string> = {
-      common: 'text-[var(--text-muted)]', rare: 'text-blue-400',
-      epic: 'text-purple-400', legendary: 'text-yellow-400',
+      common: 'text-[var(--text-muted)]', rare: 'text-blue-600',
+      epic: 'text-purple-600', legendary: 'text-yellow-600',
     };
     return map[rarity] || 'text-[var(--text-muted)]';
   };
@@ -203,11 +203,11 @@ export default function Achievements({ embedded }: { embedded?: boolean }) {
               </div>
               <div>
                 <p className="text-[var(--text-muted)] text-sm mb-1">Points Earned</p>
-                <p className="text-2xl sm:text-3xl font-bold text-yellow-400">{totalPoints}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-[var(--brand-secondary)]">{totalPoints}</p>
               </div>
               <div>
                 <p className="text-[var(--text-muted)] text-sm mb-1">Next Up</p>
-                <p className="text-base sm:text-lg font-bold text-blue-400">{nextAchievement?.name || 'All done!'}</p>
+                <p className="text-base sm:text-lg font-bold text-[var(--brand-primary)]">{nextAchievement?.name || 'All done!'}</p>
                 {nextAchievement && (
                   <p className="text-xs text-[var(--text-muted)]">{nextAchievement.progress}/{nextAchievement.target}</p>
                 )}
@@ -215,7 +215,7 @@ export default function Achievements({ embedded }: { embedded?: boolean }) {
             </div>
             <div className="w-full bg-[var(--bg-tertiary)] rounded-full h-3">
               <div
-                className="bg-gradient-to-r from-emerald-500 to-blue-600 h-3 rounded-full transition-all duration-500"
+                className="bg-[var(--brand-primary)] h-3 rounded-full transition-all duration-500"
                 style={{ width: `${completionPercentage}%` }}
               ></div>
             </div>
@@ -238,7 +238,7 @@ export default function Achievements({ embedded }: { embedded?: boolean }) {
                   onClick={() => setSelectedCategory(category.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition whitespace-nowrap ${
                     selectedCategory === category.id
-                      ? 'bg-emerald-600 text-[var(--text-primary)]'
+                      ? 'bg-[var(--brand-primary)] text-[var(--text-inverse)]'
                       : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]'
                   }`}
                 >
@@ -288,7 +288,7 @@ export default function Achievements({ embedded }: { embedded?: boolean }) {
 
                   {/* Progress */}
                   {achievement.unlocked ? (
-                    <div className="flex items-center gap-2 text-emerald-400">
+                    <div className="flex items-center gap-2 text-[var(--success)]">
                       <Check className="w-5 h-5" />
                       <span className="text-sm font-semibold">Unlocked</span>
                       {achievement.unlockedAt && (
@@ -301,7 +301,7 @@ export default function Achievements({ embedded }: { embedded?: boolean }) {
                     <div>
                       <div className="flex justify-between text-sm mb-2">
                         <span className="text-[var(--text-muted)]">Progress</span>
-                        <span className="text-emerald-400 font-semibold">
+                        <span className="text-[var(--success)] font-semibold">
                           {achievement.progress} / {achievement.target}
                         </span>
                       </div>
