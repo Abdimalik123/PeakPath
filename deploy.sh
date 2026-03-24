@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# PeakPath Deployment Script — Hetzner VPS
+# Uptrakk Deployment Script — Hetzner VPS
 # Usage: ./deploy.sh
 
 set -e
@@ -25,7 +25,7 @@ for var in DOMAIN DB_PASSWORD SECRET_KEY; do
     fi
 done
 
-echo -e "${GREEN}Starting PeakPath deployment on Hetzner...${NC}"
+echo -e "${GREEN}Starting Uptrakk deployment on Hetzner...${NC}"
 
 # Replace domain placeholder in Nginx config
 echo -e "${YELLOW}Configuring Nginx for domain: ${DOMAIN}...${NC}"

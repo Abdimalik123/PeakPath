@@ -5,6 +5,7 @@ from models import User, Workout, WorkoutExercise
 from api.auth import login_required
 from datetime import datetime, timedelta
 from sqlalchemy import and_, or_, func
+from utils.validators import validate_request, ChallengeSchema
 
 challenges_bp = Blueprint('challenges_bp', __name__)
 
@@ -50,20 +51,16 @@ def get_challenges():
 
 @challenges_bp.route('/challenges', methods=['POST'])
 @login_required
+@validate_request(ChallengeSchema)
 def create_challenge():
     """Create a new challenge"""
     try:
-        data = request.get_json()
+        data = request.validated_data
         user_id = g.user['id']
-        
-        # Validate required fields
-        required = ['challenge_type', 'title', 'target_value', 'duration_days']
-        if not all(field in data for field in required):
-            return jsonify({'success': False, 'message': 'Missing required fields'}), 400
-        
+
         start_date = datetime.utcnow()
         end_date = start_date + timedelta(days=data['duration_days'])
-        
+
         challenge = Challenge(
             creator_id=user_id,
             challenge_type=data['challenge_type'],
@@ -76,11 +73,10 @@ def create_challenge():
             is_public=data.get('is_public', False),
             status='active'
         )
-        
+
         db.session.add(challenge)
         db.session.flush()
-        
-        # Auto-join creator as participant
+
         participant = ChallengeParticipant(
             challenge_id=challenge.id,
             user_id=user_id,
@@ -88,10 +84,8 @@ def create_challenge():
             status='active'
         )
         db.session.add(participant)
-        
-        # Invite specific users if provided
-        invited_user_ids = data.get('invited_users', [])
-        for invited_id in invited_user_ids:
+
+        for invited_id in data.get('invited_users', []):
             if invited_id != user_id:
                 invite = ChallengeParticipant(
                     challenge_id=challenge.id,
@@ -100,15 +94,15 @@ def create_challenge():
                     status='active'
                 )
                 db.session.add(invite)
-        
+
         db.session.commit()
-        
+
         return jsonify({
             'success': True,
             'message': 'Challenge created successfully',
             'challenge': challenge.to_dict()
         }), 201
-        
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error creating challenge: {e}")

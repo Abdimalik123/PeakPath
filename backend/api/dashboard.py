@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, g, current_app
-from database import db
+from database import db, cache
 from api.auth import login_required
 from datetime import datetime, timedelta
 
@@ -8,6 +8,7 @@ dashboard_bp = Blueprint('dashboard_bp', __name__)
 
 @dashboard_bp.route('/dashboard', methods=['GET'])
 @login_required
+@cache.cached(timeout=120, key_prefix=lambda: f'dashboard_{g.user["id"]}')
 def get_dashboard():
     user_id = g.user['id']
     

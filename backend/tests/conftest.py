@@ -1,5 +1,5 @@
 """
-conftest.py - Shared pytest fixtures for the PeakPath Flask backend test suite.
+conftest.py - Shared pytest fixtures for the Uptrakk Flask backend test suite.
 
 Design decisions:
 - Uses SQLite in-memory database so no PostgreSQL instance is required.

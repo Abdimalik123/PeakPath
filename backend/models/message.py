@@ -37,7 +37,11 @@ class Message(db.Model):
     
     conversation = db.relationship('Conversation', back_populates='messages')
     sender = db.relationship('User', backref='sent_messages')
-    
+
+    __table_args__ = (
+        db.Index('idx_messages_conversation_id', 'conversation_id'),
+    )
+
     def to_dict(self):
         return {
             'id': self.id,

@@ -88,7 +88,7 @@ function Register() {
           <Card>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Create account</CardTitle>
-              <CardDescription>Join PeakPath and start your fitness journey</CardDescription>
+              <CardDescription>Join Uptrakk and start your fitness journey</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-5">

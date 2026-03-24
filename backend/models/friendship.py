@@ -16,6 +16,8 @@ class Friendship(db.Model):
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'friend_id', name='unique_friendship'),
+        db.Index('idx_friendships_user_status', 'user_id', 'status'),
+        db.Index('idx_friendships_friend_status', 'friend_id', 'status'),
     )
 
     def __repr__(self):

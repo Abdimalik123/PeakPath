@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# PeakPath — First-time SSL setup with Let's Encrypt
+# Uptrakk — First-time SSL setup with Let's Encrypt
 # Run this ONCE on your Hetzner VPS after the first deploy.
 # Prerequisites: domain DNS A record pointing to this server's IP.
 
@@ -35,7 +35,7 @@ server {
     }
 
     location / {
-        return 200 'PeakPath — waiting for SSL setup';
+        return 200 'Uptrakk — waiting for SSL setup';
         add_header Content-Type text/plain;
     }
 }

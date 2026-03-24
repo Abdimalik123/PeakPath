@@ -3,6 +3,7 @@ from database import db
 from models.body_measurement import BodyMeasurement
 from api.auth import login_required
 from utils.logging import log_activity
+from utils.validators import validate_request, BodyMeasurementSchema
 from sqlalchemy import desc, func
 from datetime import datetime, timedelta
 
@@ -11,91 +12,67 @@ body_measurements_bp = Blueprint('body_measurements_bp', __name__)
 
 @body_measurements_bp.route('/body-measurements', methods=['POST'])
 @login_required
+@validate_request(BodyMeasurementSchema)
 def log_measurement():
     """Log a new body measurement"""
-    data = request.get_json()
-    
-    weight_kg = data.get('weight_kg')
-    measured_at = data.get('measured_at', datetime.now().date())
-    
-    if not weight_kg:
-        return jsonify({
-            "success": False,
-            "message": "Weight is required"
-        }), 400
-    
+    data = request.validated_data
+
+    weight_kg = data['weight_kg']
+    measured_at = data.get('measured_at') or datetime.now().date()
+
     try:
-        # Check if measurement already exists for this date
         existing = BodyMeasurement.query.filter_by(
             user_id=g.user['id'],
             measured_at=measured_at
         ).first()
-        
+
+        measurement_fields = {
+            'weight_kg': weight_kg,
+            'chest': data.get('chest'),
+            'waist': data.get('waist'),
+            'hips': data.get('hips'),
+            'bicep_left': data.get('bicep_left'),
+            'bicep_right': data.get('bicep_right'),
+            'thigh_left': data.get('thigh_left'),
+            'thigh_right': data.get('thigh_right'),
+            'calf_left': data.get('calf_left'),
+            'calf_right': data.get('calf_right'),
+            'neck': data.get('neck'),
+            'shoulders': data.get('shoulders'),
+            'body_fat_percentage': data.get('body_fat_percentage'),
+            'notes': data.get('notes'),
+        }
+
         if existing:
-            # Update existing measurement
-            existing.weight_kg = weight_kg
-            existing.chest = data.get('chest')
-            existing.waist = data.get('waist')
-            existing.hips = data.get('hips')
-            existing.bicep_left = data.get('bicep_left')
-            existing.bicep_right = data.get('bicep_right')
-            existing.thigh_left = data.get('thigh_left')
-            existing.thigh_right = data.get('thigh_right')
-            existing.calf_left = data.get('calf_left')
-            existing.calf_right = data.get('calf_right')
-            existing.neck = data.get('neck')
-            existing.shoulders = data.get('shoulders')
-            existing.body_fat_percentage = data.get('body_fat_percentage')
-            existing.notes = data.get('notes')
+            for k, v in measurement_fields.items():
+                setattr(existing, k, v)
             existing.updated_at = datetime.utcnow()
-            
             db.session.commit()
             log_activity(g.user['id'], "updated", "body_measurement", existing.id)
-            
             return jsonify({
                 "success": True,
                 "message": "Measurement updated successfully",
                 "measurement": existing.to_dict()
             }), 200
         else:
-            # Create new measurement
             measurement = BodyMeasurement(
                 user_id=g.user['id'],
-                weight_kg=weight_kg,
-                chest=data.get('chest'),
-                waist=data.get('waist'),
-                hips=data.get('hips'),
-                bicep_left=data.get('bicep_left'),
-                bicep_right=data.get('bicep_right'),
-                thigh_left=data.get('thigh_left'),
-                thigh_right=data.get('thigh_right'),
-                calf_left=data.get('calf_left'),
-                calf_right=data.get('calf_right'),
-                neck=data.get('neck'),
-                shoulders=data.get('shoulders'),
-                body_fat_percentage=data.get('body_fat_percentage'),
-                notes=data.get('notes'),
-                measured_at=measured_at
+                measured_at=measured_at,
+                **measurement_fields
             )
-            
             db.session.add(measurement)
             db.session.commit()
-            
             log_activity(g.user['id'], "created", "body_measurement", measurement.id)
-            
             return jsonify({
                 "success": True,
                 "message": "Measurement logged successfully",
                 "measurement": measurement.to_dict()
             }), 201
-            
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error logging measurement: {e}")
-        return jsonify({
-            "success": False,
-            "message": "Internal server error"
-        }), 500
+        return jsonify({"success": False, "message": "Internal server error"}), 500
 
 
 @body_measurements_bp.route('/body-measurements', methods=['GET'])

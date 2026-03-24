@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Starting PeakPath Backend..."
+echo "🚀 Starting Uptrakk Backend..."
 
 # Wait for database to be ready (optional, but recommended for ECS)
 echo "⏳ Waiting for database connection..."

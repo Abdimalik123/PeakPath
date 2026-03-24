@@ -23,6 +23,7 @@ from .social_activity import SocialActivity, ActivityLike, ActivityComment
 from .progress_photo import ProgressPhoto
 from .body_measurement import BodyMeasurement
 from .streak_freeze import StreakFreeze
+from .refresh_token import RefreshToken
 
 __all__ = [
     'User',
@@ -49,5 +50,6 @@ __all__ = [
     'ActivityComment',
     'ProgressPhoto',
     'BodyMeasurement',
-    'StreakFreeze'
+    'StreakFreeze',
+    'RefreshToken'
 ]

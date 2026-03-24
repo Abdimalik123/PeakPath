@@ -114,7 +114,7 @@ export function EnhancedOnboarding() {
         } catch (e) { console.warn('Could not create weight goal:', e); }
       }
 
-      showToast('Welcome to PeakPath! 🎉', 'success');
+      showToast('Welcome to Uptrakk! 🎉', 'success');
       // Hard navigation avoids React state race conditions at the onboarding→dashboard transition
       setTimeout(() => { window.location.replace('/dashboard'); }, 1000);
 

@@ -1,5 +1,6 @@
 from database import db
 
+
 class WeightLog(db.Model):
     __tablename__ = "weight_logs"
 
@@ -10,3 +11,7 @@ class WeightLog(db.Model):
     created_at = db.Column(db.DateTime)
 
     user = db.relationship("User", back_populates="weight_logs")
+
+    __table_args__ = (
+        db.Index('idx_weight_logs_user_date', 'user_id', 'date'),
+    )

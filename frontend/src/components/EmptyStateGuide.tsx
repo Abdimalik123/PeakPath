@@ -20,7 +20,7 @@ export function EmptyStateGuide({ type = 'dashboard' }: EmptyStateGuideProps) {
 
   const guides = {
     dashboard: {
-      title: "Welcome to PeakPath! 🎉",
+      title: "Welcome to Uptrakk! 🎉",
       subtitle: "Let's get you started on your fitness journey",
       steps: [
         {

@@ -1,4 +1,4 @@
-PeakPath
+Uptrakk
 
 A fitness tracking web app I built to help people stay on top of their workouts, habits, and goals. You can log workouts, track daily habits, set goals with deadlines, upload progress photos, and see how you're doing over time with charts and stats. There's also a social side — you can follow friends, see a leaderboard, and like each other's activity.
 
@@ -63,7 +63,7 @@ The frontend runs on `http://localhost:5173` and the backend on `http://localhos
 Project Structure
 
 ```
-PeakPath/
+Uptrakk/
 ├── backend/
 │   ├── api/            # Route blueprints (auth, workouts, habits, goals, etc.)
 │   ├── models/         # SQLAlchemy models

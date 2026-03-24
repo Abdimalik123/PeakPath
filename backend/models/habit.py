@@ -14,5 +14,9 @@ class Habit(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    __table_args__ = (
+        db.Index('idx_habits_user_id', 'user_id'),
+    )
+
     user = db.relationship("User", back_populates="habits")
     logs = db.relationship("HabitLog", back_populates="habit", cascade="all, delete-orphan")

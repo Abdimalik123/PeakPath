@@ -15,5 +15,9 @@ class Goal(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     auto_sync = db.Column(db.Boolean, default=False)
 
+    __table_args__ = (
+        db.Index('idx_goals_user_id', 'user_id'),
+    )
+
     user = db.relationship("User", back_populates="goals")
     goal_links = db.relationship("GoalLink", back_populates="goal", cascade="all, delete-orphan")

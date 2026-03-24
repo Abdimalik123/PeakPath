@@ -43,7 +43,7 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
               <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--brand-primary)] flex items-center justify-center">
                 <Activity className="w-5 h-5 text-[var(--text-inverse)]" />
               </div>
-              <span className="text-xl font-bold text-[var(--text-primary)]">PeakPath</span>
+              <span className="text-xl font-bold text-[var(--text-primary)]">Uptrakk</span>
             </Link>
             <div className="flex items-center gap-3">
               {isAuthenticated ? (
@@ -81,7 +81,7 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
           <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--brand-primary)] flex items-center justify-center">
             <Activity className="w-4 h-4 text-[var(--text-inverse)]" />
           </div>
-          <span className="text-lg font-bold text-[var(--text-primary)]">PeakPath</span>
+          <span className="text-lg font-bold text-[var(--text-primary)]">Uptrakk</span>
         </Link>
 
         {/* Right: Notifications + Profile */}
@@ -169,7 +169,7 @@ export function Navigation({ currentPage, showAuthButtons = false }: NavigationP
             <div className="w-9 h-9 rounded-[var(--radius-md)] bg-[var(--brand-primary)] flex items-center justify-center">
               <Activity className="w-5 h-5 text-[var(--text-inverse)]" />
             </div>
-            <span className="text-lg font-bold text-[var(--text-primary)]">PeakPath</span>
+            <span className="text-lg font-bold text-[var(--text-primary)]">Uptrakk</span>
           </Link>
         </div>
 

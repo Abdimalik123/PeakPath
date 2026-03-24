@@ -3,66 +3,40 @@ from database import db
 from models.cardio_workout import CardioWorkout
 from api.auth import login_required
 from datetime import datetime
+from utils.validators import validate_request, CardioSchema
 
 cardio_bp = Blueprint('cardio_bp', __name__)
 
 
 @cardio_bp.route('/cardio', methods=['POST'])
 @login_required
+@validate_request(CardioSchema)
 def log_cardio():
     """Log a cardio workout"""
     try:
-        data = request.get_json()
+        data = request.validated_data
         user_id = g.user['id']
-        
-        # Debug logging
-        current_app.logger.info(f"Received cardio data: {data}")
-        current_app.logger.info(f"Data types: {[(k, type(v).__name__) for k, v in data.items()]}")
-        
-        # Convert all numeric fields to proper types
-        distance = None
-        duration = None
-        pace = None
-        calories = None
-        
-        if data.get('distance'):
-            distance = float(data['distance']) if data['distance'] != '' else None
-        
-        if data.get('duration'):
-            duration = int(data['duration']) if data['duration'] != '' else None
-        
-        if data.get('pace'):
-            pace = float(data['pace']) if data['pace'] != '' else None
-        
-        if data.get('calories'):
-            calories = int(data['calories']) if data['calories'] != '' else None
-        
+
+        distance = data.get('distance')
+        duration = data.get('duration')
+        pace = data.get('pace')
+        calories = data.get('calories')
+
         # Calculate pace if distance and duration provided but no pace
         if not pace and distance and duration and distance > 0:
             pace = duration / distance  # min/km
-        
+
         # Parse date
         workout_date = datetime.utcnow()
         if data.get('date'):
             try:
                 workout_date = datetime.fromisoformat(data['date'].replace('Z', '+00:00'))
-            except:
-                workout_date = datetime.strptime(data['date'], '%Y-%m-%d')
-        
-        # Convert remaining optional fields
-        heart_rate_avg = None
-        heart_rate_max = None
-        elevation_gain = None
-        
-        if data.get('heart_rate_avg'):
-            heart_rate_avg = int(data['heart_rate_avg']) if data['heart_rate_avg'] != '' else None
-        
-        if data.get('heart_rate_max'):
-            heart_rate_max = int(data['heart_rate_max']) if data['heart_rate_max'] != '' else None
-        
-        if data.get('elevation_gain'):
-            elevation_gain = float(data['elevation_gain']) if data['elevation_gain'] != '' else None
-        
+            except Exception:
+                try:
+                    workout_date = datetime.strptime(data['date'], '%Y-%m-%d')
+                except Exception:
+                    pass
+
         cardio = CardioWorkout(
             user_id=user_id,
             cardio_type=data.get('cardio_type', 'running'),
@@ -70,31 +44,28 @@ def log_cardio():
             duration=duration,
             pace=pace,
             calories=calories,
-            heart_rate_avg=heart_rate_avg,
-            heart_rate_max=heart_rate_max,
-            elevation_gain=elevation_gain,
+            heart_rate_avg=data.get('heart_rate_avg'),
+            heart_rate_max=data.get('heart_rate_max'),
+            elevation_gain=data.get('elevation_gain'),
             notes=data.get('notes', ''),
             date=workout_date
         )
-        
+
         db.session.add(cardio)
         db.session.commit()
-        
-        # Award points for cardio
+
         from utils.gamification_helper import award_points
-        points = 30  # Base points for cardio
+        points = 30
         if distance:
-            points += int(distance * 5)  # 5 points per km
-        
-        # Call award_points with correct signature: (user_id, reason, points, entity_type, entity_id)
+            points += int(distance * 5)
         award_points(user_id, "cardio_workout", points=points, entity_type="cardio", entity_id=cardio.id)
-        
+
         return jsonify({
             'success': True,
             'cardio': cardio.to_dict(),
             'points_earned': points
         }), 201
-        
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error logging cardio: {e}")

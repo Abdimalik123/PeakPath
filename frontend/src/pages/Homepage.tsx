@@ -107,13 +107,13 @@ const HomePage: React.FC = () => {
               <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--brand-primary)] flex items-center justify-center">
                 <Activity className="w-4 h-4 text-[var(--text-inverse)]" />
               </div>
-              <span className="text-lg font-bold text-[var(--text-primary)]">PeakPath</span>
+              <span className="text-lg font-bold text-[var(--text-primary)]">Uptrakk</span>
             </div>
             <div className="flex gap-6 text-sm text-[var(--text-muted)]">
-              <a href="mailto:support@peakpath.app" className="hover:text-[var(--text-primary)] transition">Support</a>
+              <a href="mailto:support@uptrakk.com" className="hover:text-[var(--text-primary)] transition">Support</a>
             </div>
             <p className="text-sm text-[var(--text-muted)]">
-              © 2026 PeakPath. All rights reserved.
+              © 2026 Uptrakk. All rights reserved.
             </p>
           </div>
         </div>

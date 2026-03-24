@@ -80,7 +80,7 @@ export default function ActiveWorkout() {
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  const STORAGE_KEY = 'peakpath_active_workout';
+  const STORAGE_KEY = 'uptrakk_active_workout';
 
   // Persist active workout to localStorage whenever state changes
   useEffect(() => {
@@ -247,13 +247,14 @@ export default function ActiveWorkout() {
   };
 
   const completeSet = (exerciseIdx: number, setIdx: number) => {
+    const isCompleted = exercises[exerciseIdx].completedSets[setIdx].completed;
     setExercises(prev => prev.map((ex, i) => {
       if (i !== exerciseIdx) return ex;
       const newSets = [...ex.completedSets];
-      newSets[setIdx] = { ...newSets[setIdx], completed: true };
+      newSets[setIdx] = { ...newSets[setIdx], completed: !isCompleted };
       return { ...ex, completedSets: newSets };
     }));
-    startRestTimer();
+    if (!isCompleted) startRestTimer(); // only start rest on completion, not undo
   };
 
   const updateSetValue = (exerciseIdx: number, setIdx: number, field: 'reps' | 'weight', value: number) => {
@@ -601,8 +602,7 @@ export default function ActiveWorkout() {
                           type="number"
                           value={set.weight || ''}
                           onChange={e => updateSetValue(exIdx, setIdx, 'weight', parseFloat(e.target.value) || 0)}
-                          disabled={set.completed}
-                          className="bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-lg px-2 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] disabled:opacity-50 w-full min-w-0"
+                          className="bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-lg px-2 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] w-full min-w-0"
                           step="0.5"
                           inputMode="decimal"
                         />
@@ -610,23 +610,21 @@ export default function ActiveWorkout() {
                           type="number"
                           value={set.reps || ''}
                           onChange={e => updateSetValue(exIdx, setIdx, 'reps', parseInt(e.target.value) || 0)}
-                          disabled={set.completed}
-                          className="bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-lg px-2 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] disabled:opacity-50 w-full min-w-0"
+                          className="bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-lg px-2 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)] w-full min-w-0"
                           inputMode="numeric"
                         />
-                        {set.completed ? (
-                          <div className="flex justify-center">
-                            <Check className="w-5 h-5 text-[var(--success)]" />
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => completeSet(exIdx, setIdx)}
-                            disabled={!set.reps || set.reps < 1}
-                            className="w-full py-2 bg-[var(--brand-primary)] text-[var(--text-inverse)] rounded-lg text-xs font-bold hover:opacity-90 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                          >
-                            Done
-                          </button>
-                        )}
+                        <button
+                          onClick={() => completeSet(exIdx, setIdx)}
+                          disabled={!set.completed && (!set.reps || set.reps < 1)}
+                          title={set.completed ? 'Tap to undo' : 'Mark set done'}
+                          className={`w-full py-2 rounded-lg text-xs font-bold transition flex items-center justify-center ${
+                            set.completed
+                              ? 'bg-[var(--success)] text-white hover:bg-[var(--success)]/80'
+                              : 'bg-[var(--brand-primary)] text-[var(--text-inverse)] hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed'
+                          }`}
+                        >
+                          {set.completed ? <Check className="w-4 h-4" /> : 'Done'}
+                        </button>
                       </div>
                     ))}
 

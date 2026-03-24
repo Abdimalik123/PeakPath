@@ -12,3 +12,7 @@ class ActivityLog(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship("User", back_populates="activity_logs")
+
+    __table_args__ = (
+        db.Index('idx_activity_logs_user_created', 'user_id', 'created_at'),
+    )

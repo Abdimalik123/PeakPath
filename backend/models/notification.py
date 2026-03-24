@@ -19,7 +19,11 @@ class Notification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship("User", back_populates="notifications")
-    
+
+    __table_args__ = (
+        db.Index('idx_notifications_user_read', 'user_id', 'is_read'),
+    )
+
     def to_dict(self):
         return {
             'id': self.id,

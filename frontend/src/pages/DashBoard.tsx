@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchDashboard } from '../api/dashboard';
+import client from '../api/client';
 import type { DashboardData } from '../api/dashboard';
 import { WorkoutCard } from '../components/WorkoutCard';
 import { Navigation } from '../components/Navigation';
 import { PageHeader } from '../components/PageHeader';
 import { StatCard, StatsGrid } from '../components/StatCard';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
-import { Zap, CheckCircle, Target, Flame, Play, Dumbbell } from 'lucide-react';
+import { Zap, CheckCircle, Target, Flame, Play, Dumbbell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DailyQuestsWidget } from '../components/DailyQuestsWidget';
 import { StreakProtection } from '../components/StreakProtection';
 import { DashboardTour } from '../components/DashboardTour';
@@ -36,13 +37,18 @@ const TONE_STYLES = {
   neutral: 'bg-[var(--bg-secondary)] border-[var(--border-default)] text-[var(--text-secondary)]',
 };
 
-const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
 // ── Component ────────────────────────────────────────────────────────────────
 const Dashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Calendar state
+  const now = new Date();
+  const [calYear, setCalYear] = useState(now.getFullYear());
+  const [calMonth, setCalMonth] = useState(now.getMonth()); // 0-indexed
+  const [calWorkouts, setCalWorkouts] = useState<{ date: string; type: string }[]>([]);
+  const [selectedCalDay, setSelectedCalDay] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -55,7 +61,43 @@ const Dashboard: React.FC = () => {
         setLoading(false);
       }
     })();
+    client.get('/workouts').then(res => {
+      if (res.data.success) setCalWorkouts(res.data.workouts.map((w: any) => ({ date: w.date, type: w.type })));
+    }).catch(() => {});
   }, []);
+
+  const workoutDayMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    calWorkouts.forEach(w => {
+      if (!map[w.date]) map[w.date] = [];
+      map[w.date].push(w.type);
+    });
+    return map;
+  }, [calWorkouts]);
+
+  const calDays = useMemo(() => {
+    const firstDay = new Date(calYear, calMonth, 1);
+    const lastDay = new Date(calYear, calMonth + 1, 0);
+    const startDow = (firstDay.getDay() + 6) % 7; // Mon = 0
+    const days: (Date | null)[] = Array(startDow).fill(null);
+    for (let d = 1; d <= lastDay.getDate(); d++) days.push(new Date(calYear, calMonth, d));
+    return days;
+  }, [calYear, calMonth]);
+
+  const calMonthLabel = new Date(calYear, calMonth, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const isCurrentMonth = calYear === now.getFullYear() && calMonth === now.getMonth();
+
+  const goPrevMonth = () => {
+    if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); }
+    else setCalMonth(m => m - 1);
+    setSelectedCalDay(null);
+  };
+  const goNextMonth = () => {
+    if (isCurrentMonth) return;
+    if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); }
+    else setCalMonth(m => m + 1);
+    setSelectedCalDay(null);
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
@@ -193,63 +235,87 @@ const Dashboard: React.FC = () => {
             {/* Right column */}
             <div className="space-y-5">
 
-              {/* This Week — compact 7-day grid (workouts + habits) */}
+              {/* Calendar */}
               <div id="tour-heatmap">
                 <Card>
                   <CardHeader>
-                    <CardTitle>This Week</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Calendar</CardTitle>
+                      <div className="flex items-center gap-0.5">
+                        <button
+                          onClick={goPrevMonth}
+                          className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition"
+                          title="Previous month"
+                        >
+                          <ChevronLeft className="w-4 h-4 text-[var(--text-muted)]" />
+                        </button>
+                        <span className="text-xs font-semibold text-[var(--text-muted)] px-1 min-w-[80px] text-center">{calMonthLabel}</span>
+                        <button
+                          onClick={goNextMonth}
+                          disabled={isCurrentMonth}
+                          className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition disabled:opacity-30"
+                          title="Next month"
+                        >
+                          <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
+                        </button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-7 gap-1 mb-3">
-                      {DAY_LABELS.map((label, i) => {
-                        const day   = dashboardData.weekly_activity[i];
-                        const isToday = day?.date === today;
-                        const hasWorkout = (day?.workouts || 0) > 0;
-                        const hasHabit  = (day?.habits  || 0) > 0;
+                    {/* Day-of-week headers */}
+                    <div className="grid grid-cols-7 mb-1">
+                      {['Mo','Tu','We','Th','Fr','Sa','Su'].map(d => (
+                        <span key={d} className="text-[10px] font-semibold text-[var(--text-muted)] text-center">{d}</span>
+                      ))}
+                    </div>
+                    {/* Day cells */}
+                    <div className="grid grid-cols-7 gap-0.5">
+                      {calDays.map((day, i) => {
+                        if (!day) return <div key={`e-${i}`} />;
+                        const dateStr = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
+                        const isToday = dateStr === today;
+                        const hasWorkout = !!workoutDayMap[dateStr];
+                        const isSelected = selectedCalDay === dateStr;
                         return (
-                          <div key={label} className="flex flex-col items-center gap-1">
-                            <span className={`text-[10px] font-semibold ${isToday ? 'text-[var(--brand-primary)]' : 'text-[var(--text-muted)]'}`}>
-                              {label}
-                            </span>
-                            {/* Workout dot */}
-                            <div
-                              className={`w-6 h-6 rounded-md flex items-center justify-center ${
-                                hasWorkout
-                                  ? 'bg-[var(--brand-primary)] text-white'
-                                  : isToday
-                                  ? 'border border-[var(--brand-primary)]/30 bg-transparent'
-                                  : 'bg-[var(--bg-tertiary)]'
-                              }`}
-                              title={hasWorkout ? `${day.workouts} workout${day.workouts > 1 ? 's' : ''}` : 'No workout'}
-                            >
-                              {hasWorkout && <Dumbbell className="w-3 h-3" />}
-                            </div>
-                            {/* Habit dot */}
-                            <div
-                              className={`w-6 h-6 rounded-md flex items-center justify-center ${
-                                hasHabit
-                                  ? 'bg-[var(--brand-secondary)]/80 text-white'
-                                  : isToday
-                                  ? 'border border-[var(--brand-secondary)]/30 bg-transparent'
-                                  : 'bg-[var(--bg-tertiary)]'
-                              }`}
-                              title={hasHabit ? `${day.habits} habit${day.habits > 1 ? 's' : ''}` : 'No habits'}
-                            >
-                              {hasHabit && <CheckCircle className="w-3 h-3" />}
-                            </div>
-                          </div>
+                          <button
+                            key={dateStr}
+                            onClick={() => setSelectedCalDay(isSelected ? null : dateStr)}
+                            className={`aspect-square flex items-center justify-center rounded text-xs font-medium transition ${
+                              hasWorkout
+                                ? 'bg-[var(--brand-primary)] text-[var(--text-inverse)] hover:opacity-80'
+                                : isToday
+                                ? 'border border-[var(--brand-primary)]/60 text-[var(--brand-primary)] hover:bg-[var(--bg-tertiary)]'
+                                : 'text-[var(--text-muted)] hover:bg-[var(--bg-tertiary)]'
+                            } ${isSelected ? 'ring-2 ring-offset-1 ring-[var(--brand-primary)]' : ''}`}
+                          >
+                            {day.getDate()}
+                          </button>
                         );
                       })}
                     </div>
-                    <div className="flex items-center gap-4 text-[10px] text-[var(--text-muted)]">
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded-sm bg-[var(--brand-primary)]" />
-                        <span>Workout</span>
+
+                    {/* Selected day detail */}
+                    {selectedCalDay && (
+                      <div className="mt-3 pt-3 border-t border-[var(--border-default)]">
+                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">
+                          {new Date(selectedCalDay + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}
+                        </p>
+                        {workoutDayMap[selectedCalDay]?.length > 0 ? (
+                          workoutDayMap[selectedCalDay].map((type, i) => (
+                            <div key={i} className="flex items-center gap-2 py-0.5">
+                              <Dumbbell className="w-3.5 h-3.5 text-[var(--brand-primary)] flex-shrink-0" />
+                              <span className="text-sm font-medium text-[var(--text-primary)]">{type}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs text-[var(--text-muted)]">Rest day</p>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-3 h-3 rounded-sm bg-[var(--brand-secondary)]/80" />
-                        <span>Habits</span>
-                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1.5 mt-3 text-[10px] text-[var(--text-muted)]">
+                      <div className="w-2.5 h-2.5 rounded-sm bg-[var(--brand-primary)]" />
+                      <span>Workout logged</span>
                     </div>
                   </CardContent>
                 </Card>

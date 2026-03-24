@@ -19,6 +19,10 @@ class SocialActivity(db.Model):
     likes = db.relationship("ActivityLike", back_populates="activity", cascade="all, delete-orphan")
     comments = db.relationship("ActivityComment", back_populates="activity", cascade="all, delete-orphan")
 
+    __table_args__ = (
+        db.Index('idx_social_activities_user_created', 'user_id', 'created_at'),
+    )
+
     def __repr__(self):
         return f"<SocialActivity {self.user_id} - {self.activity_type}>"
 
@@ -36,6 +40,7 @@ class ActivityLike(db.Model):
 
     __table_args__ = (
         db.UniqueConstraint('activity_id', 'user_id', name='unique_activity_like'),
+        db.Index('idx_activity_likes_activity_id', 'activity_id'),
     )
 
     def __repr__(self):
@@ -53,6 +58,10 @@ class ActivityComment(db.Model):
 
     activity = db.relationship("SocialActivity", back_populates="comments")
     user = db.relationship("User", backref="activity_comments")
+
+    __table_args__ = (
+        db.Index('idx_activity_comments_activity_id', 'activity_id'),
+    )
 
     def __repr__(self):
         return f"<ActivityComment {self.user_id} on Activity {self.activity_id}>"

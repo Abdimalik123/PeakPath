@@ -3,6 +3,7 @@ from database import db
 from models import User, Friendship, SocialActivity, ActivityLike, ActivityComment, UserPoint, Workout, WorkoutExercise, Exercise, Goal, Habit
 from api.auth import login_required
 from utils.logging import log_activity
+from utils.validators import validate_request, CommentSchema
 from sqlalchemy import or_, and_, desc
 from datetime import datetime, timedelta, timezone
 
@@ -517,12 +518,11 @@ def get_comments(activity_id):
 
 @social_bp.route('/social/activities/<int:activity_id>/comments', methods=['POST'])
 @login_required
+@validate_request(CommentSchema)
 def add_comment(activity_id):
     try:
         user_id = g.user['id']
-        data = request.get_json()
-        if not data or not data.get('comment'):
-            return jsonify({'success': False, 'message': 'Comment text is required'}), 400
+        data = request.validated_data
 
         activity = SocialActivity.query.get(activity_id)
         if not activity:
@@ -532,7 +532,6 @@ def add_comment(activity_id):
         db.session.add(comment)
         activity.comments_count += 1
 
-        # Notify activity owner (not yourself)
         if activity.user_id != user_id:
             from utils.notifications import notify_activity_commented
             commenter = User.query.get(user_id)

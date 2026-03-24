@@ -1,4 +1,4 @@
-/* Mobile-Specific Optimizations for PeakPath */
+/* Mobile-Specific Optimizations for Uptrakk */
 
 /* Prevent iOS input zoom — font-size must be >= 16px */
 @media (max-width: 768px) {

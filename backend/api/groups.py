@@ -4,6 +4,7 @@ from models.group import Group, GroupMember, GroupPost
 from models import User
 from api.auth import login_required
 from datetime import datetime
+from utils.validators import validate_request, GroupSchema, GroupPostSchema
 
 groups_bp = Blueprint('groups_bp', __name__)
 
@@ -53,15 +54,13 @@ def get_groups():
 
 @groups_bp.route('/groups', methods=['POST'])
 @login_required
+@validate_request(GroupSchema)
 def create_group():
     """Create a new group"""
     try:
-        data = request.get_json()
+        data = request.validated_data
         user_id = g.user['id']
-        
-        if not data.get('name'):
-            return jsonify({'success': False, 'message': 'Group name is required'}), 400
-        
+
         group = Group(
             name=data['name'],
             description=data.get('description', ''),
@@ -70,11 +69,10 @@ def create_group():
             category=data.get('category', 'General'),
             member_count=1
         )
-        
+
         db.session.add(group)
         db.session.flush()
-        
-        # Auto-add creator as admin member
+
         member = GroupMember(
             group_id=group.id,
             user_id=user_id,
@@ -82,13 +80,13 @@ def create_group():
         )
         db.session.add(member)
         db.session.commit()
-        
+
         return jsonify({
             'success': True,
             'message': 'Group created successfully',
             'group': group.to_dict()
         }), 201
-        
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error creating group: {e}")
@@ -246,39 +244,36 @@ def leave_group(group_id):
 
 @groups_bp.route('/groups/<int:group_id>/posts', methods=['POST'])
 @login_required
+@validate_request(GroupPostSchema)
 def create_group_post(group_id):
     """Create a post in a group"""
     try:
         user_id = g.user['id']
-        data = request.get_json()
-        
-        # Check if user is a member
+        data = request.validated_data
+
         is_member = GroupMember.query.filter_by(
             group_id=group_id,
             user_id=user_id
         ).first()
-        
+
         if not is_member:
             return jsonify({'success': False, 'message': 'Must be a member to post'}), 403
-        
-        if not data.get('content'):
-            return jsonify({'success': False, 'message': 'Content is required'}), 400
-        
+
         post = GroupPost(
             group_id=group_id,
             user_id=user_id,
             content=data['content']
         )
-        
+
         db.session.add(post)
         db.session.commit()
-        
+
         return jsonify({
             'success': True,
             'message': 'Post created successfully',
             'post': post.to_dict()
         }), 201
-        
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error creating group post: {e}")

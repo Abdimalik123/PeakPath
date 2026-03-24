@@ -69,7 +69,7 @@ export default function Onboarding() {
           <div className="flex justify-between items-center h-20">
             <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-[var(--brand-primary)]"></div>
-              <h1 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">PeakPath</h1>
+              <h1 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">Uptrakk</h1>
             </Link>
           </div>
         </div>

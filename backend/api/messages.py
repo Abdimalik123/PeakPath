@@ -5,6 +5,7 @@ from models import User
 from api.auth import login_required
 from datetime import datetime
 from sqlalchemy import or_, and_
+from utils.validators import validate_request, MessageSchema
 
 messages_bp = Blueprint('messages_bp', __name__)
 
@@ -172,41 +173,35 @@ def get_messages(conversation_id):
 
 @messages_bp.route('/conversations/<int:conversation_id>/messages', methods=['POST'])
 @login_required
+@validate_request(MessageSchema)
 def send_message(conversation_id):
     """Send a message in a conversation"""
     try:
         user_id = g.user['id']
-        data = request.get_json()
-        
-        # Verify user is part of conversation
+        data = request.validated_data
+
         conversation = Conversation.query.get(conversation_id)
         if not conversation:
             return jsonify({'success': False, 'message': 'Conversation not found'}), 404
-        
+
         if conversation.user1_id != user_id and conversation.user2_id != user_id:
             return jsonify({'success': False, 'message': 'Unauthorized'}), 403
-        
-        if not data.get('content'):
-            return jsonify({'success': False, 'message': 'Message content is required'}), 400
-        
+
         message = Message(
             conversation_id=conversation_id,
             sender_id=user_id,
             content=data['content']
         )
-        
+
         db.session.add(message)
-        
-        # Update conversation last_message_at
         conversation.last_message_at = datetime.utcnow()
-        
         db.session.commit()
-        
+
         return jsonify({
             'success': True,
             'message': message.to_dict()
         }), 201
-        
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error sending message: {e}")

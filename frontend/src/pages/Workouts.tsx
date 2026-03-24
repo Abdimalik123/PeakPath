@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { WorkoutCard } from '../components/WorkoutCard';
 import { Navigation } from '../components/Navigation';
 import { PageHeader } from '../components/PageHeader';
 import { AddWorkoutModal } from '../components/AddWorkoutModal';
-import { WorkoutDetails } from '../components/WorkoutDetails';
 import { PRCelebration } from '../components/PRCelebration';
 import { useWorkouts } from '../hooks/useWorkouts';
 import { useToast } from '../contexts/ToastContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Filter, Dumbbell, Play, Trash2, Timer, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Filter, Dumbbell, Play, Trash2, Timer, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 import client from '../api/client';
 
 interface SavedTemplate {
@@ -33,6 +31,17 @@ interface AvailableExercise {
   } | null;
 }
 
+const formatWorkoutDate = (dateStr: string) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+  d.setHours(0, 0, 0, 0);
+  if (d.getTime() === today.getTime()) return 'Today';
+  if (d.getTime() === yesterday.getTime()) return 'Yesterday';
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+};
+
 const Workouts: React.FC = () => {
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -42,13 +51,13 @@ const Workouts: React.FC = () => {
   const TEMPLATES_LIMIT = 4;
 
   useEffect(() => {
-    const saved = localStorage.getItem('peakpath_active_workout');
+    const saved = localStorage.getItem('uptrakk_active_workout');
     if (saved) {
       try {
         const { workoutType } = JSON.parse(saved);
         setActiveWorkoutName(workoutType || 'Workout');
       } catch {
-        localStorage.removeItem('peakpath_active_workout');
+        localStorage.removeItem('uptrakk_active_workout');
       }
     }
   }, []);
@@ -394,100 +403,151 @@ const Workouts: React.FC = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            {/* Workouts List */}
-            <div className="lg:col-span-2 space-y-4">
-              {/* Search & Filter */}
-              {workouts.length > 0 && (
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-                    <input
-                      type="text"
-                      value={historySearch}
-                      onChange={(e) => setHistorySearch(e.target.value)}
-                      placeholder="Search workouts..."
-                      className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-[var(--radius-lg)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)]"
-                    />
-                  </div>
-                  {workoutTypes.length > 1 && (
-                    <select
-                      value={historyTypeFilter}
-                      onChange={(e) => setHistoryTypeFilter(e.target.value)}
-                      className="px-3 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-[var(--radius-lg)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)]"
+          {/* Workout Log */}
+          <div className="space-y-3">
+            {/* Search & Filter */}
+            {workouts.length > 0 && (
+              <div className="flex gap-2 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                  <input
+                    type="text"
+                    value={historySearch}
+                    onChange={(e) => setHistorySearch(e.target.value)}
+                    placeholder="Search workouts..."
+                    className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-[var(--radius-lg)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand-primary)]"
+                  />
+                </div>
+                {workoutTypes.length > 1 && (
+                  <select
+                    value={historyTypeFilter}
+                    onChange={(e) => setHistoryTypeFilter(e.target.value)}
+                    className="px-3 py-2.5 bg-[var(--bg-secondary)] border border-[var(--border-default)] rounded-[var(--radius-lg)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--brand-primary)]"
+                  >
+                    <option value="">All Types</option>
+                    {workoutTypes.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
+
+            {filteredWorkouts.length === 0 && workouts.length > 0 ? (
+              <div className="pp-card p-8 text-center">
+                <Filter className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3 opacity-40" />
+                <p className="text-[var(--text-muted)] text-sm">No workouts match your search</p>
+                <button onClick={() => { setHistorySearch(''); setHistoryTypeFilter(''); }} className="text-[var(--brand-primary)] text-sm mt-2 font-medium">Clear filters</button>
+              </div>
+            ) : workouts.length === 0 ? (
+              <div className="pp-card p-12 text-center">
+                <svg className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Workouts Yet</h3>
+                <p className="text-[var(--text-muted)] text-sm">Hit 'Start Workout' above to begin your first session, or 'Create Workout' to log a previous one.</p>
+              </div>
+            ) : (
+              filteredWorkouts.map((workout) => {
+                const isExpanded = selectedWorkout?.id === workout.id;
+                return (
+                  <div key={workout.id} className="rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--bg-secondary)] overflow-hidden">
+                    {/* Summary row — always visible */}
+                    <button
+                      className="w-full p-4 flex items-center gap-3 hover:bg-[var(--bg-tertiary)] transition text-left"
+                      onClick={() => isExpanded ? setSelectedWorkout(null) : fetchWorkoutDetails(workout.id)}
                     >
-                      <option value="">All Types</option>
-                      {workoutTypes.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              )}
+                      <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--brand-primary)]/15 flex items-center justify-center flex-shrink-0">
+                        <Dumbbell className="w-5 h-5 text-[var(--brand-primary)]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-[var(--text-primary)] text-sm">{workout.type}</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                          {formatWorkoutDate(workout.date)}
+                          {workout.duration ? ` · ${workout.duration} min` : ''}
+                          {workout.exercise_count != null ? ` · ${workout.exercise_count} exercise${workout.exercise_count !== 1 ? 's' : ''}` : ''}
+                        </p>
+                      </div>
+                      {isExpanded
+                        ? <ChevronUp className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
+                        : <ChevronDown className="w-4 h-4 text-[var(--text-muted)] flex-shrink-0" />
+                      }
+                    </button>
 
-              {filteredWorkouts.length === 0 && workouts.length > 0 ? (
-                <div className="pp-card p-8 text-center">
-                  <Filter className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3 opacity-40" />
-                  <p className="text-[var(--text-muted)] text-sm">No workouts match your search</p>
-                  <button onClick={() => { setHistorySearch(''); setHistoryTypeFilter(''); }} className="text-[var(--brand-primary)] text-sm mt-2 font-medium">Clear filters</button>
-                </div>
-              ) : workouts.length === 0 ? (
-                <div className="pp-card p-12 text-center">
-                  <svg className="w-16 h-16 text-[var(--text-muted)] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Workouts Yet</h3>
-                  <p className="text-[var(--text-muted)] text-sm">Hit 'Start Workout' above to begin your first session, or 'Create Workout' to log a previous one.</p>
-                </div>
-              ) : (
-                <>
-                {filteredWorkouts.map((workout) => {
-                  const workoutData = {
-                    id: workout.id.toString(),
-                    type: workout.type,
-                    date: workout.date,
-                    duration: workout.duration,
-                    exercise_count: workout.exercise_count || 0
-                  };
-                  
-                  return (
-                    <WorkoutCard 
-                      key={workout.id}
-                      workout={workoutData}
-                      onClick={(id) => fetchWorkoutDetails(parseInt(id))}
-                    />
-                  );
-                })}
-                </>
-              )}
-            </div>
-
-            <div className="lg:col-span-1 space-y-6">
-              {selectedWorkout && (
-                <WorkoutDetails
-                  workout={selectedWorkout}
-                  onDelete={handleDelete}
-                  onClose={() => setSelectedWorkout(null)}
-                  onAddExercise={() => {
-                    if (selectedWorkout) {
-                      setShowAddExerciseModal(true);
-                    } else {
-                      showToast('Please select a workout first', 'warning');
-                    }
-                  }}
-                />
-              )}
-
-              {/* Templates */}
-              <Link
-                to="/templates"
-                className="flex items-center justify-between px-4 py-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] transition text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              >
-                <span>Browse workout templates</span>
-                <span className="text-[var(--brand-primary)]">→</span>
-              </Link>
-            </div>
+                    {/* Expanded exercise log */}
+                    {isExpanded && (
+                      <div className="border-t border-[var(--border-default)] px-4 pb-4">
+                        {!selectedWorkout ? (
+                          <div className="flex justify-center py-5">
+                            <div className="w-5 h-5 border-2 border-[var(--brand-primary)] border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        ) : selectedWorkout.exercises?.length > 0 ? (
+                          <div className="mt-1">
+                            {selectedWorkout.exercises.map((ex, i) => (
+                              <div key={i} className="flex items-center justify-between py-2.5 border-b border-[var(--border-default)] last:border-0">
+                                <span className="text-sm font-medium text-[var(--text-primary)]">{ex.name}</span>
+                                <span className="text-xs text-[var(--text-muted)]">
+                                  {[
+                                    ex.sets > 0 ? `${ex.sets} sets` : null,
+                                    ex.reps > 0 ? `${ex.reps} reps` : null,
+                                    ex.weight > 0 ? `${ex.weight} kg` : null,
+                                  ].filter(Boolean).join(' · ')}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-[var(--text-muted)] text-center py-4">No exercises recorded for this session</p>
+                        )}
+                        <div className="flex items-center justify-between mt-3 pt-1">
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => setShowAddExerciseModal(true)}
+                              className="text-xs text-[var(--brand-primary)] hover:opacity-80 font-medium transition"
+                            >
+                              + Add exercise
+                            </button>
+                            <button
+                              onClick={() => navigate('/active-workout', {
+                                state: {
+                                  exercises: selectedWorkout?.exercises?.map(ex => ({
+                                    exercise_id: ex.exercise_id,
+                                    exercise_name: ex.name,
+                                    sets: ex.sets || 3,
+                                    reps: ex.reps || 10,
+                                    weight: ex.weight || 0,
+                                  })) ?? [],
+                                  workoutType: workout.type,
+                                }
+                              })}
+                              className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] font-medium transition flex items-center gap-1"
+                            >
+                              <RotateCcw className="w-3 h-3" /> Repeat
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => handleDelete(workout.id)}
+                            className="p-1.5 hover:bg-[var(--error)]/10 rounded-[var(--radius-md)] text-[var(--text-muted)] hover:text-[var(--error)] transition"
+                            title="Delete workout"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
+
+          <Link
+            to="/templates"
+            className="mt-2 flex items-center justify-between px-4 py-3 rounded-[var(--radius-md)] border border-[var(--border-default)] bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] transition text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+          >
+            <span>Browse workout templates</span>
+            <span className="text-[var(--brand-primary)]">→</span>
+          </Link>
         </main>
       </div>
 
