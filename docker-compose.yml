@@ -27,6 +27,22 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       FLASK_DEBUG: "false"
       FRONTEND_URL: https://${DOMAIN}
+      DOMAIN_URL: https://${DOMAIN}
+
+      # Email configuration
+      MAIL_SERVER: ${MAIL_SERVER}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USE_TLS: ${MAIL_USE_TLS}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_DEFAULT_SENDER: ${MAIL_DEFAULT_SENDER}
+
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+
+      # Redis (optional)
+      REDIS_URL: ${REDIS_URL:-}
     expose:
       - "5000"
     volumes:
