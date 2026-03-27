@@ -15,6 +15,17 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build: ./backend
     restart: unless-stopped
@@ -41,8 +52,8 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       ENVIRONMENT: ${ENVIRONMENT:-production}
 
-      # Redis (optional)
-      REDIS_URL: ${REDIS_URL:-}
+      # Redis
+      REDIS_URL: redis://redis:6379
 
       # Object Storage
       S3_ENDPOINT_URL: ${S3_ENDPOINT_URL}
@@ -56,6 +67,8 @@ services:
       - uploads_data:/app/uploads
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   frontend:
