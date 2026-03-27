@@ -386,11 +386,11 @@ def create_app():
             TOTAL_WORKOUTS.set(total_workouts or 0)
 
             # Habit metrics
-            total_habits = db.session.execute(db.text("SELECT COUNT(*) FROM habits WHERE status = 'active'")).scalar()
+            total_habits = db.session.execute(db.text("SELECT COUNT(*) FROM habits")).scalar()
             TOTAL_HABITS.set(total_habits or 0)
 
             # Goal metrics
-            total_goals = db.session.execute(db.text("SELECT COUNT(*) FROM goals WHERE status = 'active'")).scalar()
+            total_goals = db.session.execute(db.text("SELECT COUNT(*) FROM goals")).scalar()
             TOTAL_GOALS.set(total_goals or 0)
 
             # Social metrics
